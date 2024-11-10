@@ -46,6 +46,8 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
 
 @[simp] theorem mem_univ {a : α} : a ∈ Set.univ := ⟨⟩
 @[simp] theorem subset_univ : x ⊆ Set.univ := fun _ _ => ⟨⟩
+@[simp] theorem not_mem_empty {a : α} : a ∉ (∅ : Set α) := fun x => x
+@[simp] theorem empty_subset : ∅ ⊆ x := fun _ => False.elim
 end
 
 /- sets of products -/
