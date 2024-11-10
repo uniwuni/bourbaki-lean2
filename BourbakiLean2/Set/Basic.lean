@@ -44,10 +44,14 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
   · intro h
     exact ⟨fun a => (h a).1, fun a => (h a).2⟩
 
+/- simp lemmas -/
+
 @[simp] theorem mem_univ {a : α} : a ∈ Set.univ := ⟨⟩
 @[simp] theorem subset_univ : x ⊆ Set.univ := fun _ _ => ⟨⟩
 @[simp] theorem not_mem_empty {a : α} : a ∉ (∅ : Set α) := fun x => x
 @[simp] theorem empty_subset : ∅ ⊆ x := fun _ => False.elim
+@[simp] theorem mem_singleton_iff {a b : α} : a ∈ ({b} : Set α) ↔ a = b := Iff.rfl
+
 end
 
 /- sets of products -/
@@ -61,7 +65,7 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
     (a,b) ∈ prod x y ↔ a ∈ x ∧ b ∈ y := Iff.rfl
 
 @[simp] theorem prod_subset_prod_nonempty_iff {x x' : Set α} {y y' : Set β}
-    {hx : x.Nonempty} {hy : y.Nonempty} : prod x y ⊆ prod x' y' ↔ (x ⊆ x' ∧ y ⊆ y') := by
+    (hx : x.Nonempty) (hy : y.Nonempty) : prod x y ⊆ prod x' y' ↔ (x ⊆ x' ∧ y ⊆ y') := by
   rcases hx with ⟨ax, hx⟩
   rcases hy with ⟨ay, hy⟩
   constructor

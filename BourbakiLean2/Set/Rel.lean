@@ -3,12 +3,12 @@ import BourbakiLean2.Set.Basic
 abbrev Relation (α β : Type*) := Set (α × β)
 
 namespace Relation
-variable {α β : Type*}
+variable {α β γ δ : Type*}
 
 def domain (r : Relation α β) : Set α := {a | ∃ b, (a,b) ∈ r}
 def range (r : Relation α β) : Set β := {b | ∃ a, (a,b) ∈ r}
 
-variable {r r' : Relation α β} {a : α} {b : β}
+variable {r r' : Relation α β} {s : Relation γ α} {t : Relation δ γ} {a : α} {b : β} {c : γ}
 
 @[simp] theorem mem_domain_iff :
     a ∈ domain r ↔ ∃ b, (a,b) ∈ r := Iff.rfl
@@ -45,7 +45,7 @@ def image (r : Relation α β) (x : Set α) : Set β :=
 def preimage (r : Relation α β) (y : Set β) : Set α :=
   {a | ∃ b, (a,b) ∈ r ∧ b ∈ y}
 
-variable {x x' : Set α} {y y' : Set β}
+variable {x x' : Set α} {y y' : Set β} {z z' : Set γ}
 
 @[simp] theorem mem_image_iff :
     b ∈ image r x ↔ ∃ a, (a,b) ∈ r ∧ a ∈ x := Iff.rfl
@@ -185,5 +185,139 @@ theorem preimage_of_range_subset (h : r.range ⊆ y) : r.preimage y = r.domain :
     apply preimage_mono_right Set.subset_univ
   · rw[← preimage_range_domain]
     apply preimage_mono_right h
+
+/- SECTIONS -/
+
+def sect (r : Relation α β) (a : α) := image r {a}
+
+@[simp] theorem mem_sect_iff : b ∈ r.sect a ↔ (a,b) ∈ r := by
+  simp only [sect, mem_image_iff, Set.mem_singleton_iff, exists_eq_right]
+
+theorem rel_subset_iff_sect_subset : r ⊆ r' ↔ (∀ a, r.sect a ⊆ r'.sect a) := by
+  constructor
+  · intro h a b
+    rw[mem_sect_iff, mem_sect_iff]
+    exact @h (a,b)
+  · rintro h ⟨a,b⟩ h'
+    specialize @h a b
+    rw[mem_sect_iff, mem_sect_iff] at *
+    exact h h'
+
+theorem sect_mono (h : r ⊆ r') : r.sect a ⊆ r'.sect a := by
+  rw[rel_subset_iff_sect_subset] at h
+  exact h a
+
+/- INVERSE -/
+
+def inv (r : Relation α β) : Relation β α := {p | (p.2, p.1) ∈ r}
+
+@[simp] theorem mem_inv_iff : (b,a) ∈ r.inv ↔ (a,b) ∈ r := Iff.rfl
+
+@[simp] theorem domain_inv : r.inv.domain = r.range := by
+  simp only [domain, mem_inv_iff, range]
+
+@[simp] theorem range_inv : r.inv.range = r.domain := by
+  simp only [domain, mem_inv_iff, range]
+
+@[simp] theorem image_inv : r.inv.image y = r.preimage y := by
+  simp only [image, mem_inv_iff, preimage]
+
+@[simp] theorem preimage_inv : r.inv.preimage x = r.image x := by
+  simp only [image, mem_inv_iff, preimage]
+
+@[simp] theorem inv_empty : (∅ : Relation α β).inv = ∅ := by
+  ext a
+  rcases a
+  simp only [mem_inv_iff, Set.not_mem_empty]
+
+@[simp] theorem inv_univ : Relation.inv (Set.univ : Relation α β) = Set.univ := by
+  ext a
+  rcases a
+  simp only [mem_inv_iff, Set.mem_univ]
+
+@[simp] theorem inv_inv : r.inv.inv = r := by
+  ext a
+  rcases a
+  simp only [mem_inv_iff]
+
+theorem inv_monotone (h : r ⊆ r') : r.inv ⊆ r'.inv := by
+  rintro ⟨_,_⟩
+  simp only [mem_inv_iff]
+  apply h
+
+/- SET PRODUCT SPECIAL CASES -/
+
+@[simp] theorem sprod_domain (h : y.Nonempty) : Relation.domain (x.prod y) = x := by
+  ext a
+  simp only [mem_domain_iff, Set.mem_prod_iff, exists_and_left, and_iff_left_iff_imp]
+  intro
+  assumption
+
+@[simp] theorem sprod_range (h : x.Nonempty) : Relation.range (x.prod y) = y := by
+  ext a
+  simp only [mem_range_iff, Set.mem_prod_iff, exists_and_right, and_iff_right_iff_imp]
+  intro
+  assumption
+
+@[simp] theorem sprod_image (h : a ∈ x) (h' : a ∈ x') : Relation.image (x.prod y) x' = y := by
+  ext b'
+  simp only [mem_image_iff, Set.mem_prod_iff]
+  refine ⟨fun ⟨_, ⟨⟨_, v⟩,_⟩⟩ => v,
+          fun h'' => ⟨a, ⟨⟨h,h''⟩,h'⟩⟩⟩
+
+@[simp] theorem sprod_preimage (h : b ∈ y) (h' : b ∈ y') : Relation.preimage (x.prod y) y' = x := by
+  ext a'
+  simp only [mem_preimage_iff, Set.mem_prod_iff]
+  refine ⟨fun ⟨_, ⟨⟨v, _⟩,_⟩⟩ => v,
+          fun h'' => ⟨b, ⟨⟨h'',h⟩,h'⟩⟩⟩
+
+@[simp] theorem sprod_inv : Relation.inv (x.prod y) = y.prod x := by
+  ext ⟨a,b⟩
+  simp only [mem_inv_iff, Set.mem_prod_iff, and_comm]
+
+@[simp] theorem sprod_sect (h : a ∈ x) : Relation.sect (x.prod y) a = y := by
+  apply sprod_image h
+  simp only [Set.mem_singleton_iff]
+
+/- COMPOSITION -/
+
+def comp (r : Relation α β) (s : Relation γ α) : Relation γ β :=
+  {x | ∃ a, ⟨x.1, a⟩ ∈ s ∧ ⟨a, x.2⟩ ∈ r}
+
+local infixr:80 " ∘ " => Relation.comp
+
+@[simp] theorem mem_comp_iff : (c,b) ∈ r ∘ s ↔ (∃ a, (c,a) ∈ s ∧ (a,b) ∈ r) := Iff.rfl
+
+theorem mem_comp_of (h : (c,a) ∈ s) (h' : (a,b) ∈ r) : (c,b) ∈ r ∘ s :=
+  mem_comp_iff.mpr ⟨a, ⟨h,h'⟩⟩
+
+/- EDGE CASES -/
+
+@[simp] theorem comp_empty : r ∘ (∅ : Relation γ α) = ∅ := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.not_mem_empty, false_and, exists_false]
+
+@[simp] theorem empty_comp : (∅ : Relation α β) ∘ s = ∅ := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.not_mem_empty, and_false, exists_false]
+
+@[simp] theorem comp_univ : r ∘ (Set.univ : Relation γ α) = Set.univ.prod r.range := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_univ, true_and, Set.mem_prod_iff, mem_range_iff]
+
+@[simp] theorem univ_comp : (Set.univ : Relation α β) ∘ s = s.domain.prod Set.univ := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_univ, and_true, Set.mem_prod_iff, mem_domain_iff]
+
+/- COMP PROPS -/
+
+@[simp] theorem inv_comp : (r ∘ s).inv = s.inv ∘ r.inv := by
+  ext ⟨_,_⟩
+  simp only [mem_inv_iff, mem_comp_iff, and_comm]
+
+@[simp] theorem comp_assoc : r ∘ (s ∘ t) = (r ∘ s) ∘ t := by
+  ext ⟨d,b⟩
+  exact ⟨fun ⟨a, ⟨⟨c, ⟨h',h''⟩⟩, h⟩⟩ => ⟨c, ⟨h',⟨a,⟨h'',h⟩⟩⟩⟩,
+         fun ⟨c, ⟨h',⟨a,⟨h'',h⟩⟩⟩⟩ => ⟨a, ⟨⟨c, ⟨h',h''⟩⟩, h⟩⟩⟩
 
 end Relation
