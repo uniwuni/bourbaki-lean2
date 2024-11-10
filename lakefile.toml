@@ -1,0 +1,16 @@
+name = "bourbaki-lean2"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["BourbakiLean2"]
+
+[leanOptions]
+pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+autoImplicit = false
+
+[[lean_lib]]
+name = "BourbakiLean2"
+
+[[require]]
+name = "«batteries»"
+git = "https://github.com/leanprover-community/batteries"
+rev = "main"
