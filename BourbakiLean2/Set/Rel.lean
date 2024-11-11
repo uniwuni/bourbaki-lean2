@@ -8,7 +8,7 @@ variable {α β γ δ : Type*}
 def domain (r : Relation α β) : Set α := {a | ∃ b, (a,b) ∈ r}
 def range (r : Relation α β) : Set β := {b | ∃ a, (a,b) ∈ r}
 
-variable {r r' : Relation α β} {s : Relation γ α} {t : Relation δ γ} {a : α} {b : β} {c : γ}
+variable {r r' : Relation α β} {s s' : Relation γ α} {t : Relation δ γ} {a : α} {b : β} {c : γ}
 
 @[simp] theorem mem_domain_iff :
     a ∈ domain r ↔ ∃ b, (a,b) ∈ r := Iff.rfl
@@ -319,5 +319,56 @@ theorem mem_comp_of (h : (c,a) ∈ s) (h' : (a,b) ∈ r) : (c,b) ∈ r ∘ s :=
   ext ⟨d,b⟩
   exact ⟨fun ⟨a, ⟨⟨c, ⟨h',h''⟩⟩, h⟩⟩ => ⟨c, ⟨h',⟨a,⟨h'',h⟩⟩⟩⟩,
          fun ⟨c, ⟨h',⟨a,⟨h'',h⟩⟩⟩⟩ => ⟨a, ⟨⟨c, ⟨h',h''⟩⟩, h⟩⟩⟩
+
+theorem range_comp_subset : (r ∘ s).range ⊆ r.range := by
+  intro
+  simp only [mem_range_iff, mem_comp_iff, forall_exists_index, and_imp]
+  exact fun _ _ _ h' => ⟨_, h'⟩
+
+theorem domain_comp_subset : (r ∘ s).domain ⊆ s.domain := by
+  intro
+  simp only [mem_domain_iff, mem_comp_iff, forall_exists_index, and_imp]
+  exact fun _ _ h _ => ⟨_, h⟩
+
+theorem range_comp_eq_image : (r ∘ s).range = r.image s.range := by
+  ext b
+  simp only [mem_range_iff, mem_comp_iff, mem_image_iff]
+  exact ⟨fun ⟨_,⟨_,⟨h,h'⟩⟩⟩ => ⟨_,⟨h',⟨_,h⟩⟩⟩,
+         fun ⟨_,⟨h',⟨_,h⟩⟩⟩ => ⟨_,⟨_,⟨h,h'⟩⟩⟩⟩
+
+theorem range_domain_eq_preimage : (r ∘ s).domain = s.preimage r.domain := by
+  ext c
+  simp only [mem_domain_iff, mem_comp_iff, mem_preimage_iff]
+  exact ⟨fun ⟨_,⟨_,⟨h,h'⟩⟩⟩ => ⟨_,⟨h,⟨_,h'⟩⟩⟩,
+         fun ⟨_,⟨h',⟨_,h⟩⟩⟩ => ⟨_,⟨_,⟨h',h⟩⟩⟩⟩
+
+theorem comp_mono_left (h : r ⊆ r') : r ∘ s ⊆ r' ∘ s := by
+  intro ⟨_,_⟩
+  simp only [mem_comp_iff, forall_exists_index, and_imp] at *
+  exact fun x h' h'' => ⟨_,⟨h', h h''⟩⟩
+
+theorem comp_mono_right (h : s ⊆ s') : r ∘ s ⊆ r ∘ s' := by
+  intro ⟨_,_⟩
+  simp only [mem_comp_iff, forall_exists_index, and_imp] at *
+  exact fun x h' h'' => ⟨_,⟨h h', h''⟩⟩
+
+theorem comp_mono (h : r ⊆ r') (h' : s ⊆ s') : r ∘ s ⊆ r' ∘ s' := by
+  intro ⟨_,_⟩
+  simp only [mem_comp_iff, forall_exists_index, and_imp] at *
+  exact fun x h'' h''' => ⟨_,⟨h' h'', h h'''⟩⟩
+
+theorem subset_preimage_image_of_subset_domain (h : x ⊆ r.domain) : x ⊆ r.preimage (r.image x) := by
+  intro a h'
+  specialize h h'
+  simp only [mem_domain_iff, mem_preimage_iff, mem_image_iff] at *
+  rcases h with ⟨b, h''⟩
+  exact ⟨b, ⟨h'', ⟨_, ⟨h'',h'⟩⟩⟩⟩
+
+theorem subset_image_preimage_of_subset_range (h : y ⊆ r.range): y ⊆ r.image (r.preimage y) := by
+  intro b h'
+  specialize h h'
+  simp only [mem_range_iff, mem_image_iff, mem_preimage_iff] at *
+  rcases h with ⟨a, h''⟩
+  exact ⟨a,⟨h'',b,h'',h'⟩⟩
 
 end Relation
