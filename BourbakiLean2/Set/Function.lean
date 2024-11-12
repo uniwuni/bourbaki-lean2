@@ -64,6 +64,7 @@ theorem restriction_inj_of_comp_inj (h : Injective (f ∘ g)) : Injective (f |_ 
   specialize h _ _ h'
   rw[h]
 
-
+@[simp] theorem comp_self_inj_iff_inj {f : α → α}: Injective (f ∘ f) ↔ Injective f :=
+  ⟨inj_of_comp_inj, fun h => comp_inj_of_inj_inj h h⟩
 
 end Function
