@@ -240,18 +240,6 @@ def powerset (s : Set α) : Set (Set α) := {t | t ⊆ s}
 @[inherit_doc] prefix:100 "𝒫" => powerset
 
 universe v in
-/-- The image of `s : Set α` by `f : α → β`, written `f '' s`, is the set of `b : β` such that
-`f a = b` for some `a ∈ s`. -/
-def image {β : Type v} (f : α → β) (s : Set α) : Set β := {f a | a ∈ s}
-
-instance : Functor Set where map := @Set.image
-
-instance : LawfulFunctor Set where
-  id_map _ := funext fun _ ↦ propext ⟨fun ⟨_, sb, rfl⟩ ↦ sb, fun sb ↦ ⟨_, sb, rfl⟩⟩
-  comp_map g h _ := funext <| fun c ↦ propext
-    ⟨fun ⟨a, ⟨h₁, h₂⟩⟩ ↦ ⟨g a, ⟨⟨a, ⟨h₁, rfl⟩⟩, h₂⟩⟩,
-     fun ⟨_, ⟨⟨a, ⟨h₁, h₂⟩⟩, h₃⟩⟩ ↦ ⟨a, ⟨h₁, show h (g a) = c from h₂ ▸ h₃⟩⟩⟩
-  map_const := rfl
 
 /-- The property `s.Nonempty` expresses the fact that the set `s` is not empty. It should be used
 in theorem assumptions instead of `∃ x, x ∈ s` or `s ≠ ∅` as it gives access to a nice API thanks

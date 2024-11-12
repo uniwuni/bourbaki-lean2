@@ -1,9 +1,9 @@
 import BourbakiLean2.Set.Basic
 
 abbrev Relation (α β : Type*) := Set (α × β)
-
-namespace Relation
 variable {α β γ δ : Type*}
+namespace Relation
+
 
 def domain (r : Relation α β) : Set α := {a | ∃ b, (a,b) ∈ r}
 def range (r : Relation α β) : Set β := {b | ∃ a, (a,b) ∈ r}
@@ -441,5 +441,17 @@ variable {f : α → β}
       exact h'
   · rintro ⟨f, rfl⟩
     simp only [graph_functional]
+
+@[simp] theorem graph_section : (graph f).sect a = {f a} := by
+  ext
+  simp only [mem_sect_iff, mem_graph_iff, Set.mem_singleton_iff]
+
+theorem diag_graph_id : diag = (graph (@id α)) := by
+  ext ⟨a,b⟩
+  simp only [mem_diag_iff, mem_graph_iff, id_eq, eq_comm]
+
+theorem diag_functional : is_functional (@diag α) := by
+  rw[diag_graph_id]
+  apply graph_functional
 
 end Relation
