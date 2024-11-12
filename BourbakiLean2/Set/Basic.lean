@@ -84,7 +84,58 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
 
 @[simp] theorem prod_empty_iff {x : Set α} {y : Set β} :
     (prod x y).Nonempty ↔ (x.Nonempty ∧ y.Nonempty) := by
-  simp only [Set.Nonempty, Prod.exists, mem_prod_iff, exists_and_left, exists_and_right]
+  simp only [Set.Nonempty, Prod.exists,  mem_prod_iff, exists_and_left, exists_and_right]
 
 end
+
 end Set
+
+def ExistsUnique {α : Type*} (p : α → Prop) := ∃ x, p x ∧ ∀ y, p y → y = x
+open Lean
+
+
+/--
+Checks to see that `xs` has only one binder.
+-/
+def isExplicitBinderSingular (xs : TSyntax ``explicitBinders) : Bool :=
+  match xs with
+  | `(explicitBinders| $_:binderIdent $[: $_]?) => true
+  | `(explicitBinders| ($_:binderIdent : $_)) => true
+  | _ => false
+
+open TSyntax.Compat in
+/--
+`∃! x : α, p x` means that there exists a unique `x` in `α` such that `p x`.
+This is notation for `ExistsUnique (fun (x : α) ↦ p x)`.
+
+This notation does not allow multiple binders like `∃! (x : α) (y : β), p x y`
+as a shorthand for `∃! (x : α), ∃! (y : β), p x y` since it is liable to be misunderstood.
+Often, the intended meaning is instead `∃! q : α × β, p q.1 q.2`.
+-/
+macro "∃!" xs:explicitBinders ", " b:term : term => do
+  if !isExplicitBinderSingular xs then
+    Macro.throwErrorAt xs "\
+      The `ExistsUnique` notation should not be used with more than one binder.\n\
+      \n\
+      The reason for this is that `∃! (x : α), ∃! (y : β), p x y` has a completely different \
+      meaning from `∃! q : α × β, p q.1 q.2`. \
+      To prevent confusion, this notation requires that you be explicit \
+      and use one with the correct interpretation."
+  expandExplicitBinders ``ExistsUnique xs b
+
+@[app_unexpander ExistsUnique] def unexpandExistsUnique : Lean.PrettyPrinter.Unexpander
+  | `($(_) fun $x:ident ↦ $b)                      => `(∃! $x:ident, $b)
+  | `($(_) fun ($x:ident : $t) ↦ $b)               => `(∃! $x:ident : $t, $b)
+  | _                                               => throw ()
+
+/--
+`∃! x ∈ s, p x` means `∃! x, x ∈ s ∧ p x`, which is to say that there exists a unique `x ∈ s`
+such that `p x`.
+Similarly, notations such as `∃! x ≤ n, p n` are supported,
+using any relation defined using the `binder_predicate` command.
+-/
+syntax "∃! " binderIdent binderPred ", " term : term
+
+macro_rules
+  | `(∃! $x:ident $p:binderPred, $b) => `(∃! $x:ident, satisfies_binder_pred% $x $p ∧ $b)
+  | `(∃! _ $p:binderPred, $b) => `(∃! x, satisfies_binder_pred% x $p ∧ $b)

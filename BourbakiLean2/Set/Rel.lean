@@ -8,7 +8,7 @@ variable {α β γ δ : Type*}
 def domain (r : Relation α β) : Set α := {a | ∃ b, (a,b) ∈ r}
 def range (r : Relation α β) : Set β := {b | ∃ a, (a,b) ∈ r}
 
-variable {r r' : Relation α β} {s s' : Relation γ α} {t : Relation δ γ} {a : α} {b : β} {c : γ}
+variable {r r' : Relation α β} {s s' : Relation γ α} {t : Relation δ γ} {a a' : α} {b : β} {c : γ}
 
 @[simp] theorem mem_domain_iff :
     a ∈ domain r ↔ ∃ b, (a,b) ∈ r := Iff.rfl
@@ -370,5 +370,76 @@ theorem subset_image_preimage_of_subset_range (h : y ⊆ r.range): y ⊆ r.image
   simp only [mem_range_iff, mem_image_iff, mem_preimage_iff] at *
   rcases h with ⟨a, h''⟩
   exact ⟨a,⟨h'',b,h'',h'⟩⟩
+
+/- DIAGONAL -/
+
+def diag : Relation α α := {x | x.1 = x.2}
+
+@[simp] theorem mem_diag_iff : (a,a') ∈ diag ↔ a = a' := Iff.rfl
+
+@[simp] theorem image_diag : diag.image x = x := by
+  ext _
+  simp only [mem_image_iff, mem_diag_iff, exists_eq_left]
+
+@[simp] theorem preimage_diag : diag.preimage x = x := by
+  ext _
+  simp only [mem_preimage_iff, mem_diag_iff, exists_eq_left']
+
+@[simp] theorem range_diag : diag.range = @Set.univ α := by
+  ext _
+  simp only [mem_range_iff, mem_diag_iff, exists_eq, Set.mem_univ]
+
+@[simp] theorem domain_diag : diag.domain = @Set.univ α := by
+  ext _
+  simp only [mem_domain_iff, mem_diag_iff, exists_eq', Set.mem_univ]
+
+@[simp] theorem inv_diag : diag.inv = (diag : Relation α α) := by
+  ext ⟨_,_⟩
+  simp only [mem_inv_iff, mem_diag_iff, Eq.comm]
+
+@[simp] theorem diag_comp : diag ∘ r = r := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, mem_diag_iff, exists_eq_right]
+
+@[simp] theorem comp_diag : r ∘ diag = r := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, mem_diag_iff, exists_eq_left']
+
+/- FUNCTIONAL -/
+
+def is_functional (r : Relation α β) := ∀ x, ∃! y, ⟨x,y⟩ ∈ r
+def graph (f : α → β) : Relation α β := {x | x.2 = f x.1}
+
+variable {f : α → β}
+
+@[simp] theorem mem_graph_iff : ⟨a, b⟩ ∈ graph f ↔ b = f a := by
+  simp only [graph, Set.mem_setOf_iff]
+
+@[simp] theorem mem_graph : ⟨a, f a⟩ ∈ graph f := by rw[mem_graph_iff]
+
+@[simp] theorem graph_functional : is_functional (graph f) := by
+  intro x
+  exists f x
+  simp only [mem_graph_iff, imp_self, implies_true, and_self]
+
+@[simp] theorem functional_iff_graph : is_functional r ↔ (∃ f, r = graph f) := by
+  constructor
+  · intro h
+    have ⟨f, h'⟩ := Classical.axiomOfChoice h
+    exists f
+    ext ⟨a,b⟩
+    specialize h' a
+    simp only at h'
+    rcases h' with ⟨h', h''⟩
+    constructor
+    · intro h'''
+      specialize h'' b h'''
+      simp only [h'', mem_graph_iff]
+    · intro h'''
+      simp only [mem_graph_iff] at h'''
+      rw[h''']
+      exact h'
+  · rintro ⟨f, rfl⟩
+    simp only [graph_functional]
 
 end Relation
