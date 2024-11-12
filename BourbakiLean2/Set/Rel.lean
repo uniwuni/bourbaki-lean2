@@ -371,6 +371,16 @@ theorem subset_image_preimage_of_subset_range (h : y ⊆ r.range): y ⊆ r.image
   rcases h with ⟨a, h''⟩
   exact ⟨a,⟨h'',b,h'',h'⟩⟩
 
+@[simp] theorem image_comp : (r ∘ s).image z = r.image (s.image z) := by
+  ext b
+  simp only [mem_image_iff, mem_comp_iff]
+  exact ⟨fun ⟨c,⟨⟨a,⟨h,h'⟩⟩,h''⟩⟩ => ⟨_,h',_,h,h''⟩,
+         fun ⟨a,h',c,h,h''⟩ => ⟨c,⟨a,h,h'⟩,h''⟩⟩
+
+@[simp] theorem preimage_comp : (r ∘ s).preimage y = s.preimage (r.preimage y) := by
+  rw[←image_inv, ←image_inv, ←image_inv, inv_comp, image_comp]
+
+
 /- DIAGONAL -/
 
 def diag : Relation α α := {x | x.1 = x.2}
@@ -407,7 +417,7 @@ def diag : Relation α α := {x | x.1 = x.2}
 
 /- FUNCTIONAL -/
 
-def is_functional (r : Relation α β) := ∀ x, ∃! y, ⟨x,y⟩ ∈ r
+def Functional (r : Relation α β) := ∀ x, ∃! y, ⟨x,y⟩ ∈ r
 def graph (f : α → β) : Relation α β := {x | x.2 = f x.1}
 
 variable {f : α → β}
@@ -417,12 +427,12 @@ variable {f : α → β}
 
 @[simp] theorem mem_graph : ⟨a, f a⟩ ∈ graph f := by rw[mem_graph_iff]
 
-@[simp] theorem graph_functional : is_functional (graph f) := by
+@[simp] theorem graph_functional : Functional (graph f) := by
   intro x
   exists f x
   simp only [mem_graph_iff, imp_self, implies_true, and_self]
 
-@[simp] theorem functional_iff_graph : is_functional r ↔ (∃ f, r = graph f) := by
+@[simp] theorem functional_iff_graph : Functional r ↔ (∃ f, r = graph f) := by
   constructor
   · intro h
     have ⟨f, h'⟩ := Classical.axiomOfChoice h
@@ -450,8 +460,20 @@ theorem diag_graph_id : diag = (graph (@id α)) := by
   ext ⟨a,b⟩
   simp only [mem_diag_iff, mem_graph_iff, id_eq, eq_comm]
 
-theorem diag_functional : is_functional (@diag α) := by
+theorem diag_functional : Functional (@diag α) := by
   rw[diag_graph_id]
   apply graph_functional
+
+theorem graph_comp {g : γ → α} : graph (f ∘ g) = (graph f) ∘ (graph g) := by
+  ext ⟨c,b⟩
+  simp only [mem_graph_iff, Function.comp_apply, mem_comp_iff, exists_eq_left]
+
+theorem functional_comp_of_functional (h : Functional r) (h' : Functional s) : Functional (r ∘ s) := by
+  rw[functional_iff_graph] at *
+  obtain ⟨f, h⟩ := h
+  obtain ⟨g, h'⟩ := h'
+  exists f ∘ g
+  rw[graph_comp, h, h']
+
 
 end Relation
