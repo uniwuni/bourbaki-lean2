@@ -7,3 +7,4 @@ theorem imp_iff_not_imp_not : (p → q) ↔ (¬ q → ¬ p) := by
     by_cases h'' : q
     · exact h''
     · exact (h h'' h').elim
+attribute [simp] Subtype.eq_iff

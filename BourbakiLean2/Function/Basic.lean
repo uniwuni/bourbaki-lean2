@@ -65,6 +65,9 @@ theorem restriction_comp {z : Set γ} {g : γ → α} : restriction (f ∘ g) z 
 
 @[simp] def Injective (f : α → β) := ∀ a a', f a = f a' → a = a'
 
+theorem Injective.eq_iff (h : Injective f) {a a' : α} : f a = f a' ↔ a = a' :=
+  ⟨h _ _, congrArg f⟩
+
 theorem inj_iff_neq_of_neq : Injective f ↔ ∀ a a', a ≠ a' → f a ≠ f a' := by
   apply forall_congr'
   intro a
@@ -126,7 +129,7 @@ def Surjective (f : α → β) := Set.image f Set.univ = Set.univ
 @[simp] theorem surj_iff : Surjective f ↔ ∀ b, ∃a, b = f a := by
   simp only [Surjective, Set.ext_iff, Set.mem_image_iff, Set.mem_univ, and_true, iff_true]
 
-theorem exists_preimage_of_surjective (h : Surjective f) (b : β) : ∃a, b = f a :=
+theorem Surjective.exists_preimage (h : Surjective f) (b : β) : ∃a, b = f a :=
   surj_iff.mp h _
 
 theorem Surjective.comp (h : Surjective f) (h' : Surjective g) : Surjective (f ∘ g) := by
@@ -191,7 +194,7 @@ theorem Surjective.image_preimage (h : Surjective f) {y : Set β} : Set.image f 
   · simp only [image_preimage_subset]
   · intro b h'
     simp only [Set.mem_image_iff, Set.mem_preimage_iff]
-    obtain ⟨a,h⟩ := exists_preimage_of_surjective h b
+    obtain ⟨a,h⟩ := h.exists_preimage b
     rw[h] at h'
     exists a
 
@@ -208,6 +211,55 @@ theorem corestrict_surjective : Surjective (corestrict f (Set.subset_refl _)) :=
 
 @[simp] theorem coe_corestrict {y : Set β} {h : f '' Set.univ ⊆ y} {a : α} :
     ↑ (corestrict f h a) = f a := rfl
+
+/- bijectivity -/
+
+def Bijective (f : α → β) := Injective f ∧ Surjective f
+
+theorem Bijective.inj (h : Bijective f) : Injective f := h.1
+theorem Bijective.surj (h : Bijective f) : Surjective f := h.2
+theorem bij_id : Bijective (id : α → α) := ⟨inj_id, surj_id⟩
+theorem Bijective.comp (h : Bijective f) (h' : Bijective g) : Bijective (f ∘ g) :=
+  ⟨(h.inj).comp (h'.inj), (h.surj).comp (h'.surj)⟩
+
+theorem bij_iff_inv_functional : Bijective f ↔ (Relation.graph f).inv.Functional := by
+  constructor
+  · rintro ⟨h,h'⟩ b
+    simp only [surj_iff] at h'
+    obtain ⟨a,rfl⟩ := h' b
+    exists a
+    simp only [Relation.mem_inv_iff, Relation.mem_graph_iff, true_and]
+    intro y h''
+    symm
+    apply h _ _ h''
+  · intro h
+    constructor
+    · intro a a' h'
+      obtain ⟨a₀, h₀⟩ := h (f a)
+      simp only [Relation.mem_inv_iff, Relation.mem_graph_iff] at h₀
+      rw[h'] at h₀
+      rw[h₀.2 _ rfl]
+      rw[h₀.2 _ h'.symm]
+    · rw[surj_iff]
+      intro b
+      obtain ⟨a,h,_⟩ := h b
+      simp only [Relation.mem_inv_iff, Relation.mem_graph_iff] at h
+      exists a
+
+noncomputable def Bijective.inv (h : Bijective f) (b : β) : α :=
+  Exists.choose (h.surj.exists_preimage b)
+
+
+@[simp] theorem Bijective.inv_val_iff (h : Bijective f) {a : α} {b : β}: h.inv b = a ↔ f a = b := by
+  rw[Bijective.inv]
+  have h' := Exists.choose_spec (h.surj.exists_preimage b)
+  rw[← h.inj.eq_iff, Eq.comm]
+  rw[← h']
+
+@[simp] theorem Bijective.inv_val_val (h : Bijective f) {a : α} : h.inv (f a) = a := by simp only [inv_val_iff]
+@[simp] theorem Bijective.val_inv_val (h : Bijective f) {b : β} : f (h.inv b) = b := by
+  obtain ⟨a,rfl⟩ := h.surj.exists_preimage b
+  simp only [inv_val_val]
 
 end Function
 
