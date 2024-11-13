@@ -479,4 +479,9 @@ theorem functional_comp_of_functional (h : Functional r) (h' : Functional s) : F
   ext a
   simp only [mem_domain_iff, mem_graph_iff, exists_eq, Set.mem_univ]
 
+theorem domain_functional (h : Functional r) : r.domain = Set.univ := by
+  rw[functional_iff_graph] at h
+  obtain ⟨f,rfl⟩ := h
+  simp only [domain_graph]
+
 end Relation
