@@ -12,7 +12,7 @@ theorem mem_setOf_of {x : α} (h : p x) : x ∈ {y | p y} := h
 theorem of_mem_setOf {x : α} (h : x ∈ {y | p y}) : p x := h
 
 /- subsets -/
-@[simp]
+@[simp, refl]
 theorem subset_refl (x : Set α) : x ⊆ x := fun _ h => h
 
 section
@@ -49,7 +49,15 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
 @[simp] theorem not_mem_empty {a : α} : a ∉ (∅ : Set α) := fun x => x
 @[simp] theorem empty_subset : ∅ ⊆ x := fun _ => False.elim
 @[simp] theorem mem_singleton_iff {a b : α} : a ∈ ({b} : Set α) ↔ a = b := Iff.rfl
-
+@[simp] theorem subset_empty_iff : x ⊆ ∅ ↔ x = ∅ := by
+  constructor
+  · rw[Set.ext_iff]
+    intro h x'
+    simp only [not_mem_empty, iff_false]
+    intro h'
+    exact h h'
+  · rintro rfl
+    rfl
 end
 
 /- sets of products -/
@@ -83,6 +91,10 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
 @[simp] theorem prod_empty_iff {x : Set α} {y : Set β} :
     (prod x y).Nonempty ↔ (x.Nonempty ∧ y.Nonempty) := by
   simp only [Set.Nonempty, Prod.exists,  mem_prod_iff, exists_and_left, exists_and_right]
+
+@[simp] theorem prod_univ_univ : prod Set.univ Set.univ = (Set.univ : Set (α × β)) := by
+  ext ⟨a,b⟩
+  simp only [mem_prod_iff, mem_univ, and_self]
 
 end
 

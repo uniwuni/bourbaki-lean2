@@ -45,6 +45,22 @@ namespace Function
   obtain ⟨_,rfl,h⟩ := h
   exact h
 
+@[simp] theorem image_empty : f '' ∅ = ∅ := by
+  ext a
+  simp only [Set.mem_image_iff, Set.not_mem_empty, and_false, exists_false]
+
+@[simp] theorem image_empty_iff_empty {x : Set α} : f '' x = ∅ ↔ x = ∅ := by
+  constructor
+  · intro h
+    ext a
+    simp only [Set.not_mem_empty, iff_false]
+    intro h'
+    have h' : f a ∈ f '' x := Set.val_mem_image_of_mem h'
+    rw[h] at h'
+    exact h'
+  · rintro rfl
+    exact image_empty
+
 /- const -/
 def IsConstant (f : α → β) := ∀ a a', f a = f a'
 @[simp] theorem Function.const_isConstant {a : α} : IsConstant (Function.const β a) :=
@@ -300,8 +316,8 @@ end
   simp only [id_eq, Bijective.inv_val_iff]
 
 
-@[simp] def IsRetractionOf (f : α → β) (g : β → α) := f ∘ g = id
-@[simp] def IsSectionOf (f : α → β) (g : β → α) := g ∘ f = id
+@[simp] def IsRetractionOf (r : α → β) (g : β → α) := r ∘ g = id
+@[simp] def IsSectionOf (s : α → β) (g : β → α) := g ∘ s = id
 def HasRetraction (f : α → β) := ∃g : β → α, g.IsRetractionOf f
 def HasSection (f : α → β) := ∃g : β → α, g.IsSectionOf f
 @[simp] def IsInverseOf (f : α → β) (g : β → α) := IsRetractionOf f g ∧ IsSectionOf f g
@@ -321,6 +337,57 @@ theorem IsRetractionOf.fg_eq (h : IsRetractionOf f g) {b} : f (g b) = b := by
 theorem IsSectionOf.gf_eq (h : IsSectionOf f g) {b} : g (f b) = b := by
   rw[← @comp_apply _ _ _ g f, h]
   dsimp only [id_eq]
+
+theorem Surjective.hasSection (h : Surjective f) : HasSection f := by
+  rw[surj_iff] at h
+  obtain ⟨s, h⟩ := Classical.axiomOfChoice h
+  exists s
+  exact (funext h).symm
+
+theorem Injective.hasRetraction [Nonempty α] (h : Injective f) : HasRetraction f := by
+  classical
+  let g (b : β) : α := by
+    by_cases h' : ∃a, f a = b
+    · exact Exists.choose h'
+    · exact Classical.choice (by infer_instance)
+  exists g
+  ext a
+  simp only [comp_apply, exists_apply_eq_apply, ↓reduceDIte, id_eq, g]
+  have h' : f (@Exists.choose α (fun a_1 ↦ f a_1 = f a) ⟨_,rfl⟩) = f a := Exists.choose_spec (p := fun a_1 ↦ f a_1 = f a) ⟨_,rfl⟩
+  apply h _ _ h'
+
+theorem Surjective.comp_right_inj (h : f.Surjective) : (fun (x : β → γ) => (x ∘ f)).Injective := by
+  intro g g' h'
+  ext b
+  obtain ⟨a, rfl⟩ := h.exists_preimage b
+  simp only at h'
+  rw[← comp_apply (f := g) (g := f), ← comp_apply (f := g')]
+  rw[h']
+
+theorem Surjective.comp_left_surj (h : f.Surjective) : (fun (x : γ → α) => (f ∘ x)).Surjective := by
+  rw[surj_iff]
+  intro g
+  obtain ⟨a,h'⟩ : ∃ (a : γ → α), ∀ x, g x = f (a x) := by
+    apply Classical.axiomOfChoice (r := fun x y => g x = f y)
+    intro a
+    obtain ⟨c, h⟩ := h.exists_preimage (g a)
+    exists c
+  exists a
+  ext
+  apply h'
+
+theorem Injective.comp_right_surj [Nonempty α] (h : f.Injective) : (fun (x : β → γ) => (x ∘ f)).Surjective := by
+  rw[surj_iff]
+  intro b
+  obtain ⟨r,h⟩ := h.hasRetraction
+  exists b ∘ r
+  rw[← comp_assoc, h, comp_id_right]
+
+
+theorem Injective.comp_left_inj (h : f.Injective) : (fun (x : γ → α) => (f ∘ x)).Injective := by
+  intro g g' h'
+  ext c
+  apply h _ _ (congrFun h' _)
 
 theorem IsSectionOf.swap_retraction (h : IsSectionOf f g) : IsRetractionOf g f := h
 theorem IsRetractionOf.swap_section (h : IsRetractionOf f g) : IsSectionOf g f := h
@@ -433,7 +500,95 @@ theorem hasInverse_iff_bij : f.HasInverse ↔ f.Bijective := by
   · intro h
     exists h.inv
     apply Bijective.inv_isInverseOf
+
 end
+section
+variable {f' : β → γ} {g : γ → α}
+
+theorem isRetraction_of_comp (h : g.IsRetractionOf (f' ∘ f)) : (g ∘ f').IsRetractionOf f := h
+theorem isSection_of_comp (h : g.IsSectionOf (f' ∘ f)) : (f ∘ g).IsSectionOf f' := h
+
+
+theorem surj_of_inj_comp_surj (h : (f' ∘ f).Surjective) (h' : f'.Injective) : f.Surjective := by
+  rw[surj_iff] at *
+  intro b
+  obtain ⟨a,h⟩ := h (f' b)
+  specialize h' _ _ h
+  exact ⟨a, h'⟩
+
+theorem inj_of_surj_comp_inj (h : (f' ∘ f).Injective) (h' : f.Surjective) : f'.Injective := by
+  intro b b' h''
+  obtain ⟨a, rfl⟩ := h'.exists_preimage b
+  obtain ⟨a', rfl⟩ := h'.exists_preimage b'
+  rw[h _ _ h'']
+
+theorem isRetraction_of_comp_surj (h : g.IsRetractionOf (f' ∘ f)) (h' : f.Surjective) :
+    (f ∘ g).IsRetractionOf f' := by
+  simp only [IsRetractionOf, comp_assoc] at *
+  apply h'.comp_right_inj
+  simp only [comp_id_left]
+  rw[← comp_assoc, ← comp_assoc, comp_assoc (f := g), h, comp_id_right]
+
+theorem isSection_of_comp_inj (h : g.IsSectionOf (f' ∘ f)) (h' : f'.Injective) :
+    (g ∘ f').IsSectionOf f := by
+  unfold IsSectionOf
+  apply h'.comp_left_inj
+  simp only [comp_id_right]
+  rw[comp_assoc, comp_assoc, h, comp_id_left]
+
+end
+section
+theorem Surjective.factor_after {g : α → γ} (h : f.Surjective) (h' : ∀ a a', f a = f a' → g a = g a') :
+    ∃! p, g = p ∘ f := by
+  obtain ⟨s, h⟩ := h.hasSection
+  exists g ∘ s
+  constructor
+  · dsimp only
+    ext a
+    apply h'
+    simp only [comp_apply, h.gf_eq]
+  · rintro p' rfl
+    ext a
+    simp only [comp_apply, h.gf_eq]
+
+theorem Injective.factor_before {g : γ → β} (h : f.Injective) (h' : g '' Set.univ ⊆ f '' Set.univ) :
+    ∃! i, g = f ∘ i := by
+  by_cases h'' : Nonempty α
+  · obtain ⟨r, h⟩ := h.hasRetraction
+    exists r ∘ g
+    constructor
+    · dsimp only
+      ext a
+      simp only [comp_apply, h.fg_eq]
+      specialize h' (a := g a)  (by simp only [Set.val_mem_image_univ])
+      rw[Set.mem_image_iff] at h'
+      obtain ⟨a',h', _⟩ := h'
+      rw[h']
+      rw[h.fg_eq]
+    · rintro r' rfl
+      ext
+      simp only [comp_apply, h.fg_eq]
+  · have h''' : f '' Set.univ = ∅ := by
+      ext x
+      simp only [Set.mem_image_iff, Set.mem_univ, and_true, Set.not_mem_empty, iff_false,
+        not_exists]
+      intro a
+      exfalso
+      exact h'' ⟨a⟩
+    simp only [h''', Set.subset_empty_iff, image_empty_iff_empty] at h'
+    have j : γ → Empty := by
+      intro c
+      have h := @Set.mem_univ _ c
+      rw[h'] at h
+      exfalso
+      exact h
+    exists fun a => (j a).elim
+    constructor
+    · apply (func_subsingleton_iff_to_empty j).allEq
+    · intro _ _
+      apply (func_subsingleton_iff_to_empty j).allEq
+end
+
 
 end Function
 
