@@ -55,7 +55,7 @@ protected def Mem (s : Set α) (a : α) : Prop :=
 instance : Membership α (Set α) :=
   ⟨Set.Mem⟩
 
-theorem ext {a b : Set α} (h : ∀ (x : α), x ∈ a ↔ x ∈ b) : a = b :=
+@[ext] theorem ext {a b : Set α} (h : ∀ (x : α), x ∈ a ↔ x ∈ b) : a = b :=
   funext (fun x ↦ propext (h x))
 
 
