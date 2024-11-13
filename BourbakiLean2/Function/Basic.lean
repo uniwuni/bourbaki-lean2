@@ -22,6 +22,18 @@ theorem val_mem_image_of_mem {x : Set α} {f : α → β} {a : α} (h : a ∈ x)
 end Set
 namespace Function
 
+@[simp] theorem comp_assoc {h : δ → γ}: f ∘ (g ∘ h) = (f ∘ g) ∘ h := by
+  ext
+  rfl
+
+@[simp] theorem comp_id_left : id ∘ f = f := by
+  ext
+  rfl
+
+@[simp] theorem comp_id_right : f ∘ id = f := by
+  ext
+  rfl
+
 @[simp] theorem subset_preimage_image {x : Set α} : x ⊆ f ⁻¹' (f '' x) := by
   intro a h
   simp only [Set.mem_preimage_iff, Set.mem_image_iff]
@@ -249,17 +261,179 @@ theorem bij_iff_inv_functional : Bijective f ↔ (Relation.graph f).inv.Function
 noncomputable def Bijective.inv (h : Bijective f) (b : β) : α :=
   Exists.choose (h.surj.exists_preimage b)
 
-
-@[simp] theorem Bijective.inv_val_iff (h : Bijective f) {a : α} {b : β}: h.inv b = a ↔ f a = b := by
+/- inv -/
+section
+variable (h : Bijective f)
+@[simp] theorem Bijective.inv_val_iff {a : α} {b : β}: h.inv b = a ↔ f a = b := by
   rw[Bijective.inv]
   have h' := Exists.choose_spec (h.surj.exists_preimage b)
   rw[← h.inj.eq_iff, Eq.comm]
   rw[← h']
 
-@[simp] theorem Bijective.inv_val_val (h : Bijective f) {a : α} : h.inv (f a) = a := by simp only [inv_val_iff]
-@[simp] theorem Bijective.val_inv_val (h : Bijective f) {b : β} : f (h.inv b) = b := by
+@[simp] theorem Bijective.inv_val_val {a : α} : h.inv (f a) = a := by simp only [inv_val_iff]
+@[simp] theorem Bijective.val_inv_val {b : β} : f (h.inv b) = b := by
   obtain ⟨a,rfl⟩ := h.surj.exists_preimage b
   simp only [inv_val_val]
+
+@[simp] theorem comp_inv (h' : Bijective g) : (h.comp h').inv = h'.inv ∘ h.inv := by
+  ext a
+  simp only [comp_apply, Bijective.inv_val_iff, Bijective.val_inv_val]
+
+@[simp] theorem Bijective.inv_bij : h.inv.Bijective := by
+  constructor
+  · intro b b' h'
+    simp only [inv_val_iff, val_inv_val] at h'
+    exact h'.symm
+  · rw[surj_iff]
+    intro b
+    exists f b
+    simp only [inv_val_val]
+
+@[simp] theorem Bijective.inv_inv : h.inv_bij.inv = f := by
+  ext a
+  simp only [inv_val_iff, inv_val_val]
+
+end
+
+@[simp] theorem id_inv (h : Bijective id) : h.inv = (id : α → α) := by
+  ext a
+  simp only [id_eq, Bijective.inv_val_iff]
+
+
+@[simp] def IsRetractionOf (f : α → β) (g : β → α) := f ∘ g = id
+@[simp] def IsSectionOf (f : α → β) (g : β → α) := g ∘ f = id
+def HasRetraction (f : α → β) := ∃g : β → α, g.IsRetractionOf f
+def HasSection (f : α → β) := ∃g : β → α, g.IsSectionOf f
+@[simp] def IsInverseOf (f : α → β) (g : β → α) := IsRetractionOf f g ∧ IsSectionOf f g
+def HasInverse f := ∃g : β → α, g.IsInverseOf f
+
+section
+variable {g g' : β → α} {f' : α → β}
+theorem IsInverseOf.fg_eq (h : IsInverseOf f g) {b} : f (g b) = b := by
+  rw[← @comp_apply _ _ _ f g, h.1]
+  dsimp only [id_eq]
+theorem IsInverseOf.gf_eq (h : IsInverseOf f g) {a} : g (f a) = a := by
+  rw[← @comp_apply _ _ _ g f, h.2]
+  dsimp only [id_eq]
+theorem IsRetractionOf.fg_eq (h : IsRetractionOf f g) {b} : f (g b) = b := by
+  rw[← @comp_apply _ _ _ f g, h]
+  dsimp only [id_eq]
+theorem IsSectionOf.gf_eq (h : IsSectionOf f g) {b} : g (f b) = b := by
+  rw[← @comp_apply _ _ _ g f, h]
+  dsimp only [id_eq]
+
+theorem IsSectionOf.swap_retraction (h : IsSectionOf f g) : IsRetractionOf g f := h
+theorem IsRetractionOf.swap_section (h : IsRetractionOf f g) : IsSectionOf g f := h
+
+theorem IsSectionOf.inj (h : IsSectionOf f g) : Injective f := by
+  intro a a' h'
+  have h'' := congrArg g h'
+  rw[h.gf_eq, h.gf_eq] at h''
+  exact h''
+theorem IsSectionOf.surj (h : IsSectionOf f g) : Surjective g := by
+  rw[surj_iff]
+  intro b
+  exists f b
+  exact h.gf_eq.symm
+theorem IsRetractionOf.inj (h : IsRetractionOf f g) : Injective g :=
+  h.swap_section.inj
+theorem IsRetractionOf.surj (h : IsRetractionOf f g) : Surjective f :=
+  h.swap_section.surj
+
+theorem IsInverseOf.symm (h : IsInverseOf f g) : IsInverseOf g f := And.symm h
+theorem IsInverseOf.bij' (h : IsInverseOf f g) : Bijective f :=
+  ⟨h.2.inj, h.1.surj⟩
+theorem IsInverseOf.bij (h : IsInverseOf f g) : Bijective g :=
+  ⟨h.1.inj, h.2.surj⟩
+
+theorem IsSectionOf.section_eq_iff_image_eq (h : f.IsSectionOf g) (h' : f'.IsSectionOf g)
+    (h'' : Set.image f Set.univ = Set.image f' Set.univ) : f = f' := by
+  ext a
+  rw[Set.ext_iff] at h''
+  have h'' := (h'' (f a)).mp (by simp)
+  simp only [Set.mem_image_iff, Set.mem_univ, and_true] at h''
+  obtain ⟨a', h''⟩ := h''
+  have h''' := congrArg g h''
+  rw[h.gf_eq, h'.gf_eq] at h'''
+  rw[← h'''] at h''
+  exact h''
+
+theorem IsInverseOf.eq_inv (h : f.IsInverseOf g) : h.bij'.inv = g := by
+  ext b
+  simp only [Bijective.inv_val_iff]
+  exact h.fg_eq
+
+theorem IsInverseOf.eq_inv' (h : f.IsInverseOf g) : h.bij.inv = f := by
+  ext a
+  simp only [Bijective.inv_val_iff]
+  exact h.gf_eq
+
+theorem IsInverseOf.isInverse_eq (h : f.IsInverseOf g) (h' : f'.IsInverseOf g) : f = f' := by
+  rw[← IsInverseOf.eq_inv' h, ← IsInverseOf.eq_inv' h']
+
+theorem IsInverseOf.isInverse_eq' (h : f.IsInverseOf g) (h' : f.IsInverseOf g') : g = g' := by
+  rw[← IsInverseOf.eq_inv h, ← IsInverseOf.eq_inv h']
+end
+
+section
+variable {g : β → α} {f' : β → γ} {g' : γ → β}
+
+theorem IsRetractionOf.comp (h : f.IsRetractionOf g) (h' : f'.IsRetractionOf g') :
+    (f' ∘ f).IsRetractionOf (g ∘ g') := by
+  unfold IsRetractionOf
+  rw[← comp_assoc, comp_assoc (f := f)]
+  rw[h]
+  simp only [comp_id_left]
+  exact h'
+
+theorem IsSectionOf.comp (h : f.IsSectionOf g) (h' : f'.IsSectionOf g') :
+    (f' ∘ f).IsSectionOf (g ∘ g') := by
+  unfold IsSectionOf
+  rw[← comp_assoc, comp_assoc (f := g')]
+  rw[h']
+  simp only [comp_id_left]
+  exact h
+
+theorem IsInverseOf.comp (h : f.IsInverseOf g) (h' : f'.IsInverseOf g') :
+  (f' ∘ f).IsInverseOf (g ∘ g') := ⟨h.1.comp h'.1, h.2.comp h'.2⟩
+
+theorem HasRetraction.comp (h : f.HasRetraction) (h' : f'.HasRetraction) :
+  (f' ∘ f).HasRetraction := by
+  obtain ⟨g, h⟩ := h
+  obtain ⟨g', h'⟩ := h'
+  exists g ∘ g'
+  apply IsRetractionOf.comp h' h
+
+theorem HasSection.comp (h : f.HasSection) (h' : f'.HasSection) :
+  (f' ∘ f).HasSection := by
+  obtain ⟨g, h⟩ := h
+  obtain ⟨g', h'⟩ := h'
+  exists g ∘ g'
+  apply IsSectionOf.comp h' h
+
+theorem HasInverse.comp (h : f.HasInverse) (h' : f'.HasInverse) :
+  (f' ∘ f).HasInverse := by
+  obtain ⟨g, h⟩ := h
+  obtain ⟨g', h'⟩ := h'
+  exists g ∘ g'
+  apply IsInverseOf.comp h' h
+
+theorem Bijective.inv_isInverseOf (h : f.Bijective) : h.inv.IsInverseOf f := by
+  constructor
+  · ext a
+    simp only [comp_apply, inv_val_val, id_eq]
+  · ext a
+    simp only [comp_apply, val_inv_val, id_eq]
+
+
+theorem hasInverse_iff_bij : f.HasInverse ↔ f.Bijective := by
+  constructor
+  · rintro ⟨g,h⟩
+    exact h.bij
+  · intro h
+    exists h.inv
+    apply Bijective.inv_isInverseOf
+end
 
 end Function
 
