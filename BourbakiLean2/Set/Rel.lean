@@ -475,5 +475,8 @@ theorem functional_comp_of_functional (h : Functional r) (h' : Functional s) : F
   exists f ∘ g
   rw[graph_comp, h, h']
 
+@[simp] theorem domain_graph : (graph f).domain = Set.univ := by
+  ext a
+  simp only [mem_domain_iff, mem_graph_iff, exists_eq, Set.mem_univ]
 
 end Relation
