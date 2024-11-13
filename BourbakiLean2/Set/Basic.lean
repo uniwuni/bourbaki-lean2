@@ -18,8 +18,6 @@ theorem subset_refl (x : Set α) : x ⊆ x := fun _ h => h
 section
 variable {x y z : Set α}
 
-@[ext] theorem eq_of_mem_iff_mem (h : ∀ a, a ∈ x ↔ a ∈ y) : x = y :=
-  Set.ext h
 theorem subset_rfl : x ⊆ x := subset_refl x
 theorem subset_trans (h : x ⊆ y) (h' : y ⊆ z) : x ⊆ z :=
   fun _ h'' => h' (h h'')
@@ -87,6 +85,26 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
   simp only [Set.Nonempty, Prod.exists,  mem_prod_iff, exists_and_left, exists_and_right]
 
 end
+
+theorem nonempty_iff_neq_empty {x : Set α} : x.Nonempty ↔ x ≠ ∅ := by
+  constructor
+  · rintro ⟨a,h⟩ rfl
+    exact not_mem_empty h
+  · intro h
+    by_cases h' : x.Nonempty
+    · exact h'
+    · have h'' : x = ∅ := by
+        ext a
+        simp only [not_mem_empty, iff_false]
+        intro h''
+        apply h' ⟨_,h''⟩
+      exact (h h'').elim
+
+@[simp] theorem singleton_neq_empty {a : α} : ({a} : Set α) ≠ ∅ := by
+  intro h
+  rw[Set.ext_iff] at h
+  specialize h a
+  simp only [mem_singleton_iff, not_mem_empty, iff_false, not_true_eq_false] at h
 
 end Set
 
