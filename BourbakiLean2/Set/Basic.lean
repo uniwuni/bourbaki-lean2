@@ -53,7 +53,7 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
 @[simp] theorem not_mem_empty {a : α} : a ∉ (∅ : Set α) := fun x => x
 @[simp] theorem empty_subset : ∅ ⊆ x := fun _ => False.elim
 @[simp] theorem mem_singleton_iff {a b : α} : a ∈ ({b} : Set α) ↔ a = b := Iff.rfl
-@[simp] theorem subset_empty_iff : x ⊆ ∅ ↔ x = ∅ := by
+theorem subset_empty_iff : x ⊆ ∅ ↔ x = ∅ := by
   constructor
   · rw[Set.ext_iff]
     intro h x'
@@ -62,7 +62,18 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
     exact h h'
   · rintro rfl
     rfl
+
+theorem univ_subset_iff : univ ⊆ x ↔ x = univ := by
+  constructor
+  · intro h
+    ext a
+    specialize h (mem_univ (a := a))
+    simp only [h, mem_univ]
+  · rintro rfl
+    rfl
+
 end
+
 
 /- sets of products -/
 

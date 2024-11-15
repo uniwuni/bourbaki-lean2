@@ -589,6 +589,14 @@ theorem Injective.factor_before {g : γ → β} (h : f.Injective) (h' : g '' Set
       apply (func_subsingleton_iff_to_empty j).allEq
 end
 
+@[simp] theorem into_unit_surjective [Nonempty α] {f : α → Unit} : f.Surjective := by
+  rw[surj_iff]
+  rintro ⟨⟩
+  exists Classical.choice (by infer_instance)
+
+@[simp] theorem out_of_unit_injective {f : Unit → α} : f.Injective := by
+  rintro ⟨⟩ ⟨⟩ _
+  rfl
 
 end Function
 
