@@ -61,6 +61,14 @@ namespace Function
   · rintro rfl
     exact image_empty
 
+@[simp] theorem preimage_empty : f ⁻¹' ∅ = ∅ := by
+  ext a
+  simp only [Set.mem_preimage_iff, Set.not_mem_empty]
+
+@[simp] theorem preimage_univ : f ⁻¹' Set.univ = Set.univ := by
+  ext a
+  simp only [Set.mem_preimage_iff, Set.mem_univ]
+
 /- const -/
 def IsConstant (f : α → β) := ∀ a a', f a = f a'
 @[simp] theorem Function.const_isConstant {a : α} : IsConstant (Function.const β a) :=

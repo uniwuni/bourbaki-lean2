@@ -77,6 +77,7 @@ theorem univ_subset_iff : univ ⊆ x ↔ x = univ := by
 @[simp] theorem compl_compl : (xᶜ)ᶜ = x := by ext; simp only [mem_compl_iff, Classical.not_not]
 @[simp] theorem sdiff_univ_eq_compl : Set.univ \ x = xᶜ := by ext; simp only [mem_sdiff_iff,
   mem_univ, true_and, mem_compl_iff]
+@[simp] theorem empty_not_nonempty : ¬ (∅ : Set α).Nonempty := nofun
 end
 
 

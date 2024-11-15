@@ -237,6 +237,19 @@ theorem inter_comm : x ∩ x' = x' ∩ x := by ext; simp only [mem_inter_iff, An
 @[simp] theorem inter_subset_left : x ∩ x' ⊆ x := fun _ => And.left
 @[simp] theorem inter_subset_right : x ∩ x' ⊆ x' := fun _ => And.right
 @[simp] theorem inter_subset_union : x ∩ x' ⊆ x ∪ x' := fun _ => Or.inl ∘ And.left
+theorem subset_inter_iff : x ⊆ x' ∩ x'' ↔ (x ⊆ x' ∧ x ⊆ x'') := by
+  constructor
+  · intro h
+    exact ⟨subset_trans h inter_subset_left, subset_trans h inter_subset_right⟩
+  · rintro ⟨h, h'⟩ a h''
+    exact ⟨h h'', h' h''⟩
+theorem union_subset_iff : x ∪ x' ⊆ x'' ↔ (x ⊆ x'' ∧ x' ⊆ x'') := by
+  constructor
+  · intro h
+    exact ⟨subset_trans subset_union_left h, subset_trans subset_union_right h⟩
+  · rintro ⟨h, h'⟩ a (h''|h'')
+    · exact h h''
+    · exact h' h''
 @[simp] theorem union_eq_iff_subset_left : x ∪ x' = x ↔ x' ⊆ x := by
   constructor
   · intro h a h'
