@@ -21,6 +21,10 @@ variable {x y z : Set α}
 theorem subset_rfl : x ⊆ x := subset_refl x
 theorem subset_trans (h : x ⊆ y) (h' : y ⊆ z) : x ⊆ z :=
   fun _ h'' => h' (h h'')
+
+instance: Trans (fun (x y : Set α) => x ⊆ y) (fun x y => x ⊆ y) (fun x y => x ⊆ y) where
+  trans := subset_trans
+
 theorem subset_antisym (h : x ⊆ y) (h' : y ⊆ x) : x = y := ext (fun x => ⟨@h x, @h' x⟩)
 
 theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
