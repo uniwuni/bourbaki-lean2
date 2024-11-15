@@ -3,13 +3,15 @@ variable {α β : Type*} {ι ι' ι'' : Type*} {a : α} {i j : ι} {x : ι → S
 namespace Set
 def IsPartition (x : ι → Set α) := IsCovering x ∧ (∀ i j, i ≠ j → x i ∩ x j = ∅)
 
-theorem IsPartition.eq_of_mem (h : IsPartition x) (h' : a ∈ x i) (h'' : a ∈ x j) : i = j := by
-  have h := h.2 i j
+theorem eq_of_mem_disjoint (h : ∀ i j, i ≠ j → x i ∩ x j = ∅) (h' : a ∈ x i) (h'' : a ∈ x j) : i = j := by
   by_contra h'''
-  specialize h h'''
+  specialize h i j h'''
   replace h' : a ∈ x i ∩ x j := ⟨h',h''⟩
   rw[h] at h'
   exact h'
+
+theorem IsPartition.eq_of_mem (h : IsPartition x) (h' : a ∈ x i) (h'' : a ∈ x j) : i = j := by
+  apply eq_of_mem_disjoint h.2 h' h''
 
 theorem isPartition_iff : IsPartition x ↔ ∀ a, ∃! i, a ∈ x i := by
   constructor
@@ -59,5 +61,15 @@ theorem IsPartition.inj_of_ne (h : IsPartition x) (h' : ∀ i, (x i).Nonempty) :
   obtain rfl : i = j := h.eq_of_mem h'' h'''
   simp only
 
+theorem singleton_partition : IsPartition (fun x : α => {x}) := by
+  constructor
+  · ext a
+    simp only [mem_iUnion_iff, mem_singleton_iff, exists_eq', mem_univ]
+  · intro i j h
+    ext a
+    simp only [mem_inter_iff, mem_singleton_iff, not_mem_empty, iff_false, not_and]
+    intro h'
+    rw[h']
+    exact h
 
 end Set
