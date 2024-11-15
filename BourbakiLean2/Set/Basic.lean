@@ -72,6 +72,11 @@ theorem univ_subset_iff : univ ⊆ x ↔ x = univ := by
   · rintro rfl
     rfl
 
+@[simp] theorem mem_sdiff_iff {a} : a ∈ x \ y ↔ a ∈ x ∧ a ∉ y := Iff.rfl
+@[simp] theorem mem_compl_iff {a} : a ∈ xᶜ ↔ a ∉ x := Iff.rfl
+@[simp] theorem compl_compl : (xᶜ)ᶜ = x := by ext; simp only [mem_compl_iff, Classical.not_not]
+@[simp] theorem sdiff_univ_eq_compl : Set.univ \ x = xᶜ := by ext; simp only [mem_sdiff_iff,
+  mem_univ, true_and, mem_compl_iff]
 end
 
 

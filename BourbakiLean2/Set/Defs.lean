@@ -226,7 +226,7 @@ instance : Inter (Set α) := ⟨Set.inter⟩
 
 Note that you should **not** use this definition directly, but instead write `sᶜ`. -/
 protected def compl (s : Set α) : Set α := {a | a ∉ s}
-
+postfix:1024 "ᶜ" => Set.compl
 /-- The difference of two sets `s` and `t` is the set of elements contained in `s` but not in `t`.
 
 Note that you should **not** use this definition directly, but instead write `s \ t`. -/
