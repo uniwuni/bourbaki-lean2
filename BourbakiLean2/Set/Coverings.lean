@@ -76,7 +76,7 @@ theorem IsCovering.image_isCovering_of_surj (h : IsCovering x) (h' : f.Surjectiv
   simp only [IsCovering, Function.comp_apply]
   rw[← iUnion_image, h, h']
 
-theorem IsCovering.preimage_isCovering (h : IsCovering y) : IsCovering (Set.preimage f ∘ y) := by
+theorem IsCovering.preimage (h : IsCovering y) : IsCovering (Set.preimage f ∘ y) := by
   simp only [IsCovering, Function.comp_apply]
   rw[← iUnion_preimage, h, Function.preimage_univ]
 

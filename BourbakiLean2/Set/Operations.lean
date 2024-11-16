@@ -452,11 +452,14 @@ theorem Relation.union_preimage : r.preimage (y ∪ y') = r.preimage y ∪ r.pre
 
 theorem Relation.subset_inter_preimage : r.preimage (y ∩ y') ⊆ r.preimage y ∩ r.preimage y' := by
   simp only [← image_inv, subset_inter_image]
+
 end
 
 namespace Set
 section
 variable {f : α → β}
+@[simp] def Disjoint (x : ι → Set α) := ∀ i i', i ≠ i' → x i ∩ x i' = ∅
+
 theorem iUnion_image : Set.image f (⋃ i, x i) = ⋃ i, Set.image f (x i) := Relation.iUnion_image
 theorem iUnion_preimage : Set.preimage f (⋃ i, y i) = ⋃ i, Set.preimage f (y i) := Relation.iUnion_preimage
 theorem subset_iInter_image : Set.image f (⋂ i, x i) ⊆ ⋂ i, Set.image f (x i) := Relation.subset_iInter_image
@@ -513,4 +516,21 @@ theorem sdiff_image_inj (h : f.Injective) : Set.image f (x \ x') = Set.image f x
     exists a
     specialize h'' a rfl
     constructor <;> trivial
+
+theorem Disjoint.preimage {y : ι → Set β} (h : Disjoint y) : Disjoint (Set.preimage f ∘ y) := by
+  intro i j h'
+  simp only [Function.comp_apply, ← inter_preimage]
+  rw[h _ _ h']
+  simp only [Function.preimage_empty]
+
+theorem Disjoint.inj_of_nonempty {x : ι → Set α} (h : Disjoint x) (h' : ∀ i, (x i).Nonempty) : x.Injective := by
+  intro i j h''
+  by_contra h'''
+  replace h := h i j h'''
+  rw[h''] at h
+  simp only [inter_self] at h
+  specialize h' j
+  rw[h] at h'
+  simp only [empty_not_nonempty] at h'
+
 end

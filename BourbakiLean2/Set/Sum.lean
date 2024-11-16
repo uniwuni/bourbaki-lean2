@@ -20,5 +20,7 @@ theorem sum_to_union_inj_of_disjoint (h : ∀ i j, i ≠ j → x i ∩ x j = ∅
     rw[h]
   · simp only [heq_eq_eq, h, h''', h'']
 
+theorem sum_to_union_bij_of_disjoint (h : ∀ i j, i ≠ j → x i ∩ x j = ∅) : (sum_to_union (x := x)).Bijective :=
+  ⟨sum_to_union_inj_of_disjoint h, sum_to_union_surj⟩
 
 end Set
