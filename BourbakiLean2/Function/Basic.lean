@@ -69,6 +69,19 @@ namespace Function
   ext a
   simp only [Set.mem_preimage_iff, Set.mem_univ]
 
+@[simp] theorem image_comp {z : Set γ} : (f ∘ g) '' z = f '' (g '' z) := by
+  ext b
+  simp only [Set.mem_image_iff, comp_apply]
+  constructor
+  · rintro ⟨c,rfl,h'⟩
+    exact ⟨g c, rfl, c, rfl, h'⟩
+  · rintro ⟨a, rfl, c, rfl, h''⟩
+    exists c
+
+@[simp] theorem preimage_comp {x} : (f ∘ g) ⁻¹' x = g ⁻¹' (f ⁻¹' x) := by
+  ext a
+  simp only [Set.mem_preimage_iff, comp_apply]
+
 /- const -/
 def IsConstant (f : α → β) := ∀ a a', f a = f a'
 @[simp] theorem Function.const_isConstant {a : α} : IsConstant (Function.const β a) :=
