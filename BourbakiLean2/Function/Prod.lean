@@ -86,3 +86,89 @@ theorem prod_inverse {g : β → α} {g' : β' → α'} (h : IsInverseOf g f) (h
     · simp only [comp_apply, prod_val, h'.gf_eq, id_eq]
 
 end Function
+
+namespace Function
+variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*}
+
+instance {x : False → Type*} : Unique ((a : _) → x a) where
+  default := nofun
+  uniq _ := funext nofun
+
+theorem prod_const : ((i : ι) → (const _ α) i) = (ι → α) := rfl
+def prod_unique [inst : Unique ι] : Bijection ((i : ι) → x i) (x default) :=
+  bijection_of_funcs (fun x => x default)
+  (fun a i => Eq.ndrec a (Unique.uniq _ i).symm)
+  (by intros; simp only)
+  (by intro a
+      ext i
+      rw[Unique.uniq _ i]
+      simp only
+      cases (Eq.symm (inst.uniq default))
+      rfl)
+
+def prod_bool {β} : Bijection ((i : Bool) → if i then α else β) (α × β) :=
+  bijection_of_funcs
+    (fun f => (f True, f False))
+    (fun (x,y) b => by
+      cases b
+      · exact y
+      · exact x)
+    (by intro ⟨a,b⟩
+        simp only [decide_True, ↓dreduceIte, decide_False, Bool.false_eq_true])
+    (by intro p
+        ext b
+        cases b
+        · simp only [Bool.false_eq_true, ↓dreduceIte, decide_False]
+        · simp only [↓dreduceIte, decide_True])
+
+theorem nonempty_prod (h : ∀ i, Nonempty (x i)) : Nonempty ((i : ι) → x i) :=
+  ⟨fun i => Classical.choice (h i)⟩
+
+def unique_prod_of_unique (h : ∀ i, Unique (x i)) : Unique ((i : ι) → x i) where
+  default := fun i => (h i).default
+  uniq _ := funext (fun i => (h i).uniq _)
+
+@[simp] theorem const_inj [inst : Nonempty β] : Function.Injective (const (α := α) β) :=
+  fun _ _ h => inst.elim (congrFun h)
+
+def reindex_by_bij (f : Bijection ι' ι) : Bijection ((i : ι) → x i) ((i' : ι') → x (f i')) := by
+  exists fun h i' => h (f.val i')
+  constructor
+  · intro a a' h
+    simp only at h
+    ext i
+    replace h := congrFun h (f.inv i)
+    rwa[f.val_inv_val] at h
+  · rw[surj_iff]
+    intro b
+    let b' := fun i => b (f.inv.val i)
+    conv =>
+      rhs
+      intro a
+      rw[funext_iff]
+    exists fun i => f.val_inv_val (b := i) ▸ b' i
+    intro i'
+    symm
+    simp[b']
+    apply Eq.rec_of_inj (f := f.val) (a := b) (i := f.inv.val (f.val i')) (i' := i') (h := (Bijection.val_inv_val f))
+    exact f.2.1
+
+theorem subfamily_covered {f : Injection ι' ι} (h : ∀ i, Nonempty (x i)):
+    (fun (a : (i : ι) → x i) i' => a (f i')).Surjective := by
+  rw[surj_iff]
+  intro b
+  classical
+  let a i := if h' : ∃ i', i = f i' then
+    (Classical.epsilon_spec h') ▸ b
+      (Classical.epsilon (h := nonempty_of_exists h') fun i' => i = f i') else Classical.choice (h i)
+  exists a
+  ext i'
+  simp only [Injective, a]
+  have h' : ∃ i'', f.val i' = f.val i'' := ⟨i', rfl⟩
+  simp only [h', ↓reduceDIte, Injective]
+  symm
+  apply Eq.rec_of_inj
+  apply f.2
+
+
+end Function

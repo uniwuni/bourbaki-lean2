@@ -619,9 +619,38 @@ end
   rintro ⟨⟩ ⟨⟩ _
   rfl
 
+theorem curry_bijective : (curry : (α × β → γ) → α → β → γ).Bijective := by
+  apply hasInverse_iff_bij.1
+  exists uncurry
+
+theorem uncurry_bijective : (uncurry : (α → β → γ) → (α × β → γ)).Bijective := by
+  apply hasInverse_iff_bij.1
+  exists curry
+
+theorem curry_uncurry_inverse : (curry : (α × β → γ) → α → β → γ).IsInverseOf uncurry := by
+  constructor <;> (ext; simp)
+
+def Injection (α β : Type*) := {f : α → β // f.Injective}
+def Bijection (α β : Type*) := {f : α → β // f.Bijective}
+instance {α β} : CoeFun (Bijection α β) (fun _ => α → β) where
+  coe f := f.1
+instance {α β} : CoeFun (Injection α β) (fun _ => α → β) where
+  coe f := f.1
+noncomputable def Bijection.invfun (f : Bijection α β) := f.2.inv
+noncomputable def Bijection.inv (f : Bijection α β) : Bijection β α := ⟨f.2.inv, f.2.inv_bij⟩
+@[simp] theorem Bijection.val_inv_val (f : Bijection α β) {b} : f (f.inv b) = b := by
+  simp only [inv, Bijective.val_inv_val]
+@[simp] theorem Bijection.inv_val_val (f : Bijection α β) {a} : f.inv (f a) = a := by
+  simp only [inv, Bijective.inv_val_val]
+@[simp] def bijection_of_funcs (f : α → β) (g : β → α) (h : ∀ b, f (g b) = b) (h' : ∀ a, g (f a) = a) : Bijection α β :=
+  ⟨f, IsInverseOf.bij ⟨funext h', funext h⟩⟩
 end Function
 
 theorem Subtype.coe.inj {p : α → Prop}: Function.Injective (fun ⟨x, _⟩ => x : { x // p x } → α) := by
   rintro ⟨a,_⟩ ⟨a',_⟩ h
   simp only [mk.injEq] at *
   exact h
+theorem Eq.rec_of_inj {ι' : Type*} {ι : Type*} {x : ι → Type*}   {i i' : ι'} (f : ι' → ι) (h : f i = f i') (h' : f.Injective) (a : (i : ι') → x (f i)) : Eq.rec (a i) h = a i' := by
+  replace h := h' _ _ h
+  cases h
+  simp only
