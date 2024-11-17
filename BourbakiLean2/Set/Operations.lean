@@ -184,7 +184,6 @@ theorem iInter_subset_iUnion [Nonempty ι] : ⋂ i, x i ⊆ ⋃ i, x i := by
 
 section
 variable {x' : ι → Set α}
-
 theorem iUnion_mono (h : ∀ i, x i ⊆ x' i) : ⋃ i, x i ⊆ ⋃ i, x' i := by
   rw[iUnion_subset_iff_all]
   intro i
@@ -196,6 +195,7 @@ theorem iInter_mono (h : ∀ i, x i ⊆ x' i) : ⋂ i, x i ⊆ ⋂ i, x' i := by
   exact subset_trans iInter_subset (h i)
 end
 
+variable {y' : ι' → Set β}
 theorem iUnion_assoc {x : ι → ι' → Set α} : ⋃ i : ι × ι', x i.1 i.2 = ⋃ j, (⋃ i, x j i) := by
   ext a
   simp only [mem_iUnion_iff, Prod.exists]
@@ -211,6 +211,18 @@ theorem iUnion_compl : ⋃ i, (x i)ᶜ = (⋂ i, x i)ᶜ := by
 theorem iInter_compl : ⋂ i, (x i)ᶜ = (⋃ i, x i)ᶜ := by
   ext
   simp only [mem_iInter_iff, mem_compl_iff, mem_iUnion_iff, not_exists]
+
+theorem sprod_iUnion : (⋃ i, x i).prod (⋃ i, y' i) = ⋃ j : ι × ι', (x j.1).prod (y' j.2) := by
+  ext ⟨a,b⟩
+  simp only [mem_prod_iff, mem_iUnion_iff, Prod.exists, exists_and_left, exists_and_right]
+
+theorem sprod_iInter [inst : Nonempty ι] [inst' : Nonempty ι'] : (⋂ i, x i).prod (⋂ i, y' i) = ⋂ j : ι × ι', (x j.1).prod (y' j.2) := by
+  ext ⟨a,b⟩
+  simp only [mem_prod_iff, mem_iInter_iff, Prod.forall]
+  exact ⟨fun ⟨h, h'⟩ a b => ⟨h a, h' b⟩,
+      fun h => ⟨fun a => (h a (Classical.choice inst')).1,
+                fun a => (h (Classical.choice inst) a).2⟩⟩
+
 
 variable {x x' x'' x''' : Set α}
 
@@ -535,3 +547,74 @@ theorem Disjoint.inj_of_nonempty {x : ι → Set α} (h : Disjoint x) (h' : ∀ 
   simp only [empty_not_nonempty] at h'
 
 end
+
+
+namespace Set
+variable {α ι : Type*} {ι' : ι → Type} {x : (i : ι) → ι' i → Set α}
+
+theorem iUnion_iInter_distrib :
+    ⋃ i : ι, ⋂ i' : ι' i, x i i' =  ⋂ f : (i : ι) → ι' i, ⋃ i : ι, x i (f i) := by
+  ext a
+  simp only [mem_iUnion_iff, mem_iInter_iff]
+  constructor
+  · intro ⟨i, h'⟩ i'
+    specialize h' (i' i)
+    exists i
+  · rw[imp_iff_not_imp_not]
+    intro h' h''
+    conv at h' =>
+      rw[not_exists]
+      intro
+      rw[Classical.not_forall]
+    replace ⟨f,h'⟩ := Classical.axiomOfChoice h'
+    replace ⟨i,h''⟩ := h'' f
+    apply h' _ h''
+
+theorem iInter_iUnion_distrib :
+    ⋂ i : ι, ⋃ i' : ι' i, x i i' = ⋃ f : (i : ι) → ι' i, ⋂ i : ι, x i (f i) := by
+  apply compl_inj
+  conv =>
+    rw[← iInter_compl, ← iUnion_compl]
+    lhs
+    intro
+    lhs
+    intro
+    rw[← iInter_compl]
+  conv =>
+    rhs
+    intro
+    lhs
+    intro
+    rw[← iUnion_compl]
+  rw[iUnion_iInter_distrib]
+
+variable {α ι ι' : Type*} {x : ι → Set α} {x' : ι' → Set α}
+theorem iInter_union_distrib :
+    (⋂ i, x i) ∪ (⋂ i', x' i') = ⋂ ii' : ι × ι', x ii'.1 ∪ x' ii'.2 := by
+  ext a
+  simp only [mem_union_iff, mem_iInter_iff, Prod.forall]
+  constructor
+  · rintro (h|h) i i'
+    · exact Or.inl (h i)
+    · exact Or.inr (h i')
+  · intro h
+    by_contra h'
+    rw[not_or, Classical.not_forall, Classical.not_forall] at h'
+    obtain ⟨⟨i,h'⟩, ⟨i', h''⟩⟩ := h'
+    rcases (h i i') with (h|h)
+    · exact h' h
+    · exact h'' h
+
+theorem iUnion_inter_distrib :
+    (⋃ i, x i) ∩ (⋃ i', x' i') = ⋃ ii' : ι × ι', x ii'.1 ∩ x' ii'.2 := by
+  apply compl_inj
+  rw[compl_inter, ← iInter_compl, ← iInter_compl,
+    ← iInter_compl, iInter_union_distrib]
+  conv =>
+    arg 1
+    arg 1
+    intro
+    rw[← compl_inter]
+
+
+end Set

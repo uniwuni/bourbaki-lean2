@@ -89,7 +89,7 @@ theorem prod_inverse {g : β → α} {g' : β' → α'} (h : IsInverseOf g f) (h
 end Function
 
 namespace Function
-variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*} {y : ι → Type*}
+variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*} {y z : ι → Type*}
 
 instance {x : False → Type*} : Unique ((a : _) → x a) where
   default := nofun
@@ -188,6 +188,12 @@ theorem subfamily_covered {f : Injection ι' ι} (h : ∀ i, Nonempty (x i)):
 @[simp] def prod_map (f : (i : ι) → x i → y i) (a : (i : ι) → x i) (i : ι) : y i :=
   f i (a i)
 
+@[simp] theorem prod_map_comp {f : (i : ι) → x i → y i} {g : (i : ι) → z i → x i} :
+    prod_map (fun i c => f i (g i c)) = prod_map f ∘ prod_map g := by
+  ext a i
+  rfl
+
+@[simp] theorem prod_map_id : prod_map (y := x) (fun _ a => a) = id := rfl
 theorem prod_map_inj {f : (i : ι) → x i → y i} (h : ∀ i, (f i).Injective) :
     (prod_map f).Injective := by
   intro a a' h'
@@ -217,6 +223,13 @@ theorem prod_map_inj {f : (i : ι) → x i → y i} (h : ∀ i, (f i).Injective)
     simp only [↓reduceDIte, dite_eq_ite, ↓reduceIte, g, g'] at h'
     exact h'
   · apply prod_map_inj
+
+@[simp] def dep_flip : Bijection ((i : ι) → α → x i) (α → (i : ι) → x i) :=
+  bijection_of_funcs
+    (fun f a i => f i a)
+    (fun f i a => f a i)
+    (fun _ => rfl)
+    (fun _ => rfl)
 
 end Function
 namespace Set.IsPartition
@@ -250,47 +263,3 @@ def prod_assoc : Function.Bijection (α × (β × γ)) ((α × β) × γ) :=
     (fun _ => rfl)
     (fun _ => rfl)
 end Prod
-
-namespace Set
-variable {α ι : Type*} {ι' : ι → Type} {x : (i : ι) → ι' i → Set α}
-
-theorem iUnion_iInter_distrib :
-    ⋃ i : ι, ⋂ i' : ι' i, x i i' =  ⋂ f : (i : ι) → ι' i, ⋃ i : ι, x i (f i) := by
-  ext a
-  simp only [mem_iUnion_iff, mem_iInter_iff]
-  constructor
-  · intro ⟨i, h'⟩ i'
-    specialize h' (i' i)
-    exists i
-  · rw[imp_iff_not_imp_not]
-    intro h' h''
-    conv at h' =>
-      rw[not_exists]
-      intro
-      rw[Classical.not_forall]
-    replace ⟨f,h'⟩ := Classical.axiomOfChoice h'
-    replace ⟨i,h''⟩ := h'' f
-    apply h' _ h''
-
-theorem iInter_iUnion_distrib :
-    ⋂ i : ι, ⋃ i' : ι' i, x i i' = ⋃ f : (i : ι) → ι' i, ⋂ i : ι, x i (f i) := by
-  apply compl_inj
-  conv =>
-    rw[← iInter_compl, ← iUnion_compl]
-    lhs
-    intro
-    lhs
-    intro
-    rw[← iInter_compl]
-  conv =>
-    rhs
-    intro
-    lhs
-    intro
-    rw[← iUnion_compl]
-  rw[iUnion_iInter_distrib]
-
-
-
-
-end Set
