@@ -85,13 +85,13 @@ theorem IsCovering.functions_eq_of_all_eq (h : IsCovering x) (h' : ∀ i, ∀ a 
   replace ⟨i,h⟩ := h.mem_exists a
   apply h' _ _ h
 
-noncomputable def IsCovering.glue (h : IsCovering x) (f : (i : ι) → x i → β) : α → β := by
+noncomputable def IsCovering.glue {β : α → Type*} (h : IsCovering x) (f : (i : ι) → (a : x i) → β a) : (a : α) → β a := by
   intro a
   let i := Classical.choose (h.mem_exists a)
   replace h := Classical.choose_spec (h.mem_exists a)
   exact f i ⟨_,h⟩
 
-@[simp] theorem IsCovering.glue_agrees (h : IsCovering x) {f : (i : ι) → x i → β}
+@[simp] theorem IsCovering.glue_agrees {β : α → Type*} (h : IsCovering x) {f : (i : ι) → (a : x i) → β a}
   (h' : ∀ (a i j) (h : a ∈ x i) (h' : a ∈ x j), f i ⟨a, h⟩ = f j ⟨a,h'⟩) (h'' : a ∈ x i)
     : h.glue f a = f i ⟨a, h''⟩ := by
   simp only [glue]

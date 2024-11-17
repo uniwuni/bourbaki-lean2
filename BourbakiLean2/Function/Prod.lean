@@ -1,4 +1,5 @@
 import BourbakiLean2.Function.Basic
+import BourbakiLean2.Set.Partitions
 
 namespace Function
 variable {α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : Set α} {x' : Set α'} {y : Set β} {y' : Set β'} {a : α} {a' : α'}
@@ -88,7 +89,7 @@ theorem prod_inverse {g : β → α} {g' : β' → α'} (h : IsInverseOf g f) (h
 end Function
 
 namespace Function
-variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*}
+variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*} {y : ι → Type*}
 
 instance {x : False → Type*} : Unique ((a : _) → x a) where
   default := nofun
@@ -170,5 +171,126 @@ theorem subfamily_covered {f : Injection ι' ι} (h : ∀ i, Nonempty (x i)):
   apply Eq.rec_of_inj
   apply f.2
 
+@[simp] theorem apply_surjective (h : ∀ i, Nonempty (x i)) {i : ι} :
+    (fun (a : (i : ι) → x i) => a i).Surjective := by
+  rw[surj_iff]
+  intro b
+  classical
+  exists fun i' => if h' : i = i' then h' ▸ b else Classical.choice (h i')
+  simp only [↓reduceDIte]
+
+@[simp] theorem prod_nonempty_iff : Nonempty ((i : ι) → x i) ↔ ((i : ι) → Nonempty (x i)) := by
+  constructor
+  · intro ⟨h⟩ i
+    exact ⟨h i⟩
+  · exact nonempty_prod
+
+@[simp] def prod_map (f : (i : ι) → x i → y i) (a : (i : ι) → x i) (i : ι) : y i :=
+  f i (a i)
+
+theorem prod_map_inj {f : (i : ι) → x i → y i} (h : ∀ i, (f i).Injective) :
+    (prod_map f).Injective := by
+  intro a a' h'
+  ext i
+  apply h i
+  replace h' := congrArg (fun f => f i) h'
+  exact h'
+
+@[simp] theorem prod_map_inj_iff (h : ∀ i, Nonempty (x i)) {f : (i : ι) → x i → y i} :
+    (prod_map f).Injective ↔ (∀ i, (f i).Injective) := by
+  constructor
+  · intro h' i a a' h''
+    classical
+    let g := fun i' => if h' : i = i' then h' ▸ a else Classical.choice (h i')
+    let g' := fun i' => if h' : i = i' then h' ▸ a' else g i'
+    have h''' : prod_map f g = prod_map f g' := by
+      ext i'
+      simp[g, g']
+      split
+      case h.isTrue eq =>
+        rcases eq
+        simp only [h'']
+      case h.isFalse neq =>
+        rfl
+    specialize h' _ _ h'''
+    replace h' := congrFun h' i
+    simp only [↓reduceDIte, dite_eq_ite, ↓reduceIte, g, g'] at h'
+    exact h'
+  · apply prod_map_inj
 
 end Function
+namespace Set.IsPartition
+variable {ι ι' α α' β β' γ γ' : Type*} {f : α → β} {f' : α' → β'} {g : γ → α} {g' : γ' → α'} {x : ι → Type*} {y : ι → Type*}
+def prod_assoc {p : ι' → Set ι} (h : IsPartition p) : Function.Bijection ((i : ι) → x i) ((i' : ι') → ((i : p i') → x i)) :=
+  Function.bijection_of_funcs
+    (fun a i' ⟨i, h⟩ => a i)
+    (fun a => h.1.glue a)
+    (by intro b
+        ext i' ⟨a,h'⟩
+        simp only
+        apply h.glue_agrees)
+    (by intro a
+        ext i
+        simp
+        obtain ⟨i',h'⟩ := h.1.mem_exists i
+        apply h.glue_agrees h')
+
+end Set.IsPartition
+namespace Prod
+variable {ι ι' α α' β β' γ γ' : Type*}
+theorem swap_inv : (swap : α × β → β × α).IsInverseOf swap :=
+  ⟨funext (fun _ => rfl),funext (fun _ => rfl)⟩
+
+@[simp] theorem swap_bij : (swap : α × β → β × α).Bijective := swap_inv.bij
+
+def prod_assoc : Function.Bijection (α × (β × γ)) ((α × β) × γ) :=
+  Function.bijection_of_funcs
+    (fun ⟨a,⟨b,c⟩⟩ => ⟨⟨a,b⟩,c⟩)
+    (fun ⟨⟨a,b⟩,c⟩ => ⟨a,⟨b,c⟩⟩)
+    (fun _ => rfl)
+    (fun _ => rfl)
+end Prod
+
+namespace Set
+variable {α ι : Type*} {ι' : ι → Type} {x : (i : ι) → ι' i → Set α}
+
+theorem iUnion_iInter_distrib :
+    ⋃ i : ι, ⋂ i' : ι' i, x i i' =  ⋂ f : (i : ι) → ι' i, ⋃ i : ι, x i (f i) := by
+  ext a
+  simp only [mem_iUnion_iff, mem_iInter_iff]
+  constructor
+  · intro ⟨i, h'⟩ i'
+    specialize h' (i' i)
+    exists i
+  · rw[imp_iff_not_imp_not]
+    intro h' h''
+    conv at h' =>
+      rw[not_exists]
+      intro
+      rw[Classical.not_forall]
+    replace ⟨f,h'⟩ := Classical.axiomOfChoice h'
+    replace ⟨i,h''⟩ := h'' f
+    apply h' _ h''
+
+theorem iInter_iUnion_distrib :
+    ⋂ i : ι, ⋃ i' : ι' i, x i i' = ⋃ f : (i : ι) → ι' i, ⋂ i : ι, x i (f i) := by
+  apply compl_inj
+  conv =>
+    rw[← iInter_compl, ← iUnion_compl]
+    lhs
+    intro
+    lhs
+    intro
+    rw[← iInter_compl]
+  conv =>
+    rhs
+    intro
+    lhs
+    intro
+    rw[← iUnion_compl]
+  rw[iUnion_iInter_distrib]
+
+
+
+
+end Set

@@ -44,7 +44,7 @@ theorem IsPartition.preimage (h : IsPartition y) : IsPartition (Set.preimage f �
 theorem IsPartition.inj_of_nonempty (h : IsPartition x) (h' : ∀ i, (x i).Nonempty) : x.Injective :=
   h.2.inj_of_nonempty h'
 
-@[simp] theorem IsPartition.glue_agrees (h : IsPartition x) {f : (i : ι) → x i → β} (h' : a ∈ x i) :
+@[simp] theorem IsPartition.glue_agrees {β : α → Type*} (h : IsPartition x) {f : (i : ι) → (a : x i) → β a} (h' : a ∈ x i) :
     h.1.glue f a = f i ⟨a, h'⟩ := by
   apply h.1.glue_agrees
   intro a i j h'' h'''

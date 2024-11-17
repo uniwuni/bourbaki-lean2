@@ -212,7 +212,6 @@ theorem iInter_compl : ⋂ i, (x i)ᶜ = (⋃ i, x i)ᶜ := by
   ext
   simp only [mem_iInter_iff, mem_compl_iff, mem_iUnion_iff, not_exists]
 
-
 variable {x x' x'' x''' : Set α}
 
 @[simp] theorem mem_union_iff : a ∈ x ∪ x' ↔ a ∈ x ∨ a ∈ x' := Iff.rfl
@@ -400,6 +399,8 @@ theorem sdiff_mono_right (h : x' ⊆ x'') : x \ x'' ⊆ x \ x' := by
 
 @[simp] theorem sdiff_subset : x \ x' ⊆ x := fun _ h => h.1
 @[simp] theorem sdiff_subset_compl : x \ x' ⊆ x'ᶜ := fun _ h => h.2
+theorem compl_inj (h : xᶜ = x'ᶜ) : x = x' := by
+  rw[← compl_compl (x := x), ← compl_compl (x := x'), h]
 
 end Set
 
