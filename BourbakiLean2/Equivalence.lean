@@ -134,4 +134,7 @@ def Relation.IsEquivalence.quot_equiv_class_bij [h : r.IsEquivalence] : Function
   ext
   simp only [IsEquivalence.mem_equiv_class_iff, mem_diag_iff, Set.mem_singleton_iff, Eq.comm]
 
-def Relation.quot_diag_bij : Quot.mk (diag : Relation α α).curry
+
+@[simp] theorem Relation.equiv_class_univ {a} : Relation.equiv_class (Set.univ : Relation α α) a = Set.univ := by
+  ext
+  simp only [IsEquivalence.mem_equiv_class_iff, Set.mem_univ]
