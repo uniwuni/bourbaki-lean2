@@ -1,5 +1,7 @@
 import BourbakiLean2.Set.Rel
 import BourbakiLean2.Function.Basic
+import BourbakiLean2.Set.Partitions
+
 attribute [class] Equivalence
 namespace Relation
 variable {α : Type*} {r : Relation α α}
@@ -138,3 +140,45 @@ def Relation.IsEquivalence.quot_equiv_class_bij [h : r.IsEquivalence] : Function
 @[simp] theorem Relation.equiv_class_univ {a} : Relation.equiv_class (Set.univ : Relation α α) a = Set.univ := by
   ext
   simp only [IsEquivalence.mem_equiv_class_iff, Set.mem_univ]
+
+theorem Relation.quotient_preimage_isPartition :
+    Set.IsPartition (fun x => Set.preimage (Quot.mk r.curry) {a | a = x}) := by
+  constructor
+  · ext a
+    simp only [Set.mem_iUnion_iff, Set.mem_preimage_iff, Set.mem_univ, iff_true]
+    exists Quot.mk _ a
+  · intro a b neq
+    ext c
+    simp only [Set.mem_inter_iff, Set.mem_preimage_iff, Set.mem_setOf_iff, Set.not_mem_empty,
+      iff_false, not_and]
+    intro h' h''
+    exact neq (h' ▸ h'')
+
+theorem Set.IsPartition.in_same_equiv {ι : Type*} {p : ι → Set α} (h : IsPartition p) :
+    Relation.IsEquivalence (fun (x,y) => ∃ i, x ∈ p i ∧ y ∈ p i) := by
+  constructor
+  · intro x
+    obtain ⟨i,h⟩ := h.1.mem_exists x
+    exists i
+  · rintro x y ⟨i,h',h''⟩
+    exact ⟨i,h'',h'⟩
+  · rintro x y z ⟨i,h',h''⟩ ⟨j,hj',hj''⟩
+    have eq : i = j := h.eq_of_mem h'' hj'
+    rw[← eq] at hj' hj''
+    exists i
+
+def Relation.compatible (p : α → Prop) := ∀ {x x'}, x ∈ r.equiv_class x' → (p x ↔ p x')
+
+@[simp] theorem Relation.diag_compatible {p} : (Relation.diag : Relation α α).compatible p := by
+  intro x x'
+  simp only [equiv_class_diag, Set.mem_singleton_iff]
+  rintro rfl
+  rfl
+
+def Relation.compatible.lift {p : α → Prop} [inst : r.IsEquivalence] (h : r.compatible p) :
+    (Quot (Function.curry r)) → Prop :=
+  Quot.lift p fun _ _ h' => propext $ h $ Iff.mpr inst.mem_equiv_class_iff $ inst.symm h'
+
+@[simp] theorem Relation.compatible.lift_iff {p : α → Prop} {a} [r.IsEquivalence] (h : r.compatible p) :
+    h.lift (Quot.mk _ a) ↔ p a := by
+  simp only [lift]
