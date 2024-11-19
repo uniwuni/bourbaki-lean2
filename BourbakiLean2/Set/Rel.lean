@@ -484,4 +484,27 @@ theorem domain_functional (h : Functional r) : r.domain = Set.univ := by
   obtain ⟨f,rfl⟩ := h
   simp only [domain_graph]
 
+
+def inverse_image {γ : Type*} (r : Relation α α) (f : γ → α) : Relation γ γ :=
+  fun ⟨x,y⟩ => r ⟨f x, f y⟩
+
+@[simp] theorem Relation.mem_inverse_image_iff {r : Relation α α} {f : γ → α} {c c' : γ} :
+  ⟨c,c'⟩ ∈ r.inverse_image f ↔ ⟨f c, f c'⟩ ∈ r := Iff.rfl
+
+def restrict (r : Relation α α) (x : Set α) : Relation x x :=
+  fun ⟨a,b⟩ => r ⟨a,b⟩
+
+@[simp] theorem Relation.mem_restrict_iff {r : Relation α α} {x : Set α} {a a' : x} :
+    ⟨a,a'⟩ ∈ r.restrict x ↔ ⟨a,a'⟩ ∈ r := Iff.rfl
+
+theorem Relation.restrict_inverse_image {r : Relation α α} {x : Set α} :
+    r.restrict x = r.inverse_image Subtype.val := by
+  ext ⟨a,b⟩
+  simp only [mem_restrict_iff, mem_inverse_image_iff]
+
+theorem Relation.injection_restrict_compatible {r : Relation α α} {x : Set α} (a a' : x)
+    (h : ⟨a,a'⟩ ∈ r.restrict x) : ⟨Subtype.val a, Subtype.val a'⟩ ∈ r :=
+  Relation.mem_restrict_iff.mp h
+
+
 end Relation
