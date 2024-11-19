@@ -488,23 +488,27 @@ theorem domain_functional (h : Functional r) : r.domain = Set.univ := by
 def inverse_image {γ : Type*} (r : Relation α α) (f : γ → α) : Relation γ γ :=
   fun ⟨x,y⟩ => r ⟨f x, f y⟩
 
-@[simp] theorem Relation.mem_inverse_image_iff {r : Relation α α} {f : γ → α} {c c' : γ} :
+@[simp] theorem mem_inverse_image_iff {r : Relation α α} {f : γ → α} {c c' : γ} :
   ⟨c,c'⟩ ∈ r.inverse_image f ↔ ⟨f c, f c'⟩ ∈ r := Iff.rfl
 
 def restrict (r : Relation α α) (x : Set α) : Relation x x :=
   fun ⟨a,b⟩ => r ⟨a,b⟩
 
-@[simp] theorem Relation.mem_restrict_iff {r : Relation α α} {x : Set α} {a a' : x} :
+@[simp] theorem mem_restrict_iff {r : Relation α α} {x : Set α} {a a' : x} :
     ⟨a,a'⟩ ∈ r.restrict x ↔ ⟨a,a'⟩ ∈ r := Iff.rfl
 
-theorem Relation.restrict_inverse_image {r : Relation α α} {x : Set α} :
+theorem restrict_inverse_image {r : Relation α α} {x : Set α} :
     r.restrict x = r.inverse_image Subtype.val := by
   ext ⟨a,b⟩
   simp only [mem_restrict_iff, mem_inverse_image_iff]
 
-theorem Relation.injection_restrict_compatible {r : Relation α α} {x : Set α} (a a' : x)
+theorem injection_restrict_compatible {r : Relation α α} {x : Set α} (a a' : x)
     (h : ⟨a,a'⟩ ∈ r.restrict x) : ⟨Subtype.val a, Subtype.val a'⟩ ∈ r :=
   Relation.mem_restrict_iff.mp h
 
+def prod_rel (r : Relation α α) (s : Relation β β) : Relation (α × β) (α × β) :=
+  fun ⟨⟨a,b⟩, ⟨a',b'⟩⟩ => ⟨a, a'⟩ ∈ r ∧ ⟨b, b'⟩ ∈ s
 
+@[simp] theorem mem_prod_rel_iff {r : Relation α α} {s : Relation β β} {a a' b b'} :
+    ⟨⟨a,b⟩, ⟨a',b'⟩⟩ ∈ r.prod_rel s ↔ ⟨a, a'⟩ ∈ r ∧ ⟨b, b'⟩ ∈ s := Iff.rfl
 end Relation

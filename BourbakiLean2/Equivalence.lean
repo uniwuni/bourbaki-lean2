@@ -1,5 +1,6 @@
 import BourbakiLean2.Set.Rel
 import BourbakiLean2.Function.Basic
+import BourbakiLean2.Function.Prod
 import BourbakiLean2.Set.Partitions
 
 attribute [class] Equivalence
@@ -441,3 +442,43 @@ theorem Relation.IsEquivalence.is_quotient_quotient [inst : r.IsEquivalence] {s 
   obtain ⟨a,rfl⟩ := a.exists_rep
   obtain ⟨a',rfl⟩ := a'.exists_rep
   simp only [quotient_lift_iff, Relation.mem_inverse_image_iff]
+
+
+variable {s : Relation β β} [inst : r.IsEquivalence] [inst' : s.IsEquivalence]
+instance : (r.prod_rel s).IsEquivalence where
+  refl _ := ⟨inst.refl _, inst'.refl _⟩
+  symm h := ⟨inst.symm h.1, inst'.symm h.2⟩
+  trans h h' := ⟨inst.trans h.1 h'.1, inst'.trans h.2 h'.2⟩
+
+@[simp] theorem Relation.IsEquivalence.prod_rel_equivalence_class {a} {b} :
+    (r.prod_rel s).equiv_class ⟨a,b⟩ = (r.equiv_class a).prod (s.equiv_class b) := by
+  ext ⟨a',b'⟩
+  simp only [IsEquivalence.mem_equiv_class_iff, mem_prod_rel_iff, Set.mem_prod_iff]
+
+theorem Relation.IsEquivalence.prod_rel_is_identified_under :
+    r.prod_rel s = ((Quot.mk (Function.curry r)).prod (Quot.mk (Function.curry s))).identified_under := by
+  ext ⟨⟨a,b⟩, ⟨a',b'⟩⟩
+  simp only [mem_prod_rel_iff, Function.mem_identified_under, Function.prod_val, Prod.mk.injEq,
+    Quot.mk_eq_iff_rel]
+
+def Relation.IsEquivalence.prod_quotient :
+    Quot (Function.curry (r.prod_rel s)) → (Quot (Function.curry r)) × (Quot (Function.curry s)) :=
+  Quot.lift ((Quot.mk _).prod (Quot.mk _))
+  (by intro ⟨a,b⟩ ⟨a',b'⟩ ⟨h,h'⟩
+      simp only [Function.prod_val, Prod.mk.injEq, Quot.mk_eq_iff_rel]
+      exact ⟨h,h'⟩)
+
+theorem Relation.IsEquivalence.prod_quotient_bij :
+    (Relation.IsEquivalence.prod_quotient : Quot (Function.curry (r.prod_rel s)) → (Quot (Function.curry r)) × (Quot (Function.curry s))).Bijective := by
+  constructor
+  · intro a a' h
+    obtain ⟨⟨a,b⟩,rfl⟩ := a.exists_rep
+    obtain ⟨⟨a',b'⟩,rfl⟩ := a'.exists_rep
+    simp[prod_quotient] at h
+    apply Quot.sound
+    exact h
+  · rw[Function.surj_iff]
+    intro ⟨a,b⟩
+    obtain ⟨a,rfl⟩ := a.exists_rep
+    obtain ⟨b,rfl⟩ := b.exists_rep
+    exists Quot.mk _ ⟨a,b⟩
