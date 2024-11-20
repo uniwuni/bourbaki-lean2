@@ -43,3 +43,48 @@ theorem Relation.graph_of_bij_iff {r : Relation α β} {s : Relation β α} :
       constructor
       · intro h
 -/
+
+theorem Relation.functional_iff_disjoint_preimage_disjoint {r : Relation α β} :
+    r.Functional ↔
+    (r.domain = Set.univ ∧ ((x y : Set β) → x ∩ y = ∅ → r.preimage x ∩ r.preimage y = ∅)) := by
+  constructor
+  · intro h
+    rw[functional_iff_graph] at h
+    obtain ⟨f,rfl⟩ := h
+    constructor
+    · exact domain_graph
+    · intro x y h
+      rw[← Set.preimage, ← Set.preimage, ← Set.inter_preimage, h, Function.preimage_empty]
+  · intro ⟨h, h'⟩ a
+    obtain ⟨b,h''⟩ : a ∈ r.domain := h ▸ Set.mem_univ
+    exists b
+    constructor
+    · exact h''
+    · intro y h'''
+      by_contra h4
+      have : {y} ∩ {b} = (∅ : Set _) := by
+        ext
+        simp only [Set.mem_inter_iff,
+          Set.mem_singleton_iff, Set.not_mem_empty, iff_false, not_and]
+        exact fun h => h ▸ h4
+      specialize h' _ _ this
+      have : a ∈ r.preimage {y} ∩ r.preimage {b} := by
+        simp only [Set.mem_inter_iff, mem_preimage_iff, Set.mem_singleton_iff, exists_eq_right, h'', h''', and_true]
+      rwa[h'] at this
+
+variable {γ : Type*} {r r' : Relation α β} {s s' : Relation γ α} {a a' : α} {b : β} {c : γ} {x : Set α}
+
+theorem Relation.image_eq_range_inter : r.image x = range (r ∩ (x.prod r.range)) := by
+  ext a
+  apply exists_congr
+  intro a
+  simp only [Set.mem_inter_iff, Set.mem_prod_iff, mem_range_iff, and_congr_right_iff, iff_self_and]
+  exact fun h h' => ⟨_,h⟩
+
+theorem Relation.image_eq_image_inter_domain : r.image x = r.image (x ∩ r.domain) := by
+  ext b
+  apply exists_congr
+  intro a
+  apply and_congr_right
+  simp only [Set.mem_inter_iff, mem_domain_iff, iff_self_and]
+  exact fun h h' => ⟨_,h⟩

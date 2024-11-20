@@ -405,6 +405,43 @@ theorem comp_sprod : Relation.comp r (y.prod x) = y.prod (r.image x) := by
 @[simp] theorem preimage_comp : (r ∘ s).preimage y = s.preimage (r.preimage y) := by
   rw[←image_inv, ←image_inv, ←image_inv, inv_comp, image_comp]
 
+theorem sprod_comp_sprod_empty_iff {w : Set γ} (h1 : y.Nonempty) (h2 : w.Nonempty) : Relation.comp (x.prod y) (w.prod x') = ∅ ↔ x ∩ x' = ∅ := by
+  constructor
+  · intro h
+    ext a
+    simp only [Set.not_mem_empty, iff_false]
+    intro h'
+    obtain ⟨a1,h1⟩ := h1
+    obtain ⟨a2,h2⟩ := h2
+    have : ⟨a2,a1⟩ ∈  x.prod y ∘ w.prod x' :=
+      ⟨a,⟨⟨h2, h'.2⟩, ⟨h'.1, h1⟩⟩⟩
+    rwa[h] at this
+  · intro h
+    ext a
+    simp only [Set.not_mem_empty, iff_false]
+    rintro ⟨b,h',h''⟩
+    have : b ∈ x ∩ x' := ⟨h''.1, h'.2⟩
+    rwa[h] at this
+
+theorem sprod_comp_sprod_eq_sprod_iff {w : Set γ} (h1 : y.Nonempty) (h2 : w.Nonempty) : Relation.comp (x.prod y) (w.prod x') = w.prod y ↔ x ∩ x' ≠ ∅ := by
+  constructor
+  · rw[imp_iff_not_imp_not]
+    simp only [ne_eq, Classical.not_not]
+    intro h
+    have := (sprod_comp_sprod_empty_iff h1 h2).mpr h
+    rw[this]
+    obtain ⟨a1,h1⟩ := h1
+    obtain ⟨a2,h2⟩ := h2
+    have : ⟨a2,a1⟩ ∈ w.prod y := ⟨h2,h1⟩
+    intro h
+    rwa[←h] at this
+  · intro h
+    rw[← Set.nonempty_iff_neq_empty] at h
+    obtain ⟨a, ⟨h,h'⟩⟩ := h
+    ext ⟨c,b⟩
+    simp only [mem_comp_iff, Set.mem_prod_iff]
+    exact ⟨fun ⟨_,⟨b,_⟩,_,c⟩ => ⟨b,c⟩,
+           fun ⟨b,c⟩ => ⟨a,⟨b,h'⟩,h,c⟩⟩
 
 
 /- DIAGONAL -/
