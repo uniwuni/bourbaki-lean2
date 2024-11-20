@@ -120,6 +120,10 @@ theorem iInter_empty_index (h : ι → False) : ⋂ i, x i = Set.univ := by
   · rintro h ⟨⟩
     exact h
 
+theorem iUnion_singletons {x : Set α} : ⋃ a : x, {a.1} = x := by
+  ext a
+  simp only [mem_iUnion_iff, mem_singleton_iff, Subtype.exists, exists_prop, exists_eq_right']
+
 theorem iUnion_index_change_subset {f : ι' → ι} : ⋃ i', x (f i') ⊆ ⋃ i, x i := by
   intro a
   simp only [mem_iUnion_iff]

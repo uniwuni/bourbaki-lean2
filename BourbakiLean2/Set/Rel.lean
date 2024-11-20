@@ -245,6 +245,10 @@ theorem inv_monotone (h : r ⊆ r') : r.inv ⊆ r'.inv := by
   simp only [mem_inv_iff]
   apply h
 
+theorem inv_compl : Relation.inv r.compl = r.inv.compl := by
+  ext ⟨a,b⟩
+  rfl
+
 /- SET PRODUCT SPECIAL CASES -/
 
 @[simp] theorem sprod_domain (h : y.Nonempty) : Relation.domain (x.prod y) = x := by
@@ -364,12 +368,33 @@ theorem subset_preimage_image_of_subset_domain (h : x ⊆ r.domain) : x ⊆ r.pr
   rcases h with ⟨b, h''⟩
   exact ⟨b, ⟨h'', ⟨_, ⟨h'',h'⟩⟩⟩⟩
 
+theorem subset_preimage_image_iff_subset_domain : x ⊆ r.preimage (r.image x) ↔ x ⊆ r.domain := by
+  constructor
+  · intro h
+    exact Set.subset_trans h preimage_subset_domain
+  · exact subset_preimage_image_of_subset_domain
+
+
 theorem subset_image_preimage_of_subset_range (h : y ⊆ r.range): y ⊆ r.image (r.preimage y) := by
   intro b h'
   specialize h h'
   simp only [mem_range_iff, mem_image_iff, mem_preimage_iff] at *
   rcases h with ⟨a, h''⟩
   exact ⟨a,⟨h'',b,h'',h'⟩⟩
+
+theorem subset_image_preimage_iff_subset_range : y ⊆ r.image (r.preimage y) ↔ y ⊆ r.range := by
+  constructor
+  · intro h
+    exact Set.subset_trans h image_subset_range
+  · exact subset_image_preimage_of_subset_range
+
+theorem sprod_comp : Relation.comp (y.prod x) r = (r.preimage y).prod x := by
+  ext
+  exact ⟨fun ⟨a,h,h',h''⟩ => ⟨⟨a,h,h'⟩,h''⟩, fun ⟨⟨a,h,h'⟩,h''⟩ => ⟨a,h,h',h''⟩⟩
+
+theorem comp_sprod : Relation.comp r (y.prod x) = y.prod (r.image x) := by
+  ext
+  exact ⟨fun ⟨a,⟨h,h'⟩,h''⟩ => ⟨h,⟨_,h'',h'⟩⟩, fun ⟨h,⟨a,h',h''⟩⟩ => ⟨a,⟨h,h''⟩,h'⟩⟩
 
 @[simp] theorem image_comp : (r ∘ s).image z = r.image (s.image z) := by
   ext b
@@ -379,6 +404,7 @@ theorem subset_image_preimage_of_subset_range (h : y ⊆ r.range): y ⊆ r.image
 
 @[simp] theorem preimage_comp : (r ∘ s).preimage y = s.preimage (r.preimage y) := by
   rw[←image_inv, ←image_inv, ←image_inv, inv_comp, image_comp]
+
 
 
 /- DIAGONAL -/
@@ -414,6 +440,45 @@ def diag : Relation α α := {x | x.1 = x.2}
 @[simp] theorem comp_diag : r ∘ diag = r := by
   ext ⟨_,_⟩
   simp only [mem_comp_iff, mem_diag_iff, exists_eq_left']
+
+theorem comp_compl_inv_subset_diag_compl : r ∘ r.inv.compl ⊆ diag.compl := by
+  intro ⟨b,b'⟩
+  simp only [mem_comp_iff, Set.mem_compl_iff, mem_inv_iff, mem_diag_iff, forall_exists_index,
+    and_imp]
+  rintro x h h' rfl
+  exact h h'
+
+theorem compl_inv_comp_subset_diag_compl : r.inv.compl ∘ r ⊆ diag.compl := by
+  intro ⟨b,b'⟩
+  simp only [mem_comp_iff, Set.mem_compl_iff, mem_inv_iff, mem_diag_iff, forall_exists_index,
+    and_imp]
+  rintro x h h' rfl
+  exact h' h
+
+theorem comp_compl_inv_comp_iff_prod : r ∘ r.inv.compl ∘ r = ∅ ↔ r = r.domain.prod r.range := by
+  constructor
+  · intro h
+    rw[Set.eq_iff_subset_subset]
+    constructor
+    · simp only [rel_subset_prod]
+    · intro ⟨a,b⟩ ⟨⟨b',h'⟩,⟨a',h''⟩⟩
+      apply Classical.byContradiction
+      intro h'''
+      have : (a',b') ∈ r ∘ r.invᶜ ∘ r := by
+        exists a
+        constructor
+        exists b
+        exact h'
+      rwa[h] at this
+  · intro h
+    rw[← Set.subset_empty_iff, h]
+    intro ⟨a,b⟩ h'
+    simp only [sprod_inv, comp_assoc, mem_comp_iff, Set.mem_prod_iff, mem_domain_iff, mem_range_iff,
+      Set.mem_compl_iff, not_and, not_exists, forall_exists_index] at h'
+    obtain ⟨a',⟨⟨⟨b',h'⟩,⟨a'',h''⟩⟩,⟨a'',hmir,⟨b'',hb''⟩,⟨a'''',ha''''⟩⟩⟩⟩ := h'
+    specialize hmir _ h'' _ hb''
+    exact hmir
+
 
 /- FUNCTIONAL -/
 
@@ -484,12 +549,34 @@ theorem domain_functional (h : Functional r) : r.domain = Set.univ := by
   obtain ⟨f,rfl⟩ := h
   simp only [domain_graph]
 
+theorem functional_iff_preimage_image : r.Functional ↔ ((∀ y, r.image (r.preimage y) ⊆ y) ∧ r.domain = Set.univ) := by
+  constructor
+  · rw[functional_iff_graph]
+    rintro ⟨f,rfl⟩
+    constructor
+    · rintro y b ⟨a,⟨h,h'⟩⟩
+      simp only [mem_graph_iff, mem_preimage_iff, exists_eq_left] at *
+      exact h ▸ h'
+    · apply domain_graph
+  · intro ⟨h,h'⟩ a
+    obtain ⟨b, h''⟩ : a ∈ r.domain := by rw[h']; simp only [Set.mem_univ]
+    specialize h {b}
+    exists b
+    simp only [true_and, h'']
+    intro b' h'''
+    apply @h b'
+    simp only [mem_image_iff, mem_preimage_iff, Set.mem_singleton_iff, exists_eq_right]
+    exists a
+
+/- INV IMAGE -/
 
 def inverse_image {γ : Type*} (r : Relation α α) (f : γ → α) : Relation γ γ :=
   fun ⟨x,y⟩ => r ⟨f x, f y⟩
 
 @[simp] theorem mem_inverse_image_iff {r : Relation α α} {f : γ → α} {c c' : γ} :
   ⟨c,c'⟩ ∈ r.inverse_image f ↔ ⟨f c, f c'⟩ ∈ r := Iff.rfl
+
+/- RESTRICTION -/
 
 def restrict (r : Relation α α) (x : Set α) : Relation x x :=
   fun ⟨a,b⟩ => r ⟨a,b⟩
@@ -505,6 +592,8 @@ theorem restrict_inverse_image {r : Relation α α} {x : Set α} :
 theorem injection_restrict_compatible {r : Relation α α} {x : Set α} (a a' : x)
     (h : ⟨a,a'⟩ ∈ r.restrict x) : ⟨Subtype.val a, Subtype.val a'⟩ ∈ r :=
   Relation.mem_restrict_iff.mp h
+
+/- PRODUCT RELATION -/
 
 def prod_rel (r : Relation α α) (s : Relation β β) : Relation (α × β) (α × β) :=
   fun ⟨⟨a,b⟩, ⟨a',b'⟩⟩ => ⟨a, a'⟩ ∈ r ∧ ⟨b, b'⟩ ∈ s

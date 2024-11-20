@@ -22,6 +22,10 @@ theorem val_mem_image_of_mem {x : Set α} {f : α → β} {a : α} (h : a ∈ x)
 end Set
 namespace Function
 
+@[simp] theorem image_singleton {f : α → β} {a} : f '' {a} = {f a} := by
+  ext b
+  simp only [Set.mem_image_iff, Set.mem_singleton_iff, exists_eq_right]
+
 @[simp] theorem comp_assoc {h : δ → γ}: f ∘ (g ∘ h) = (f ∘ g) ∘ h := by
   ext
   rfl
@@ -522,6 +526,7 @@ theorem hasInverse_iff_bij : f.HasInverse ↔ f.Bijective := by
     exists h.inv
     apply Bijective.inv_isInverseOf
 
+
 end
 section
 variable {f' : β → γ} {g : γ → α}
@@ -556,6 +561,30 @@ theorem isSection_of_comp_inj (h : g.IsSectionOf (f' ∘ f)) (h' : f'.Injective)
   apply h'.comp_left_inj
   simp only [comp_id_right]
   rw[comp_assoc, comp_assoc, h, comp_id_left]
+
+theorem bij_of_two_bij2 (h : (f ∘ g).Bijective) (h' : (g ∘ f').Bijective) : g.Bijective :=
+  ⟨inj_of_comp_inj h.inj, surj_of_comp_surj h'.surj⟩
+
+theorem bij_of_two_bij1 (h : (f ∘ g).Bijective) (h' : (g ∘ f').Bijective) : f.Bijective :=
+  ⟨inj_of_surj_comp_inj h.inj (bij_of_two_bij2 h h').surj, surj_of_comp_surj h.surj⟩
+
+theorem bij_of_two_bij3 (h : (f ∘ g).Bijective) (h' : (g ∘ f').Bijective) : f'.Bijective :=
+  ⟨inj_of_comp_inj h'.inj, surj_of_inj_comp_surj h'.surj (bij_of_two_bij2 h h').inj⟩
+
+theorem bij_of_surj_surj_inj1 {f' : β → γ} (h : (f' ∘ f ∘ g).Surjective) (h' : (f ∘ g ∘ f').Surjective)
+    (h'' : (g ∘ f' ∘ f).Injective) : f'.Bijective :=
+  ⟨inj_of_comp_inj (g := f') (f := g) $ inj_of_surj_comp_inj h'' $ surj_of_comp_surj h',
+   surj_of_comp_surj h⟩
+
+theorem bij_of_surj_surj_inj2 {f' : β → γ} (h : (f' ∘ f ∘ g).Surjective) (h' : (f ∘ g ∘ f').Surjective)
+    (h'' : (g ∘ f' ∘ f).Injective) : f.Bijective :=
+  ⟨inj_of_comp_inj (comp_assoc ▸ h''),
+   surj_of_comp_surj h'⟩
+
+theorem bij_of_surj_inj3 {f' : β → γ} (h : (f' ∘ f ∘ g).Surjective)
+    (h'' : (g ∘ f' ∘ f).Injective) : g.Bijective :=
+  ⟨inj_of_surj_comp_inj (comp_assoc ▸ h'') $ surj_of_comp_surj (comp_assoc ▸ h),
+  surj_of_inj_comp_surj (comp_assoc ▸ h) $ inj_of_comp_inj h''⟩
 
 end
 section

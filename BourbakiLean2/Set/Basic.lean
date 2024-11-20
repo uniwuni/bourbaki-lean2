@@ -1,5 +1,5 @@
 import BourbakiLean2.Set.Defs
-
+import BourbakiLean2.Logic
 namespace Set
 variable {α : Type*} {p q : α → Prop}
 
@@ -77,6 +77,34 @@ theorem univ_subset_iff : univ ⊆ x ↔ x = univ := by
 @[simp] theorem compl_compl : (xᶜ)ᶜ = x := by ext; simp only [mem_compl_iff, Classical.not_not]
 @[simp] theorem sdiff_univ_eq_compl : Set.univ \ x = xᶜ := by ext; simp only [mem_sdiff_iff,
   mem_univ, true_and, mem_compl_iff]
+theorem subset_compl_iff_subset_compl : x ⊆ y.compl ↔ y ⊆ x.compl := by
+  apply forall_congr'
+  intro a
+  rw[← @Classical.not_not (a ∈ y)]
+  exact imp_iff_not_imp_not
+
+theorem compl_subset_iff_compl_subset : x.compl ⊆ y ↔ y.compl ⊆ x := by
+  apply forall_congr'
+  intro a
+  rw[← @Classical.not_not (a ∈ x)]
+  exact imp_iff_not_imp_not
+
+@[simp] theorem subset_singleton_iff {a} : x ⊆ {a} ↔ x = {a} ∨ x = ∅ := by
+  constructor
+  · intro h
+    by_cases h' : a ∈ x
+    · left
+      ext a'
+      exact ⟨@h a', fun e => e ▸ h'⟩
+    · right
+      ext a'
+      exact ⟨fun g => ((h g) ▸ h') g, False.elim⟩
+  · rintro (rfl|rfl)
+    · rfl
+    · exact empty_subset
+
+
+
 @[simp] theorem empty_not_nonempty : ¬ (∅ : Set α).Nonempty := nofun
 end
 
