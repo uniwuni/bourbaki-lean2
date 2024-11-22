@@ -470,6 +470,72 @@ theorem Relation.union_preimage : r.preimage (y ∪ y') = r.preimage y ∪ r.pre
 theorem Relation.subset_inter_preimage : r.preimage (y ∩ y') ⊆ r.preimage y ∩ r.preimage y' := by
   simp only [← image_inv, subset_inter_image]
 
+variable {γ : Type*} {r : ι → Relation α β} {s : Relation β γ} {t : Relation γ α}
+
+theorem Relation.rel_iUnion_image : Relation.image (⋃ i, r i) x = ⋃ i, (r i).image x := by
+  ext a
+  simp only [mem_image_iff, Set.mem_iUnion_iff, exists_comm, exists_and_right]
+
+theorem Relation.rel_iUnion_preimage : Relation.preimage (⋃ i, r i) y = ⋃ i, (r i).preimage y := by
+  ext a
+  simp only [mem_preimage_iff, Set.mem_iUnion_iff, exists_comm, exists_and_right]
+
+theorem Relation.rel_iInter_image {a} : Relation.image (⋂ i, r i) {a} = ⋂ i, (r i).image {a} := by
+  ext a
+  simp only [mem_image_iff, Set.mem_iInter_iff, Set.mem_singleton_iff, exists_eq_right]
+
+theorem Relation.rel_iInter_preimage {b} : Relation.preimage (⋂ i, r i) {b} = ⋂ i, (r i).preimage {b} := by
+  ext a
+  simp only [mem_preimage_iff, Set.mem_iInter_iff, Set.mem_singleton_iff, exists_eq_right]
+
+theorem Relation.iUnion_comp : Relation.comp (⋃ i, r i) t = ⋃ i, (r i).comp t := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_iUnion_iff, exists_comm, exists_and_left]
+
+theorem Relation.comp_iUnion : Relation.comp s (⋃ i, r i) = ⋃ i, s.comp (r i) := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_iUnion_iff, exists_comm, exists_and_right]
+
+variable {r r' : Relation α β}
+
+theorem Relation.union_comp : Relation.comp (r ∪ r') t = r.comp t ∪ r'.comp t := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_union_iff, exists_or, and_or_left]
+
+theorem Relation.comp_union : Relation.comp s (r ∪ r') = s.comp r ∪ s.comp r' := by
+  ext ⟨_,_⟩
+  simp only [mem_comp_iff, Set.mem_union_iff, or_and_right, exists_or]
+
+theorem Relation.rel_union_image : Relation.image (r ∪ r') x = r.image x ∪ r'.image x := by
+  ext a
+  simp only [mem_image_iff, Set.mem_union_iff, or_and_right, exists_or]
+
+theorem Relation.rel_union_preimage : Relation.preimage (r ∪ r') y = r.preimage y ∪ r'.preimage y := by
+  ext a
+  simp only [mem_preimage_iff, Set.mem_union_iff, or_and_right, exists_or]
+
+theorem Relation.rel_inter_image {a} : Relation.image (r ∩ r') {a} = r.image {a} ∩ r'.image {a} := by
+  ext a
+  simp only [mem_image_iff, Set.mem_inter_iff, Set.mem_singleton_iff, exists_eq_right]
+
+theorem Relation.rel_inter_preimage {b} : Relation.preimage (r ∩ r') {b} = r.preimage {b} ∩ r'.preimage {b} := by
+  ext a
+  simp only [mem_preimage_iff, Set.mem_inter_iff, Set.mem_singleton_iff, exists_eq_right]
+
+theorem Relation.comp_inter_subset {t : Relation α γ} :
+    (s.comp r) ∩ t ⊆ (s ∩ (t.comp r.inv)).comp (r ∩ (s.inv.comp t)) := by
+  rintro ⟨a,c⟩ h
+  simp only [Set.mem_inter_iff, mem_comp_iff, mem_inv_iff] at *
+  obtain ⟨⟨b,h,h'⟩,h''⟩ := h
+  exists b
+  constructor
+  · constructor
+    · assumption
+    · exists c
+  · constructor
+    · assumption
+    · exists a
+
 end
 
 namespace Set

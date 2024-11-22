@@ -71,7 +71,32 @@ theorem Relation.functional_iff_disjoint_preimage_disjoint {r : Relation α β} 
       have : a ∈ r.preimage {y} ∩ r.preimage {b} := by
         simp only [Set.mem_inter_iff, mem_preimage_iff, Set.mem_singleton_iff, exists_eq_right, h'', h''', and_true]
       rwa[h'] at this
-
+/-
+theorem Relation.functional_iff_comp_inter {r : Relation α β} :
+    r.Functional ↔ (r.domain = Set.univ ∧ ∀ (γ : Type*) (s s' : Relation β γ), Relation.comp (s ∩ s') r = s.comp r ∩ s'.comp r) := by
+  constructor
+  · rintro h
+    obtain ⟨f,rfl⟩ := functional_iff_graph.mp h
+    constructor
+    · simp only [domain_graph]
+    · intro γ s s'
+      ext ⟨a,c⟩
+      simp only [mem_comp_iff, mem_graph_iff, Set.mem_inter_iff, exists_eq_left]
+  · rintro ⟨h, h'⟩
+    rw[Relation.functional_iff_disjoint_preimage_disjoint]
+    constructor
+    · exact h
+    · intro x y h
+      specialize h' PUnit (x.prod Set.univ) (y.prod Set.univ)
+      rw[Set.ext_iff] at h'
+      rw[← Set.subset_empty_iff]
+      intro a ⟨ha, ⟨b, hb1, hb2⟩⟩
+      specialize h' ⟨a, PUnit.unit⟩
+      replace h' := h'.mp
+      simp only [mem_comp_iff, Set.mem_inter_iff, Set.mem_prod_iff, Set.mem_univ, and_true,
+        forall_exists_index, and_imp] at h'
+      specialize h' b hb1
+-/
 variable {γ : Type*} {r r' : Relation α β} {s s' : Relation γ α} {a a' : α} {b : β} {c : γ} {x : Set α}
 
 theorem Relation.image_eq_range_inter : r.image x = range (r ∩ (x.prod r.range)) := by
