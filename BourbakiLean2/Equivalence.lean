@@ -217,6 +217,30 @@ theorem Relation.IsEquivalence.comp_inter [inst : Relation.IsEquivalence r] {s t
       · assumption
     · assumption
 
+theorem Relation.IsEquivalence.comp_isEquivalence_iff_commute [inst : Relation.IsEquivalence r]
+    {s : Relation α α} [inst' : Relation.IsEquivalence s] : (r.comp s).IsEquivalence ↔ r.comp s = s.comp r := by
+  have e1 := (isEquivalence_iff.mp inst).2.1
+  have e2 := (isEquivalence_iff.mp inst').2.1
+  constructor
+  · intro h
+    have e := (isEquivalence_iff.mp h).2.1
+    rw[← e1, ← e2, ← inv_comp (r := r), e, e1, e2]
+  · intro h
+    rw[isEquivalence_iff]
+    constructor
+    · ext a
+      simp only [mem_domain_iff, mem_comp_iff, Set.mem_univ, iff_true]
+      exists a
+      exists a
+      simp only [inst'.refl, inst.refl, and_self]
+    · constructor
+      · rw[inv_comp, h, e1, e2]
+      · conv =>
+          arg 1
+          arg 2
+          rw[h]
+        rw[← comp_assoc, comp_assoc (r := s), (isEquivalence_iff.mp inst').2.2, ← h, comp_assoc, (isEquivalence_iff.mp inst).2.2]
+
 @[reducible] def Function.identified_under (f : α → β) : Relation α α := fun a => f a.1 = f a.2
 
 @[simp] theorem Function.mem_identified_under {a a' : α} : ⟨a,a'⟩ ∈ f.identified_under ↔ f a = f a' := Iff.rfl
