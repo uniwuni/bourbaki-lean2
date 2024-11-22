@@ -207,6 +207,11 @@ theorem sect_mono (h : r ⊆ r') : r.sect a ⊆ r'.sect a := by
   rw[rel_subset_iff_sect_subset] at h
   exact h a
 
+theorem curry_eq_sect : (Function.curry : Relation α β → α → Set β) r = r.sect := by
+  ext a b
+  simp only [Function.curry_apply, sect, image, Set.mem_singleton_iff, exists_eq_right]
+  rfl
+
 /- INVERSE -/
 
 def inv (r : Relation α β) : Relation β α := {p | (p.2, p.1) ∈ r}

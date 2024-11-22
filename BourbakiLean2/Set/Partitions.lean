@@ -44,6 +44,16 @@ theorem IsPartition.preimage (h : IsPartition y) : IsPartition (Set.preimage f �
 theorem IsPartition.inj_of_nonempty (h : IsPartition x) (h' : ∀ i, (x i).Nonempty) : x.Injective :=
   h.2.inj_of_nonempty h'
 
+theorem IsPartition.subset_of_finerThan (h : IsPartition x) (h' : IsPartition x') (hne : ∀ i, (x i).Nonempty) (hne' : ∀ i', (x' i').Nonempty)  (h'' : FinerThan x x')
+    (i' : ι') : ∃ i, x i ⊆ x' i' := by
+  obtain ⟨a, hmem⟩ := hne' i'
+  obtain ⟨i, hi⟩ := isPartition_iff.mp h a
+  exists i
+  obtain ⟨i'2, hi'2⟩ := h'' i
+  have := Disjoint.eq_of_subset_elem h'.2 (hne i) hmem hi.1 hi'2
+  rwa[this]
+
+
 @[simp] theorem IsPartition.glue_agrees {β : α → Type*} (h : IsPartition x) {f : (i : ι) → (a : x i) → β a} (h' : a ∈ x i) :
     h.1.glue f a = f i ⟨a, h'⟩ := by
   apply h.1.glue_agrees

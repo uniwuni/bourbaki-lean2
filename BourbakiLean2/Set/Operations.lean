@@ -543,6 +543,15 @@ section
 variable {f : α → β}
 @[simp] def Disjoint (x : ι → Set α) := ∀ i i', i ≠ i' → x i ∩ x i' = ∅
 
+theorem Disjoint.eq_of_subset_elem {x : ι → Set α} (hd : Disjoint x) {y : Set α} (h : y.Nonempty)
+    {i i'} (ha : a ∈ x i) (ha' : a ∈ y) (h'' : y ⊆ x i') : i = i' := by
+  specialize h'' ha'
+  by_contra hne
+  specialize hd _ _ hne
+  have : a ∈ x i ∩ x i' := ⟨ha,h''⟩
+  rw[hd] at this
+  exact this
+
 theorem iUnion_image : Set.image f (⋃ i, x i) = ⋃ i, Set.image f (x i) := Relation.iUnion_image
 theorem iUnion_preimage : Set.preimage f (⋃ i, y i) = ⋃ i, Set.preimage f (y i) := Relation.iUnion_preimage
 theorem subset_iInter_image : Set.image f (⋂ i, x i) ⊆ ⋂ i, Set.image f (x i) := Relation.subset_iInter_image

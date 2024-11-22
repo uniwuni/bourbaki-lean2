@@ -34,6 +34,10 @@ instance {f : γ → α} [inst : IsEquivalence r] : IsEquivalence (r.inverse_ima
   symm := inst.symm
   trans := inst.trans
 
+instance {ι : Type*} {r : ι → Relation α α} [inst : ∀ x, IsEquivalence (r x)] : IsEquivalence (⋂ i, r i) where
+  refl _ := fun i => (inst i).refl _
+  symm h := fun i => (inst i).symm $ h i
+  trans h1 h2 := fun i => (inst i).trans (h1 i) (h2 i)
 
 theorem isEquivalence_in_set_or_compl (x : Set α) : IsEquivalence
     (fun ⟨a,b⟩ => a ∈ x ↔ b ∈ x) where
@@ -74,8 +78,145 @@ theorem isEquivalence_iff :
       have h''' : (a,a'') ∈ r.comp r := ⟨a',h0,h1⟩
       rwa[h''] at h'''
 
+theorem isEquivalence_iff' :
+    r.IsEquivalence ↔ (r.comp (r.inv.comp r) = r ∧ diag ⊆ r) := by
+  constructor
+  · intro h
+    constructor
+    · ext ⟨a,a'⟩
+      simp only [comp_assoc, mem_comp_iff, mem_inv_iff]
+      constructor
+      · rintro ⟨b, ha, b', hb'b, hb'a'⟩
+        apply h.trans ha (h.trans (h.symm hb'b) hb'a')
+      · intro ha
+        exists a'
+        apply And.intro ha
+        exists a
+    · rintro ⟨a,b⟩ h'
+      simp only [diag, Set.mem_setOf_iff] at h'
+      rw[h']
+      apply h.refl _
+  · intro ⟨h1,h2⟩
+    constructor
+    · exact fun _ => h2 rfl
+    · intro x y h
+      have : (y,x) ∈ r.comp (r.inv.comp r) := by
+        exists x
+        constructor
+        · exists y
+          constructor
+          · apply h2 rfl
+          · assumption
+        · apply h2 rfl
+      rwa[h1] at this
+    · intro x y z h3 h4
+      have : (x,z) ∈ r.comp (r.inv.comp r) := by
+        exists y
+        constructor
+        exists y
+        · constructor
+          · assumption
+          · exact h2 rfl
+        · assumption
+      rwa[h1] at this
+
+theorem isEquivalence_comp_of_comp_eq_left (h : r.domain = Set.univ)
+    (h' : r.comp (r.inv.comp r) = r) : (r.inv.comp r).IsEquivalence := by
+  constructor
+  · intro x
+    obtain ⟨y,h⟩ : x ∈ r.domain := by rw[h]; trivial
+    exact ⟨y,h,h⟩
+  · rintro x y ⟨z,h1,h2⟩
+    exists z
+  · rintro x y z ⟨v,h1,h2⟩ ⟨w,h3,h4⟩
+    simp at *
+    have : (x,w) ∈ r := by
+      rw[← h']
+      exists v
+      apply And.intro h1
+      exists y
+    exists w
+
+theorem isEquivalence_comp_of_comp_eq_right (h : r.range = Set.univ)
+    (h' : r.comp (r.inv.comp r) = r) : (r.comp r.inv).IsEquivalence := by
+  constructor
+  · intro x
+    obtain ⟨y,h⟩ : x ∈ r.range := by rw[h]; trivial
+    exact ⟨y,h,h⟩
+  · rintro x y ⟨z,h1,h2⟩
+    exists z
+  · rintro x y z ⟨v,h1,h2⟩ ⟨w,h3,h4⟩
+    simp at *
+    have : (w,x) ∈ r := by
+      rw[← h']
+      exists y
+      apply And.intro h3
+      exists v
+    exists w
+
 end Relation
 variable {α β : Type*} {f : α → β} {r : Relation α α}
+
+theorem Relation.IsEquivalence.comp_right [inst : Relation.IsEquivalence r] {s : Relation α α} (h : s ⊆ r) (h' : s.domain = Set.univ) :
+    r.comp s = r := by
+  ext ⟨a,b⟩
+  constructor
+  · rintro ⟨c,h1,h2⟩
+    apply inst.trans (h h1) h2
+  · intro h1
+    obtain ⟨b',ha⟩ : a ∈ s.domain := by simp only [h', Set.mem_univ]
+    exists b'
+    constructor
+    · exact ha
+    · apply inst.symm
+      apply inst.trans $ inst.symm h1
+      apply h ha
+
+theorem Relation.IsEquivalence.comp_left [inst : Relation.IsEquivalence r] {s : Relation α α} (h : s ⊆ r) (h' : s.range = Set.univ) :
+    s.comp r = r := by
+  ext ⟨a,b⟩
+  constructor
+  · rintro ⟨c,h1,h2⟩
+    apply inst.trans h1 $ h h2
+  · intro h1
+    obtain ⟨a',ha⟩ : b ∈ s.range := by simp only [h', Set.mem_univ]
+    exists a'
+    constructor
+    · exact inst.trans h1 $ inst.symm $ h ha
+    · exact ha
+
+theorem Relation.IsEquivalence.inter_comp_commute [inst : Relation.IsEquivalence r] {s t : Relation α α} (h : s ⊆ r) :
+    (r ∩ t).comp s = r ∩ (t.comp s) := by
+  ext ⟨a,b⟩
+  constructor
+  · intro ⟨c,hac,⟨hcbr,hcbt⟩⟩
+    constructor
+    · exact inst.trans (h hac) hcbr
+    · exists c
+  · intro ⟨habr, ⟨c,hac,hcb⟩⟩
+    exists c
+    constructor
+    · assumption
+    · constructor
+      · exact inst.trans (inst.symm $ h hac) habr
+      · assumption
+
+theorem Relation.IsEquivalence.comp_inter [inst : Relation.IsEquivalence r] {s t : Relation α α} (h : s ⊆ r) :
+    s.comp (r ∩ t) = r ∩ (s.comp t) := by
+  ext ⟨a,b⟩
+  constructor
+  · intro ⟨c,⟨hacr,hact⟩, hcb⟩
+    constructor
+    · exact inst.trans hacr $ h hcb
+    · exists c
+  · intro ⟨habr, ⟨c,hac,hcb⟩⟩
+    exists c
+    constructor
+    · constructor
+      · exact inst.trans habr (inst.symm $ h hcb)
+      · assumption
+    · assumption
+
 @[reducible] def Function.identified_under (f : α → β) : Relation α α := fun a => f a.1 = f a.2
 
 @[simp] theorem Function.mem_identified_under {a a' : α} : ⟨a,a'⟩ ∈ f.identified_under ↔ f a = f a' := Iff.rfl
@@ -482,3 +623,20 @@ theorem Relation.IsEquivalence.prod_quotient_bij :
     obtain ⟨a,rfl⟩ := a.exists_rep
     obtain ⟨b,rfl⟩ := b.exists_rep
     exists Quot.mk _ ⟨a,b⟩
+
+def Relation.IsEquivalence.powerset_quotient_subset_powerset {x : Set α} :
+    Function.Bijection x.powerset (Quot (Function.curry (fun (y : Set α) => x ∩ y).identified_under)) :=
+  Function.bijection_of_funcs
+    (Quot.mk _ ∘ Subtype.val)
+    (Quot.lift (fun a => ⟨x ∩ a, (by simp only [Set.mem_powerset_iff, Set.inter_subset_left])⟩)
+      (fun a b => (by simp only [Function.curry_apply, Function.identified_under, Subtype.eq_iff,
+        imp_self])))
+    (by
+      intro b
+      obtain ⟨a,rfl⟩ := b.exists_rep
+      simp only [Function.comp_apply, Quot.mk_eq_iff_rel, Function.mem_identified_under,
+        Set.inter_eq_iff_subset_right, Set.inter_subset_left])
+    (by
+      rintro ⟨b,h⟩
+      simp only [Function.comp_apply, Subtype.eq_iff, Set.inter_eq_iff_subset_right]
+      exact h)

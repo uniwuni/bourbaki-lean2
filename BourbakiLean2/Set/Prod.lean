@@ -99,11 +99,16 @@ theorem iInter_prod_distrib {α : Type*} {y y' : (i : ι) → Set α} :
   ext ⟨a,b⟩
   simp only [mem_prod_iff, mem_iInter_iff, forall_and]
 
+theorem iProd_eq_iInter_preimage {y : (i : ι) → Set (x i)} :
+    Πˢ i, y i = ⋂ i, Set.preimage (fun (f : (i : _) → x i) => f i) (y i) := by
+  ext f
+  simp only [mem_iProd_iff, mem_iInter_iff, mem_preimage_iff]
+
 end Product
 
 variable {α ι : Type*} {ι' : ι → Type*} {x : (i : ι) → Type*}
   {y : (i : ι) → (i' : ι' i) → Set (x i)}
-theorem Set.prod_isCovering (h : ∀ i, Set.IsCovering (y i)) :
+theorem Set.iProd_isCovering (h : ∀ i, Set.IsCovering (y i)) :
     Set.IsCovering (fun (i' : (i : ι) → ι' i) => Πˢ i : ι, y i (i' i)) := by
   rw[IsCovering, ← Product.iProd_iUnion_distrib]
   conv =>
@@ -113,7 +118,7 @@ theorem Set.prod_isCovering (h : ∀ i, Set.IsCovering (y i)) :
     rw[h i]
   exact Product.iProd_univ
 
-theorem Set.prod_disjoint  (h : ∀ i, Set.Disjoint (y i)) :
+theorem Set.iProd_disjoint  (h : ∀ i, Set.Disjoint (y i)) :
     Set.Disjoint (fun (i' : (i : ι) → ι' i) => Πˢ i : ι, y i (i' i)) := by
   intro i' i'' neq
   ext a
@@ -130,10 +135,10 @@ theorem Set.prod_disjoint  (h : ∀ i, Set.Disjoint (y i)) :
   have h' : a i ∈ y _ _ ∩ y _ _ := ⟨h',h''⟩
   rwa[h] at h'
 
-theorem Set.prod_isPartition (h : ∀ i, Set.IsPartition (y i)) :
+theorem Set.iProd_isPartition (h : ∀ i, Set.IsPartition (y i)) :
     Set.IsPartition (fun (i' : (i : ι) → ι' i) => Πˢ i : ι, y i (i' i)) := by
   constructor
-  · apply Set.prod_isCovering
+  · apply Set.iProd_isCovering
     exact fun x => (h x).left
-  · apply Set.prod_disjoint
+  · apply Set.iProd_disjoint
     exact fun x => (h x).right
