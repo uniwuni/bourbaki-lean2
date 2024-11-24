@@ -72,4 +72,66 @@ theorem singleton_partition : IsPartition (fun x : α => {x}) := by
     rw[h']
     exact h
 
+structure Partition (α : Type*) where
+  subsets : Set (Set α)
+  isPartition' : IsPartition (fun (x : subsets) => x.val)
+  empty_not_included : ∅ ∉ subsets
+
+theorem Partition.eq_iff {p q : Partition α} : p = q ↔ p.subsets = q.subsets := by
+  constructor
+  · intro h
+    rw[h]
+  · intro h
+    rcases p
+    rcases q
+    simp only [mk.injEq]
+    exact h
+
+@[ext] theorem Partition.eq_of {p q : Partition α} : p.subsets = q.subsets → p = q := Partition.eq_iff.mpr
+
+def Partition.partition (p : Partition α) : p.subsets → Set α := Subtype.val
+
+@[simp] theorem Partition.isPartition (p : Partition α) : IsPartition p.partition := p.isPartition'
+
+@[simp] theorem partition.val_partition {p : Partition α} {q} {h : q ∈ p.subsets}: p.partition ⟨q,h⟩ = q := rfl
+
+
+theorem IsPartition.equivalent_partition (h : IsPartition x) (ne : (i : _) → (x i).Nonempty) : ∃ p : Partition α, FinerThan p.partition x ∧ FinerThan x p.partition := by
+  let q := Set.image x Set.univ
+  have h2 : IsPartition (fun (x : q) => x.val) := by
+    constructor
+    · apply isCovering_of_mem_exists
+      intro a
+      have ⟨i,h'⟩ := h.1.mem_exists a
+      exists ⟨x i, ⟨i, by simp only [Relation.mem_graph_iff, mem_univ, and_self]⟩⟩
+    · intro ⟨y, ⟨i,hy, _⟩⟩ ⟨z,⟨j,hz,_⟩⟩ ne'
+      ext a
+      simp only [ne_eq, Subtype.eq_iff, mem_inter_iff, not_mem_empty, iff_false, not_and] at *
+      rw[Relation.mem_graph_iff] at hy hz
+      intro h' h''
+      rcases hy
+      rcases hz
+      have := h.2 i j (fun h => ne' $ congrArg x h)
+      have that : a ∈ x i ∩ x j := ⟨h',h''⟩
+      rwa[this] at that
+  have h3 : ∅ ∉ q := by
+    rintro ⟨i, ⟨r,_⟩⟩
+    simp only [Relation.mem_graph_iff] at r
+    specialize ne i
+    rw[← r] at ne
+    apply empty_not_nonempty ne
+  exists ⟨q,h2,h3⟩
+  constructor
+  · intro ⟨a, ⟨i, ⟨h, _⟩⟩⟩
+    simp only [Relation.mem_graph_iff] at h
+    obtain rfl := h
+    exists i
+  · intro i
+    exists ⟨x i, ⟨i, by simp only [Relation.mem_graph_iff, mem_univ, and_self]⟩⟩
+
+theorem Partition.all_nonempty (p : Partition α) {a} (h' : a ∈ p.subsets) : a.Nonempty := by
+  rw[nonempty_iff_neq_empty]
+  rintro rfl
+  apply p.empty_not_included h'
+
 end Set

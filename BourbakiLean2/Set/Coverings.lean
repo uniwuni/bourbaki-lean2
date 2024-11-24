@@ -107,4 +107,9 @@ theorem IsCovering.glue_unique (h : IsCovering x) {f : (i : ι) → x i → β} 
   rw[h.glue_agrees h' h''']
   rw[h'' _ _ h''']
 
+structure Covering (α : Type*) where
+  index : Type*
+  covering : index → Set α
+  isCovering : IsCovering covering
+
 end Set

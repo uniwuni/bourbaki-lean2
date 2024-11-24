@@ -5,8 +5,20 @@ import BourbakiLean2.Set.Partitions
 
 attribute [class] Equivalence
 variable {α γ : Type*} {r : Relation α α}
+abbrev Relation.IsEquivalence (r : Relation α α) := Equivalence (fun a b => (a,b) ∈ r)
+
 namespace Relation
-abbrev IsEquivalence (r : Relation α α) := Equivalence (fun a b => (a,b) ∈ r)
+
+theorem equiv_refl {r : Relation α α} [inst : IsEquivalence r] {a : α} : (a,a) ∈ r :=
+  inst.refl _
+
+@[symm] theorem equiv_symm {r : Relation α α} [inst : IsEquivalence r] {a b : α} (h : (a,b) ∈ r) : (b,a) ∈ r :=
+  inst.symm h
+
+@[trans] theorem equiv_trans {r : Relation α α} [inst : IsEquivalence r] {a b c: α}
+  (h : (a,b) ∈ r) (h' : (b,c) ∈ r): (a,c) ∈ r :=
+  inst.trans h h'
+
 
 instance : IsEquivalence (Set.univ : Relation α α) where
   refl _ := trivial
@@ -33,6 +45,12 @@ instance {f : γ → α} [inst : IsEquivalence r] : IsEquivalence (r.inverse_ima
   refl _ := inst.refl _
   symm := inst.symm
   trans := inst.trans
+
+instance {x : Set α} [inst : IsEquivalence r] : IsEquivalence (r.restrict x) where
+  refl _ := inst.refl _
+  symm := inst.symm
+  trans := inst.trans
+
 
 instance {ι : Type*} {r : ι → Relation α α} [inst : ∀ x, IsEquivalence (r x)] : IsEquivalence (⋂ i, r i) where
   refl _ := fun i => (inst i).refl _
@@ -232,7 +250,7 @@ theorem Relation.IsEquivalence.comp_isEquivalence_iff_commute [inst : Relation.I
       simp only [mem_domain_iff, mem_comp_iff, Set.mem_univ, iff_true]
       exists a
       exists a
-      simp only [inst'.refl, inst.refl, and_self]
+      simp only [equiv_refl, and_self]
     · constructor
       · rw[inv_comp, h, e1, e2]
       · conv =>
@@ -569,9 +587,14 @@ def Relation.IsEquivalence.quotient [r.IsEquivalence] {s : Relation α α} (h : 
     (fun _ _ h' => Quot.sound $ h h')).identified_under
 
 
-@[simp] theorem Relation.IsEquivalence.quotient_lift_iff {a a'} [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
+theorem Relation.IsEquivalence.equiv_quotient_iff {a a'} [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
     ⟨Quot.mk _ a, Quot.mk _ a'⟩ ∈ inst.quotient h ↔ ⟨a,a'⟩ ∈ s := by
   simp only [quotient, Function.mem_identified_under, Quot.mk_eq_iff_rel]
+
+--theorem Relation.IsEquivalence_quotient_iff {a a'} [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
+--    ⟨Quot.mk _ a, Quot.mk _ a'⟩ ∈ inst.quotient h ↔ ∃ b b', (a,b) ∈ r ∧ (b, b') ∈ s ∧ (b', a') \in
+--  simp only [quotient, Function.mem_identified_under, Quot.mk_eq_iff_rel]
+#check Quotient.lift₂
 
 def Relation.IsEquivalence.quotient_quotient [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
     Quot (Function.curry (inst.quotient h)) → Quot (Function.curry s) :=
@@ -606,7 +629,7 @@ theorem Relation.IsEquivalence.is_quotient_quotient [inst : r.IsEquivalence] {s 
   ext ⟨a,a'⟩
   obtain ⟨a,rfl⟩ := a.exists_rep
   obtain ⟨a',rfl⟩ := a'.exists_rep
-  simp only [quotient_lift_iff, Relation.mem_inverse_image_iff]
+  simp only [equiv_quotient_iff, Relation.mem_inverse_image_iff]
 
 
 variable {s : Relation β β} [inst : r.IsEquivalence] [inst' : s.IsEquivalence]
@@ -664,3 +687,31 @@ def Relation.IsEquivalence.powerset_quotient_subset_powerset {x : Set α} :
       rintro ⟨b,h⟩
       simp only [Function.comp_apply, Subtype.eq_iff, Set.inter_eq_iff_subset_right]
       exact h)
+
+def Relation.IsEquivalence.quotient_image_bij_inverse_image {f : α → β} {r : Relation β β} [inst : r.IsEquivalence] :
+    Function.Bijection (Quot $ Function.curry $ r.inverse_image f) (Quot $ Function.curry $ r.restrict $ Set.image f Set.univ) := by
+  exists compatible_lift2 (f := f.corestrict $ Set.subset_refl _) (fun _ _ h => h)
+  constructor
+  · intro a a' h
+    obtain ⟨a,rfl⟩ := a.exists_rep
+    obtain ⟨a',rfl⟩ := a'.exists_rep
+    simp only [compatible_lift2_apply, Quot.mk_eq_iff_rel, mem_restrict_iff,
+      Function.coe_corestrict, mem_inverse_image_iff] at *
+    exact h
+  · rw[Function.surj_iff]
+    intro b
+    obtain ⟨⟨b,⟨a,h,_⟩⟩,rfl⟩ := b.exists_rep
+    exists Quot.mk _ a
+    simp only [mem_graph_iff] at h
+    simp only [compatible_lift2_apply, Quot.mk_eq_iff_rel, mem_restrict_iff,
+      Function.coe_corestrict, h, inst.refl]
+
+
+def Quot.lift2_same (f : α → α → β) {r : α → α → Prop} [inst : Equivalence r]
+    (h : ∀ x x' y y', r x x' → r y y' → f x y = f x' y') : Quot r → Quot r → β :=
+  Quot.lift (fun a => Quot.lift (f a) $ fun _ _ h' => h _ _ _ _ (inst.refl _) h')
+    (fun _ _ r' => by ext b; obtain ⟨b,rfl⟩ := b.exists_rep; simp only [h _ _ _ _ r' $
+        inst.refl _])
+@[simp] theorem Quot.lift2_same_val {f : α → α → β} {r : α → α → Prop} [inst : Equivalence r]
+    (h : ∀ x x' y y', r x x' → r y y' → f x y = f x' y') {a b : α} :
+    Quot.lift2_same f h (Quot.mk r a) (Quot.mk r b) = f a b := rfl
