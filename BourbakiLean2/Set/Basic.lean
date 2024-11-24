@@ -3,7 +3,7 @@ import BourbakiLean2.Logic
 namespace Set
 variable {α : Type*} {p q : α → Prop}
 
-/- setOf stuff -/
+/-! setOf stuff -/
 
 @[simp]
 theorem mem_setOf_iff {x : α} :
@@ -11,7 +11,7 @@ theorem mem_setOf_iff {x : α} :
 theorem mem_setOf_of {x : α} (h : p x) : x ∈ {y | p y} := h
 theorem of_mem_setOf {x : α} (h : x ∈ {y | p y}) : p x := h
 
-/- subsets -/
+/-! subsets -/
 @[simp, refl]
 theorem subset_refl (x : Set α) : x ⊆ x := fun _ h => h
 
@@ -46,7 +46,7 @@ theorem eq_iff_subset_subset : x = y ↔ (x ⊆ y ∧ y ⊆ x) := by
   · intro h
     exact ⟨fun a => (h a).1, fun a => (h a).2⟩
 
-/- simp lemmas -/
+/-! simp lemmas -/
 
 @[simp] theorem mem_univ {a : α} : a ∈ Set.univ := ⟨⟩
 @[simp] theorem subset_univ : x ⊆ Set.univ := fun _ _ => ⟨⟩
@@ -71,10 +71,12 @@ theorem univ_subset_iff : univ ⊆ x ↔ x = univ := by
     simp only [h, mem_univ]
   · rintro rfl
     rfl
-
+/-! elements of operations -/
 @[simp] theorem mem_sdiff_iff {a} : a ∈ x \ y ↔ a ∈ x ∧ a ∉ y := Iff.rfl
 @[simp] theorem mem_compl_iff {a} : a ∈ xᶜ ↔ a ∉ x := Iff.rfl
 @[simp] theorem mem_powerset_iff {a} : a ∈ 𝒫 x ↔ a ⊆ x := Iff.rfl
+
+/-! complement lemmas -/
 @[simp] theorem compl_compl : (xᶜ)ᶜ = x := by ext; simp only [mem_compl_iff, Classical.not_not]
 @[simp] theorem sdiff_univ_eq_compl : Set.univ \ x = xᶜ := by ext; simp only [mem_sdiff_iff,
   mem_univ, true_and, mem_compl_iff]
@@ -90,6 +92,7 @@ theorem compl_subset_iff_compl_subset : x.compl ⊆ y ↔ y.compl ⊆ x := by
   rw[← @Classical.not_not (a ∈ x)]
   exact imp_iff_not_imp_not
 
+/-! misc -/
 @[simp] theorem subset_singleton_iff {a} : x ⊆ {a} ↔ x = {a} ∨ x = ∅ := by
   constructor
   · intro h
@@ -110,7 +113,7 @@ theorem compl_subset_iff_compl_subset : x.compl ⊆ y ↔ y.compl ⊆ x := by
 end
 
 
-/- sets of products -/
+/-! sets of products -/
 
 section
 variable {β : Type*}
@@ -120,6 +123,7 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
 @[simp] theorem mem_prod_iff {a : α} {b : β} {x : Set α} {y : Set β} :
     (a,b) ∈ prod x y ↔ a ∈ x ∧ b ∈ y := Iff.rfl
 
+/-- for nonempty sets, products are subsets of another iff the factors are -/
 @[simp] theorem prod_subset_prod_nonempty_iff {x x' : Set α} {y y' : Set β}
     (hx : x.Nonempty) (hy : y.Nonempty) : prod x y ⊆ prod x' y' ↔ (x ⊆ x' ∧ y ⊆ y') := by
   rcases hx with ⟨ax, hx⟩
@@ -147,7 +151,7 @@ def prod (x : Set α) (y : Set β) : Set (α × β) := {a | a.1 ∈ x ∧ a.2 �
   simp only [mem_prod_iff, mem_univ, and_self]
 
 end
-
+/-! nonempty equivalences -/
 theorem nonempty_iff_neq_empty {x : Set α} : x.Nonempty ↔ x ≠ ∅ := by
   constructor
   · rintro ⟨a,h⟩ rfl
@@ -169,53 +173,3 @@ theorem nonempty_iff_neq_empty {x : Set α} : x.Nonempty ↔ x ≠ ∅ := by
   simp only [mem_singleton_iff, not_mem_empty, iff_false, not_true_eq_false] at h
 
 end Set
-
-def ExistsUnique {α : Type*} (p : α → Prop) := ∃ x, p x ∧ ∀ y, p y → y = x
-open Lean
-
-
-/--
-Checks to see that `xs` has only one binder.
--/
-def isExplicitBinderSingular (xs : TSyntax ``explicitBinders) : Bool :=
-  match xs with
-  | `(explicitBinders| $_:binderIdent $[: $_]?) => true
-  | `(explicitBinders| ($_:binderIdent : $_)) => true
-  | _ => false
-
-open TSyntax.Compat in
-/--
-`∃! x : α, p x` means that there exists a unique `x` in `α` such that `p x`.
-This is notation for `ExistsUnique (fun (x : α) ↦ p x)`.
-
-This notation does not allow multiple binders like `∃! (x : α) (y : β), p x y`
-as a shorthand for `∃! (x : α), ∃! (y : β), p x y` since it is liable to be misunderstood.
-Often, the intended meaning is instead `∃! q : α × β, p q.1 q.2`.
--/
-macro "∃!" xs:explicitBinders ", " b:term : term => do
-  if !isExplicitBinderSingular xs then
-    Macro.throwErrorAt xs "\
-      The `ExistsUnique` notation should not be used with more than one binder.\n\
-      \n\
-      The reason for this is that `∃! (x : α), ∃! (y : β), p x y` has a completely different \
-      meaning from `∃! q : α × β, p q.1 q.2`. \
-      To prevent confusion, this notation requires that you be explicit \
-      and use one with the correct interpretation."
-  expandExplicitBinders ``ExistsUnique xs b
-
-@[app_unexpander ExistsUnique] def unexpandExistsUnique : Lean.PrettyPrinter.Unexpander
-  | `($(_) fun $x:ident ↦ $b)                      => `(∃! $x:ident, $b)
-  | `($(_) fun ($x:ident : $t) ↦ $b)               => `(∃! $x:ident : $t, $b)
-  | _                                               => throw ()
-
-/--
-`∃! x ∈ s, p x` means `∃! x, x ∈ s ∧ p x`, which is to say that there exists a unique `x ∈ s`
-such that `p x`.
-Similarly, notations such as `∃! x ≤ n, p n` are supported,
-using any relation defined using the `binder_predicate` command.
--/
-syntax "∃! " binderIdent binderPred ", " term : term
-
-macro_rules
-  | `(∃! $x:ident $p:binderPred, $b) => `(∃! $x:ident, satisfies_binder_pred% $x $p ∧ $b)
-  | `(∃! _ $p:binderPred, $b) => `(∃! x, satisfies_binder_pred% x $p ∧ $b)

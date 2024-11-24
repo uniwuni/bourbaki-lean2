@@ -270,5 +270,6 @@ elab "Type*" : term => do
   let u ← Lean.Meta.mkFreshLevelMVar
   Elab.Term.levelMVarToParam (.sort (.succ u))
 
+/-- The coercion of sets to types via their elements -/
 instance {α : Type u} : CoeSort (Set α) (Type u) where
   coe x := Subtype (fun a => a ∈ x)

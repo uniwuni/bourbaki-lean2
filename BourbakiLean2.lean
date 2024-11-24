@@ -14,3 +14,5 @@ import BourbakiLean2.Equivalence
 import BourbakiLean2.Function.Basic
 import BourbakiLean2.Function.Prod
 import BourbakiLean2.Function.Rel
+import BourbakiLean2.Order.Basic
+import BourbakiLean2.Order.Synonyms
