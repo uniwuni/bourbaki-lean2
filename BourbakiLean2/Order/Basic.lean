@@ -69,34 +69,82 @@ instance equivalent_rel : Relation.IsEquivalence (Preorder.equivalent_rel (α :=
   symm x := ⟨x.2,x.1⟩
   trans x y := ⟨le_trans x.1 y.1, le_trans y.2 x.2⟩
 
+@[simp] theorem Preorder.diag_subset_graph : Relation.diag ⊆ (LE.le_rel (α := α)) := by
+  rintro ⟨a,b⟩ h
+  simp only [Relation.mem_diag_iff] at h
+  rw[h]
+  exact le_rfl
+
+@[simp] theorem Preorder.graph_comp_self : (LE.le_rel (α := α)).comp LE.le_rel = LE.le_rel := by
+  ext ⟨a,b⟩
+  constructor
+  · intro ⟨c,h,h'⟩
+    simp only [LE.mem_le_rel_iff, ge_iff_le] at *
+    apply le_trans _ _ _ h h'
+  · intro h
+    simp only [LE.mem_le_rel_iff, Relation.mem_comp_iff] at *
+    exists a
+
 universe u
 def Preorder.QuotEquiv (α : Type u) [inst : Preorder α] : Type u := Quot (α := α) (Function.curry Preorder.equivalent_rel)
-
+def Preorder.QuotEquiv.from {α : Type u} [Preorder α] (h : Preorder.QuotEquiv α) : Quot (α := α) (Function.curry Preorder.equivalent_rel) := h
+def Preorder.QuotEquiv.to {α : Type u} [Preorder α] (h : Quot (α := α) (Function.curry Preorder.equivalent_rel)) : Preorder.QuotEquiv α := h
+def Preorder.QuotEquiv.mk {α : Type u} [Preorder α] (h : α) : Preorder.QuotEquiv α := Quot.mk _ h
 end Preorder
+
+theorem isPreorder_of_graph_prop {r : Relation α α} (h : r.comp r = r) (h' : Relation.diag ⊆ r) :
+    IsPreorder r where
+  le_refl a := by
+    have : (a,a) ∈ Relation.diag := by simp only [Relation.mem_diag_iff]
+    apply h' this
+  le_trans := by
+    intro a b c h1 h2
+    rw[← h]
+    exists b
 
 
 
 section PartialOrder
-variable [PartialOrder α] {a b : α}
+variable [PartialOrder α] {a b c : α}
 theorem le_antisymm_iff : (a ≤ b ∧ b ≤ a) ↔ a = b :=
   ⟨fun ⟨h,h'⟩ => PartialOrder.le_antisymm _ _ h h',
    fun h => ⟨h ▸ le_refl a, h ▸ le_refl b⟩⟩
 
 theorem le_antisymm : a ≤ b → b ≤ a → a = b := PartialOrder.le_antisymm a b
 
+theorem le_iff_lt_or_eq : a ≤ b ↔ a < b ∨ a = b := by
+  rw[lt_iff_le_not_le]
+  constructor
+  · intro h
+    by_cases h' : b ≤ a
+    · exact Or.inr $ le_antisymm h h'
+    · exact Or.inl ⟨h,h'⟩
+  · rintro (h|rfl)
+    · exact h.1
+    · rfl
+
+@[trans] theorem lt_of_lt_lt (h : a < b) (h' : b < c) : a < c := by
+  rw[lt_iff_le_not_le] at *
+  apply And.intro (le_trans h.1 h'.1)
+  intro h''
+  exact h'.2 (le_trans h'' h.1)
+
+theorem lt_of_le_lt (h : a ≤ b) (h' : b < c) : a < c := by
+  rw[le_iff_lt_or_eq] at h
+  rcases h with h | rfl
+  · apply lt_of_lt_lt h h'
+  · exact h'
+
+theorem lt_of_lt_le (h : a < b) (h' : b ≤ c) : a < c := by
+  rw[le_iff_lt_or_eq] at h'
+  rcases h' with h' | rfl
+  · apply lt_of_lt_lt h h'
+  · exact h
+
+
 @[simp] theorem PartialOrder.equivalent_rel_diag : Preorder.equivalent_rel = (Relation.diag (α := α)) := by
   ext ⟨a,b⟩
   simp only [Preorder.mem_equivalent_rel_iff, le_antisymm_iff, Relation.mem_diag_iff]
-
-@[simp] theorem PartialOrder.graph_comp_self : (LE.le_rel (α := α)).comp LE.le_rel = LE.le_rel := by
-  ext ⟨a,b⟩
-  constructor
-  · intro ⟨c,h,h'⟩
-    simp only [LE.mem_le_rel_iff, ge_iff_le] at *
-    apply le_trans h h'
-  · intro h
-    simp only [LE.mem_le_rel_iff, Relation.mem_comp_iff] at *
-    exists a
 
 @[simp] theorem PartialOrder.graph_inter_inv : (LE.le_rel (α := α)) ∩ LE.le_rel.inv = Relation.diag := by
   ext ⟨a,b⟩
@@ -210,3 +258,7 @@ instance [Preorder α] : PartialOrder (Preorder.QuotEquiv α) where
     apply Quot.sound
     simp only [Quot.lift2_same_val, Function.curry_apply] at *
     exact ⟨h,h'⟩
+
+@[simp] theorem Preorder.quotEquiv_le_iff [Preorder α] {a b : α} :
+    (Preorder.QuotEquiv.mk a : Preorder.QuotEquiv α) ≤ (Preorder.QuotEquiv.mk b) ↔ a ≤ b := by
+  simp only [LE.le, QuotEquiv.mk, Quot.lift2_same_val]
