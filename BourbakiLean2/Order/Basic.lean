@@ -1,5 +1,6 @@
 import BourbakiLean2.Equivalence
 import BourbakiLean2.Order.Synonyms
+import BourbakiLean2.Set.Prod
 variable {α : Type*}
 
 def LE.le_rel [LE α] : Relation α α := fun ⟨a,b⟩ => a ≤ b
@@ -39,6 +40,20 @@ instance {r : Relation α α} [inst : r.IsEquivalence] : IsPreorder r where
   le_refl := inst.refl
   le_trans _ _ _ := inst.trans
 
+instance [LE α] {p : α → Prop} : LE {x : α // p x} where
+  le x y := (x : α) ≤ y
+
+instance [LT α] {p : α → Prop} : LT {x : α // p x} where
+  lt x y := (x : α) < y
+
+instance [Preorder α] {p : α → Prop} : Preorder {x : α // p x} where
+  le_trans _ _ _ h h' := Preorder.le_trans _ _ _ h h'
+  le_refl _ := Preorder.le_refl _
+  lt_iff_le_not_le _ _ := Preorder.lt_iff_le_not_le _ _
+
+instance [PartialOrder α] {p : α → Prop} : PartialOrder {x : α // p x} where
+  le_antisymm _ _ h h' := Subtype.eq $ PartialOrder.le_antisymm _ _ h h'
+
 section Preorder
 variable [Preorder α] {a b c : α}
 
@@ -54,6 +69,10 @@ theorem le_rfl : a ≤ a := le_refl a
 theorem lt_iff_le_not_le : a < b ↔ a ≤ b ∧ ¬b ≤ a := Preorder.lt_iff_le_not_le _ _
 
 theorem lt_of_le_not_le (hab : a ≤ b) (hba : ¬ b ≤ a) : a < b := lt_iff_le_not_le.2 ⟨hab, hba⟩
+
+theorem le_of_lt (h : a < b) : a ≤ b := by
+  rw[lt_iff_le_not_le] at h
+  exact h.1
 
 instance opPreorder : Preorder (Op α) where
   le_refl a := le_refl (α := α) a
@@ -83,6 +102,34 @@ theorem le_antisymm_iff : (a ≤ b ∧ b ≤ a) ↔ a = b :=
    fun h => ⟨h ▸ le_refl a, h ▸ le_refl b⟩⟩
 
 theorem le_antisymm : a ≤ b → b ≤ a → a = b := PartialOrder.le_antisymm a b
+
+theorem le_iff_lt_or_eq : a ≤ b ↔ (a = b ∨ a < b) := by
+  rw[lt_iff_le_not_le]
+  constructor
+  · intro h
+    by_cases eq : a = b
+    · left
+      assumption
+    · right
+      exact ⟨h, fun h' => eq $ le_antisymm h h'⟩
+  · rintro (rfl|⟨h,h'⟩)
+    · rfl
+    · assumption
+
+theorem lt_iff_le_not_eq : a < b ↔ (a ≤ b ∧ a ≠ b) := by
+  rw[lt_iff_le_not_le]
+  constructor
+  · rintro ⟨h,h'⟩
+    constructor
+    · assumption
+    · rintro rfl
+      exact h' h
+  · rintro ⟨h,h'⟩
+    constructor
+    · assumption
+    · intro h''
+      exact h' $ le_antisymm h h''
+
 
 @[simp] theorem PartialOrder.equivalent_rel_diag : Preorder.equivalent_rel = (Relation.diag (α := α)) := by
   ext ⟨a,b⟩
@@ -137,6 +184,8 @@ instance : PartialOrder (Set α) where
   le_refl _ := Set.subset_rfl
   le_trans _ _ _ := Set.subset_trans
   le_antisymm _ _ a b := Set.eq_iff_subset_subset.mpr ⟨a,b⟩
+
+@[simp] theorem le_set_iff_subset {a b : Set α} : a ≤ b ↔ a ⊆ b := Iff.rfl
 
 instance {β : α → Type*} : PartialOrder (PartialMap α β) where
   le_refl _ := ⟨le_rfl, fun _ _ => rfl⟩
@@ -210,3 +259,21 @@ instance [Preorder α] : PartialOrder (Preorder.QuotEquiv α) where
     apply Quot.sound
     simp only [Quot.lift2_same_val, Function.curry_apply] at *
     exact ⟨h,h'⟩
+
+instance {β : α → Type*} [∀ x, Preorder (β x)] : Preorder (Pointwise α β) where
+  le_refl _ _ := le_refl _
+  le_trans _ _ _ h h' a := le_trans (h a) (h' a)
+
+instance {β : α → Type*} [∀ x, PartialOrder (β x)] : PartialOrder (Pointwise α β) where
+  le_antisymm _ _ h h' := funext (fun a => le_antisymm (h a) (h' a))
+
+theorem pointwise_graph_product {β : α → Type*} [∀ x, LE (β x)] :
+    (LE.le_rel : Relation (Pointwise α β) _) =
+    Set.image (fun (x : (i : _) → (β i × β i)) => (fun a => (x a).1, fun a => (x a).2)) (Πˢ i, LE.le_rel) := by
+  ext ⟨a,a'⟩
+  simp only [LE.mem_le_rel_iff, LE.le, Set.mem_image_iff, Prod.mk.injEq, mem_iProd_iff]
+  constructor
+  · intro h
+    exists fun i => ⟨a i, a' i⟩
+  · rintro ⟨b, ⟨rfl, rfl⟩, h''⟩ i
+    exact h'' i

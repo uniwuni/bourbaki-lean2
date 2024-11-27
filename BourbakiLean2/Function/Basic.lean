@@ -274,7 +274,6 @@ theorem Bijective.surj (h : Bijective f) : Surjective f := h.2
 theorem bij_id : Bijective (id : α → α) := ⟨inj_id, surj_id⟩
 theorem Bijective.comp (h : Bijective f) (h' : Bijective g) : Bijective (f ∘ g) :=
   ⟨(h.inj).comp (h'.inj), (h.surj).comp (h'.surj)⟩
-
 theorem bij_iff_inv_functional : Bijective f ↔ (Relation.graph f).inv.Functional := by
   constructor
   · rintro ⟨h,h'⟩ b
@@ -339,6 +338,10 @@ end
 @[simp] theorem id_inv (h : Bijective id) : h.inv = (id : α → α) := by
   ext a
   simp only [id_eq, Bijective.inv_val_iff]
+
+theorem Bijective.comp_inv (h : Bijective f) (h' : Bijective g) : (h.comp h').inv = h'.inv ∘ h.inv := by
+  ext a
+  simp only [comp_apply, inv_val_iff, val_inv_val]
 
 
 @[simp] def IsRetractionOf (r : α → β) (g : β → α) := r ∘ g = id
