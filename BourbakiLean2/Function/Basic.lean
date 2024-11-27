@@ -579,7 +579,7 @@ theorem bij_of_surj_surj_inj1 {f' : β → γ} (h : (f' ∘ f ∘ g).Surjective)
   ⟨inj_of_comp_inj (g := f') (f := g) $ inj_of_surj_comp_inj h'' $ surj_of_comp_surj h',
    surj_of_comp_surj h⟩
 
-theorem bij_of_surj_surj_inj2 {f' : β → γ} (h : (f' ∘ f ∘ g).Surjective) (h' : (f ∘ g ∘ f').Surjective)
+theorem bij_of_surj_inj2 {f' : β → γ} (h' : (f ∘ g ∘ f').Surjective)
     (h'' : (g ∘ f' ∘ f).Injective) : f.Bijective :=
   ⟨inj_of_comp_inj (comp_assoc ▸ h''),
    surj_of_comp_surj h'⟩

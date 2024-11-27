@@ -305,7 +305,7 @@ instance {β : α → Type*} [∀ x, PartialOrder (β x)] : PartialOrder (Pointw
 
 theorem pointwise_graph_product {β : α → Type*} [∀ x, LE (β x)] :
     (LE.le_rel : Relation (Pointwise α β) _) =
-    Set.image (fun (x : (i : _) → (β i × β i)) => (fun a => (x a).1, fun a => (x a).2)) (Πˢ i, LE.le_rel) := by
+    Set.image (fun (x : (i : _) → (β i × β i)) => (fun a => (x a).1, fun a => (x a).2)) (Πˢ _i, LE.le_rel) := by
   ext ⟨a,a'⟩
   simp only [LE.mem_le_rel_iff, LE.le, Set.mem_image_iff, Prod.mk.injEq, mem_iProd_iff]
   constructor
