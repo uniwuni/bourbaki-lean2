@@ -594,7 +594,6 @@ theorem Relation.IsEquivalence.equiv_quotient_iff {a a'} [inst : r.IsEquivalence
 --theorem Relation.IsEquivalence_quotient_iff {a a'} [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
 --    ⟨Quot.mk _ a, Quot.mk _ a'⟩ ∈ inst.quotient h ↔ ∃ b b', (a,b) ∈ r ∧ (b, b') ∈ s ∧ (b', a') \in
 --  simp only [quotient, Function.mem_identified_under, Quot.mk_eq_iff_rel]
-#check Quotient.lift₂
 
 def Relation.IsEquivalence.quotient_quotient [inst : r.IsEquivalence] {s : Relation α α} [inst' : s.IsEquivalence] (h : r ⊆ s) :
     Quot (Function.curry (inst.quotient h)) → Quot (Function.curry s) :=

@@ -79,9 +79,9 @@ variable [PartialOrder α] [PartialOrder β] {f : α → β}
 theorem StrictMonotone.monotone (h : StrictMonotone f) : Monotone f := by
   intro x y h'
   rw[le_iff_lt_or_eq] at h'
-  rcases h' with (rfl|h')
-  · rfl
+  rcases h' with (h'|rfl)
   · exact le_of_lt $ h h'
+  · rfl
 
 theorem Monotone.strictMono_of_inj (h : Monotone f) (h' : f.Injective) : StrictMonotone f := by
   intro _ _ h''

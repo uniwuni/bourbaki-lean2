@@ -1,5 +1,6 @@
 
 variable {p q : Prop}
+/-- Any implication is equivalent to its converse. -/
 theorem imp_iff_not_imp_not : (p → q) ↔ (¬ q → ¬ p) := by
   constructor
   · exact fun h h' h'' => h' (h h'')
@@ -14,11 +15,13 @@ theorem func_subsingleton_iff_to_empty {α : Type u} {β : Type v} (h : α → E
   intro a b
   ext c
   rcases h c
+
+/-- transporting a proof along a path with the same basepoints doesnt yield anything new -/
 @[simp] theorem eq_rec_self {α : Sort u} {x : α → Sort u} {a} {h : a = a} {h' : x a} :
   @Eq.rec α a (fun x_1 _ ↦ x x_1) h' a h = h' := by
   rcases h
   rfl
-
+/-- transporting a proof along a path with the same basepoints in reverse doesnt yield anything new -/
 @[simp] theorem eq_rec_symm_self {α : Sort u} {x : α → Sort u} {a} {h : a = a} {h' : x a} :
   @Eq.rec α a (fun x_1 _ ↦ x x_1) h' a h.symm = h' := by
   rcases h
@@ -38,10 +41,6 @@ instance PUnit.unique : Unique PUnit.{u} where
   default := PUnit.unit
   uniq x := subsingleton x _
 
--- Porting note:
--- This should not require a nolint,
--- but it is currently failing due to a problem in the linter discussed at
--- https://leanprover.zulipchat.com/#narrow/stream/287929-mathlib4/topic/.60simpNF.60.20error.20.22unknown.20metavariable.22
 @[simp]
 theorem PUnit.default_eq_unit : (default : PUnit) = PUnit.unit :=
   rfl
@@ -51,6 +50,7 @@ def uniqueProp {p : Prop} (h : p) : Unique.{0} p where
   default := h
   uniq _ := rfl
 
+/-- `True` has a unique term. -/
 instance : Unique True :=
   uniqueProp trivial
 
@@ -83,3 +83,54 @@ theorem exists_iff {p : α → Prop} : Exists p ↔ p default :=
   ⟨fun ⟨a, ha⟩ ↦ eq_default a ▸ ha, Exists.intro default⟩
 
 end
+
+
+def ExistsUnique {α : Type u} (p : α → Prop) := ∃ x, p x ∧ ∀ y, p y → y = x
+open Lean
+
+
+/--
+Checks to see that `xs` has only one binder.
+-/
+def isExplicitBinderSingular (xs : TSyntax ``explicitBinders) : Bool :=
+  match xs with
+  | `(explicitBinders| $_:binderIdent $[: $_]?) => true
+  | `(explicitBinders| ($_:binderIdent : $_)) => true
+  | _ => false
+
+open TSyntax.Compat in
+/--
+`∃! x : α, p x` means that there exists a unique `x` in `α` such that `p x`.
+This is notation for `ExistsUnique (fun (x : α) ↦ p x)`.
+
+This notation does not allow multiple binders like `∃! (x : α) (y : β), p x y`
+as a shorthand for `∃! (x : α), ∃! (y : β), p x y` since it is liable to be misunderstood.
+Often, the intended meaning is instead `∃! q : α × β, p q.1 q.2`.
+-/
+macro "∃!" xs:explicitBinders ", " b:term : term => do
+  if !isExplicitBinderSingular xs then
+    Macro.throwErrorAt xs "\
+      The `ExistsUnique` notation should not be used with more than one binder.\n\
+      \n\
+      The reason for this is that `∃! (x : α), ∃! (y : β), p x y` has a completely different \
+      meaning from `∃! q : α × β, p q.1 q.2`. \
+      To prevent confusion, this notation requires that you be explicit \
+      and use one with the correct interpretation."
+  expandExplicitBinders ``ExistsUnique xs b
+
+@[app_unexpander ExistsUnique] def unexpandExistsUnique : Lean.PrettyPrinter.Unexpander
+  | `($(_) fun $x:ident ↦ $b)                      => `(∃! $x:ident, $b)
+  | `($(_) fun ($x:ident : $t) ↦ $b)               => `(∃! $x:ident : $t, $b)
+  | _                                               => throw ()
+
+/--
+`∃! x ∈ s, p x` means `∃! x, x ∈ s ∧ p x`, which is to say that there exists a unique `x ∈ s`
+such that `p x`.
+Similarly, notations such as `∃! x ≤ n, p n` are supported,
+using any relation defined using the `binder_predicate` command.
+-/
+syntax "∃! " binderIdent binderPred ", " term : term
+
+macro_rules
+  | `(∃! $x:ident $p:binderPred, $b) => `(∃! $x:ident, satisfies_binder_pred% $x $p ∧ $b)
+  | `(∃! _ $p:binderPred, $b) => `(∃! x, satisfies_binder_pred% x $p ∧ $b)
