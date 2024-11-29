@@ -138,3 +138,16 @@ end Op
   refine And.intro ?wah $ Function.inj_iff_neq_of_neq.mp (fun _ _ => compl_inj) _ _ h.2.symm
   rw[compl_subset_iff_compl_subset, compl_compl]
   exact h.1
+
+theorem pseudoinv_of_antitone [Preorder α] [PartialOrder β] {f : α → β} {g : β → α}
+    (hf : Antitone f) (h : ∀ x, g (f x) ≥ x) (h' : ∀ y, f (g y) ≥ y) : f ∘ g ∘ f = f := by
+  ext a
+  apply le_antisymm
+  · exact hf (h a)
+  · apply h'
+
+theorem Subtype.val_monotone {p : α → Prop} [LE α] : Monotone (Subtype.val : {x // p x} → α) :=
+  fun _ _ h => h
+
+theorem Subtype.val_strictMonotone {p : α → Prop} [LT α] : StrictMonotone (Subtype.val : {x // p x} → α) :=
+  fun _ _ h => h

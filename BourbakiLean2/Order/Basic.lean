@@ -43,8 +43,13 @@ instance {r : Relation α α} [inst : r.IsEquivalence] : IsPreorder r where
 instance [LE α] {p : α → Prop} : LE {x : α // p x} where
   le x y := (x : α) ≤ y
 
+
+@[simp] theorem Subtype.le_iff_val [LE α] {p : α → Prop} {x y : {x // p x}} : x ≤ y ↔ (x : α) ≤ y := Iff.rfl
+
 instance [LT α] {p : α → Prop} : LT {x : α // p x} where
   lt x y := (x : α) < y
+
+@[simp] theorem Subtype.lt_iff_val [LT α] {p : α → Prop} {x y : {x // p x}} : x < y ↔ (x : α) < y := Iff.rfl
 
 instance [Preorder α] {p : α → Prop} : Preorder {x : α // p x} where
   le_trans _ _ _ h h' := Preorder.le_trans _ _ _ h h'
@@ -73,7 +78,11 @@ theorem lt_of_le_not_le (hab : a ≤ b) (hba : ¬ b ≤ a) : a < b := lt_iff_le_
 theorem le_of_lt (h : a < b) : a ≤ b := by
   rw[lt_iff_le_not_le] at h
   exact h.1
-
+theorem ne_of_lt (h : a < b) : a ≠ b := by
+  intro h'
+  rw[lt_iff_le_not_le, h'] at h
+  exact h.2 h.1
+theorem not_lt_self : ¬ a < a := fun h => ne_of_lt h rfl
 instance opPreorder : Preorder (Op α) where
   le_refl a := le_refl (α := α) a
   le_trans _ _ _ h h' := le_trans h' h

@@ -6,6 +6,8 @@ variable {α : Type*}
 def toOp (x : α) : Op α := x
 def fromOp (x : Op α) : α := x
 
+theorem toOp_fromOp {x : Op α}: toOp (fromOp x) = x := rfl
+theorem fromOp_toOp {x : α}: fromOp (toOp x) = x := rfl
 instance opLE [LE α] : LE (Op α) where
   le x y := LE.le (α := α) y x
 
