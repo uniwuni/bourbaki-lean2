@@ -27,11 +27,17 @@ theorem Monotone.comp (h : Monotone f) (h' : Monotone g) : Monotone (f ∘ g) :=
 theorem Monotone.comp_anti (h : Monotone f) (h' : Antitone g) : Antitone (f ∘ g) :=
   fun _ _ h'' => h $ h' h''
 
+theorem Monotone.restrict {x : Set β} (h : Monotone f) : Monotone (f.restriction x) :=
+  fun _ _ h' => h h'
+
 theorem Antitone.comp (h : Antitone f) (h' : Antitone g) : Monotone (f ∘ g) :=
   fun _ _ h'' => h $ h' h''
 
 theorem Antitone.comp_mono (h : Antitone f) (h' : Monotone g) : Antitone (f ∘ g) :=
   fun _ _ h'' => h $ h' h''
+
+theorem Antitone.restrict {x : Set β} (h : Antitone f) : Antitone (f.restriction x) :=
+  fun _ _ h' => h h'
 
 theorem IsOrderIso.le_iff (h : IsOrderIso f) {a b : β} : f a ≤ f b ↔ a ≤ b := by
   constructor
@@ -66,6 +72,14 @@ theorem StrictAntitone.comp (h : StrictAntitone f) (h' : StrictAntitone g) : Str
 
 theorem StrictAntitone.comp_mono (h : StrictAntitone f) (h' : StrictMonotone g) : StrictAntitone (f ∘ g) :=
   fun _ _ h'' => h $ h' h''
+
+theorem StrictMonotone.restrict {x : Set β} (h : StrictMonotone f) : StrictMonotone (f.restriction x) :=
+  fun _ _ h' => h h'
+
+theorem StrictAntitone.restrict {x : Set β} (h : StrictAntitone f) : StrictAntitone (f.restriction x) :=
+  fun _ _ h' => h h'
+
+
 end
 end CategoryStuff
 section PreorderImps
