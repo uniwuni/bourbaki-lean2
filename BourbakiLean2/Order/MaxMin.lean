@@ -91,3 +91,55 @@ theorem Greatest.subtype (h : Greatest a.val) : Greatest a :=
   fun _ => h _
 theorem Least.subtype (h : Least a.val) : Least a :=
   fun _ => h _
+
+
+/-! on partial maps -/
+variable {α : Type*} {β : α → Type*}
+theorem PartialMap.maximal_iff [∀ a, Nonempty (β a)] {x : PartialMap α β} :
+    Maximal x ↔ x.carrier = Set.univ := by
+  constructor
+  · intro h
+    classical
+    let y : PartialMap α β := ⟨Set.univ,
+      fun ⟨b,h⟩ => if h : b ∈ x.carrier then x.function ⟨b,h⟩ else Classical.choice (by infer_instance)⟩
+    have : x ≤ y := by
+      simp only [LE.le, Set.subset_univ, exists_true_left, y]
+      intro a h'
+      split
+      · simp only
+      · simp
+    specialize h _ this
+    rw[← h]
+  · intro h y h'
+    simp only [LE.le] at h'
+    rcases h' with ⟨h',h''⟩
+    rw[h] at h'
+    rcases x with ⟨xc, xf⟩
+    rcases y with ⟨yc, yf⟩
+    simp only [mk.injEq] at *
+    let hh : yc = xc := by
+      rw[Set.eq_iff_subset_subset]
+      constructor
+      · rw[h]
+        apply Set.subset_univ
+      · exact h'
+    constructor
+    · exact hh
+    · apply heq_of_eqRec_eq (congrArg _ hh)
+      ext ⟨a,h⟩
+      rcases hh
+      rw[← h'' a h]
+
+theorem PartialMap.least_iff {x : PartialMap α β} :
+    Least x ↔ x.carrier = ∅ := by
+  constructor
+  · intro h
+    specialize h ⟨∅, nofun⟩
+    rw[← Set.subset_empty_iff]
+    exact h.1
+  · intro h ⟨y,f⟩
+    constructor
+    · intro a h'
+      rw[h] at h'
+      exact h'.elim
+    · simp only [h, Set.empty_subset]
