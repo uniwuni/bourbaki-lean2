@@ -21,6 +21,12 @@ theorem val_mem_image_of_mem {x : Set α} {f : α → β} {a : α} (h : a ∈ x)
   val_mem_image_of_mem mem_univ
 end Set
 namespace Function
+theorem image_mono {f : α → β} {x y : Set α} (h : x ⊆ y) : f '' x ⊆ f '' y := by
+  intro b h'
+  simp only [Set.mem_image_iff] at *
+  obtain ⟨a,bfa,ax⟩ := h'
+  exists a
+  exact ⟨bfa, h ax⟩
 
 @[simp] theorem image_singleton {f : α → β} {a} : f '' {a} = {f a} := by
   ext b
@@ -72,6 +78,11 @@ namespace Function
 @[simp] theorem preimage_univ : f ⁻¹' Set.univ = Set.univ := by
   ext a
   simp only [Set.mem_preimage_iff, Set.mem_univ]
+
+theorem preimage_mono {y y' : Set β} (h : y ⊆ y'): f ⁻¹' y ⊆ f ⁻¹' y' := by
+  intro a
+  simp at *
+  apply h
 
 @[simp] theorem image_comp {z : Set γ} : (f ∘ g) '' z = f '' (g '' z) := by
   ext b
