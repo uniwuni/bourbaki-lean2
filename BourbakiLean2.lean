@@ -18,3 +18,8 @@ import BourbakiLean2.Order.Basic
 import BourbakiLean2.Order.Synonyms
 import BourbakiLean2.Order.Monotone
 import BourbakiLean2.Order.Intervals
+import BourbakiLean2.Order.Bounds
+import BourbakiLean2.Order.BoundedFunctions
+import BourbakiLean2.Order.MaxMin
+import BourbakiLean2.Order.Sets
+import BourbakiLean2.Order.GlbLub
