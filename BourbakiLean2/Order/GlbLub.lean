@@ -225,8 +225,100 @@ theorem isGLBi_double_family {ι' : Type} {x : ι' → ι → α} {a : ι' → �
     rw[IsGLBi, ← op_isLUB_iff, ← IsLUBi]
   apply isLUBi_double_family h
 
+theorem isLUB_pointwise {α : ι → Type*} [∀ i, Preorder (α i)] (x : Set ((i : _) → α i))
+    (a : (i : _) → α i) : IsLUB (α := Pointwise ι α) x a ↔ (∀ i, IsLUB ((fun p => p i) '' x) (a i)) := by
+  constructor
+  · intro h i
+    rw[isLUB_iff]
+    constructor
+    · intro a' h'
+      rw[Set.mem_image_iff] at h'
+      obtain ⟨p, rfl, pmem⟩ := h'
+      apply h.ge pmem
+    · intro b hb
+      classical
+      let a' i' := if h' : i' = i then h' ▸ b else a i'
+      have : UpperBound (α := Pointwise _ _) x a' := by
+        intro p hp i'
+        simp only [a']
+        by_cases hi : i' = i
+        · rcases hi
+          simp only [↓reduceDIte]
+          apply hb
+          rw[Set.mem_image_iff]
+          exists p
+        · simp only [hi, ↓reduceDIte]
+          exact (h.ge hp) i'
+      have := h.2 ⟨_,this⟩
+      apply le_trans (this i)
+      simp only [dite_eq_ite, ↓reduceIte, le_refl, a']
+  · intro h
+    rw[isLUB_iff]
+    constructor
+    · intro p hp i
+      apply (h i).ge (Set.val_mem_image_of_mem hp)
+    · intro p hp i
+      rw[(h i).le_iff]
+      intro a' ha'
+      rw[Set.mem_image_iff] at ha'
+      obtain ⟨a,rfl,ha⟩ := ha'
+      apply hp _ ha
 
-end
+theorem isGLB_pointwise {α : ι → Type*} [∀ i, Preorder (α i)] (x : Set ((i : _) → α i))
+    (a : (i : _) → α i) : IsGLB (α := Pointwise ι α) x a ↔ (∀ i, IsGLB ((fun p => p i) '' x) (a i)) := by
+  conv =>
+    rw[← op_isLUB_iff]
+    arg 2
+    intro i
+    rw[← op_isLUB_iff]
+  apply isLUB_pointwise (α := fun i => Op (α i)) (a := fun i => toOp $ a i)
+
+theorem IsLUB.in_ambient_le_in_subset
+    {s : Set α} {t : Set s} {a : s} {a' : α} (h : IsLUB t a)
+    (h' : IsLUB (Subtype.val '' t) a') : a' ≤ a := by
+  rw[h'.le_iff]
+  intro x
+  rw[Set.mem_image_iff]
+  rintro ⟨⟨a',ha'⟩,rfl,ha⟩
+  apply h.ge ha (b := ⟨x,ha'⟩)
+
+theorem IsGLB.in_subset_le_in_ambient
+    {s : Set α} {t : Set s} {a : s} {a' : α} (h : IsGLB t a)
+    (h' : IsGLB (Subtype.val '' t) a') : a ≤ a' := by
+  rw[h'.ge_iff]
+  intro x
+  rw[Set.mem_image_iff]
+  rintro ⟨⟨a',ha'⟩,rfl,ha⟩
+  apply h.le ha (b := ⟨x,ha'⟩)
+
+theorem IsLUB.same_in_subset {s : Set α} {t : Set s} {a : s} (h : IsLUB (Subtype.val '' t) a) :
+    IsLUB t a := by
+  rcases a with ⟨a,ha⟩
+  rw[isLUB_iff]
+  constructor
+  · intro ⟨b,hbs⟩ hbt
+    exact h.ge (Set.val_mem_image_of_mem hbt)
+  · intro ⟨b,hbs⟩ hbu
+    simp only [h.le_iff, LE.le]
+    intro a' ha'
+    rw[Set.mem_image_iff] at ha'
+    obtain ⟨⟨a,as⟩,rfl,ha'⟩ := ha'
+    apply hbu _ ha'
+
+theorem IsGLB.same_in_subset {s : Set α} {t : Set s} {a : s} (h : IsGLB (Subtype.val '' t) a) :
+    IsGLB t a := by
+  rcases a with ⟨a,ha⟩
+  rw[isGLB_iff]
+  constructor
+  · intro ⟨b,hbs⟩ hbt
+    exact h.le (Set.val_mem_image_of_mem hbt)
+  · intro ⟨b,hbs⟩ hbu
+    simp only [h.ge_iff, LE.le]
+    intro a' ha'
+    rw[Set.mem_image_iff] at ha'
+    obtain ⟨⟨a,as⟩,rfl,ha'⟩ := ha'
+    apply hbu _ ha'
+
 section
 variable {α : Type*} [PartialOrder α] {s : Set α} {a : α}
 
