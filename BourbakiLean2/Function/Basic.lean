@@ -686,3 +686,8 @@ theorem Eq.rec_of_inj {ι' : Type*} {ι : Type*} {x : ι → Type*}   {i i' : ι
   replace h := h' _ _ h
   cases h
   simp only
+
+@[simp] theorem Subtype.val_image {t : Set α} : (Subtype.val : t → α) '' Set.univ = t := by
+  ext a
+  simp only [Set.mem_image_iff, Set.mem_univ, and_true, Subtype.exists, exists_prop,
+    exists_eq_right']

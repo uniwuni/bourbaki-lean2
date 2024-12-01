@@ -5,9 +5,9 @@ variable {α : Type*} [Preorder α]
 def UpperBound (s : Set α) (a : α) := ∀ b ∈ s, b ≤ a
 def LowerBound (s : Set α) (a : α) := ∀ b ∈ s, a ≤ b
 
-def BoundedAbove (s : Set α) := ∃ a, UpperBound s a
-def BoundedBelow (s : Set α) := ∃ a, LowerBound s a
-def Bounded (s : Set α) := BoundedAbove s ∧ BoundedBelow s
+def Set.BoundedAbove (s : Set α) := ∃ a, UpperBound s a
+def Set.BoundedBelow (s : Set α) := ∃ a, LowerBound s a
+def Set.Bounded (s : Set α) := BoundedAbove s ∧ BoundedBelow s
 
 variable {s t : Set α} {a b : α}
 theorem upperBound_iff_greatest_of_mem (h : a ∈ s) :
@@ -34,13 +34,13 @@ theorem UpperBound.subset (h : UpperBound s a) (h' : t ⊆ s) : UpperBound t a :
 theorem LowerBound.subset (h : LowerBound s a) (h' : t ⊆ s) : LowerBound t a :=
   fun b h'' => h b (h' h'')
 
-theorem BoundedAbove.subset (h : BoundedAbove s) (h' : t ⊆ s) : BoundedAbove t :=
+theorem Set.BoundedAbove.subset (h : BoundedAbove s) (h' : t ⊆ s) : BoundedAbove t :=
   h.imp (fun _ h'' => h''.subset h')
 
-theorem BoundedBelow.subset (h : BoundedBelow s) (h' : t ⊆ s) : BoundedBelow t :=
+theorem Set.BoundedBelow.subset (h : BoundedBelow s) (h' : t ⊆ s) : BoundedBelow t :=
   h.imp (fun _ h'' => h''.subset h')
 
-theorem Bounded.subset (h : Bounded s) (h' : t ⊆ s) : Bounded t :=
+theorem Set.Bounded.subset (h : Bounded s) (h' : t ⊆ s) : Bounded t :=
   ⟨h.1.subset h', h.2.subset h'⟩
 
 theorem UpperBound.upperBound_of_le (h : UpperBound s a) (h' : a ≤ b) : UpperBound s b :=
