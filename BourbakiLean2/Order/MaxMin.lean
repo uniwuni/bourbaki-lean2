@@ -1,4 +1,5 @@
 import BourbakiLean2.Order.Monotone
+section
 variable {α β : Type*} [PartialOrder α] [PartialOrder β]
 
 /-! maximal and minimal elements -/
@@ -54,28 +55,44 @@ theorem Maximal.subtype (h : Maximal a.val) : Maximal a :=
   fun _ h' => Subtype.eq (h _ h')
 theorem Minimal.subtype (h : Minimal a.val) : Minimal a :=
   fun _ h' => Subtype.eq (h _ h')
-
+end
 
 /-! Greatest and least elements -/
-
+section
+variable {α β : Type*} [Preorder α] [Preorder β]
 @[simp] def Greatest (a : α) := ∀ b, b ≤ a
 @[simp] def Least (a : α) := ∀ b, a ≤ b
 
 variable {a a' : α}
-theorem Greatest.maximal (h : Greatest a) : Maximal a := fun _ => le_antisymm (h _)
-theorem Least.minimal (h : Least a) : Minimal a := fun _ h' => le_antisymm h' (h _)
 
 theorem greatest_iff_op_least : Greatest a ↔ Least (toOp a) := Iff.rfl
 theorem least_if_op_greatest : Least a ↔ Greatest (toOp a) := Iff.rfl
 
+
+variable {p : α → Prop} {a' : {a // p a}}
+theorem Greatest.subtype (h : Greatest a'.val) : Greatest a' :=
+  fun _ => h _
+theorem Least.subtype (h : Least a'.val) : Least a' :=
+  fun _ => h _
+
+end
+section
+variable {α β : Type*} [PartialOrder α] [PartialOrder β]
+variable {a a' : α}
 theorem Greatest.all_eq (h : Greatest a) (h' : Greatest a') : a = a' :=
   le_antisymm (h' a) (h a')
 theorem Least.all_eq (h : Least a) (h' : Least a') : a = a' :=
   le_antisymm (h a') (h' a)
+
 instance : Subsingleton {a : α // Greatest a} where
   allEq := fun ⟨_,h⟩ ⟨_,h'⟩ => Subtype.eq $ h.all_eq h'
 instance : Subsingleton {a : α // Least a} where
   allEq := fun ⟨_,h⟩ ⟨_,h'⟩ => Subtype.eq $ h.all_eq h'
+
+
+theorem Greatest.maximal (h : Greatest a) : Maximal a := fun _ => le_antisymm (h _)
+theorem Least.minimal (h : Least a) : Minimal a := fun _ h' => le_antisymm h' (h _)
+
 
 theorem Greatest.maximal_eq (h : Greatest a) (h' : Maximal a') : a = a' := h' _ (h _)
 theorem Least.minimal_eq (h : Least a) (h' : Minimal a') : a = a' := h' _ (h _)
@@ -86,12 +103,31 @@ def Least.unique_minimal (h : Least a) : Unique {a : α // Minimal a} where
   default := ⟨a, h.minimal⟩
   uniq := fun ⟨_,h'⟩ => Eq.symm $ Subtype.eq $ h.minimal_eq h'
 
-variable {p : α → Prop} {a : {a // p a}}
-theorem Greatest.subtype (h : Greatest a.val) : Greatest a :=
-  fun _ => h _
-theorem Least.subtype (h : Least a.val) : Least a :=
-  fun _ => h _
+theorem Monotone.greatest_surj {f : α → β} (h : Monotone f) (h1 : f.Surjective) (h2 : Greatest a) :
+    Greatest (f a) := by
+  intro b
+  obtain ⟨a', rfl⟩ := h1.exists_preimage b
+  apply h $ h2 _
 
+theorem Monotone.least_surj {f : α → β} (h : Monotone f) (h1 : f.Surjective) (h2 : Least a) :
+    Least (f a) := by
+  intro b
+  obtain ⟨a', rfl⟩ := h1.exists_preimage b
+  apply h $ h2 _
+
+theorem Antitone.greatest_surj {f : α → β} (h : Antitone f) (h1 : f.Surjective) (h2 : Least a) :
+    Greatest (f a) := by
+  intro b
+  obtain ⟨a', rfl⟩ := h1.exists_preimage b
+  apply h $ h2 _
+
+theorem Antitone.least_surj {f : α → β} (h : Antitone f) (h1 : f.Surjective) (h2 : Greatest a) :
+    Least (f a) := by
+  intro b
+  obtain ⟨a', rfl⟩ := h1.exists_preimage b
+  apply h $ h2 _
+
+end
 
 /-! on partial maps -/
 variable {α : Type*} {β : α → Type*}
@@ -143,3 +179,62 @@ theorem PartialMap.least_iff {x : PartialMap α β} :
       rw[h] at h'
       exact h'.elim
     · simp only [h, Set.empty_subset]
+
+
+def AdjoinGreatest (α : Type*) := Sum α Unit
+def AdjoinGreatest.to : α → AdjoinGreatest α := Sum.inl
+
+def AdjoinGreatest.greatest : AdjoinGreatest α := Sum.inr ()
+
+
+instance [LE α] : LE (AdjoinGreatest α) where
+  le x y := match y with
+            | Sum.inl y => match x with
+                     | Sum.inl x => x ≤ y
+                     | Sum.inr _ => False
+            | Sum.inr _ => True
+
+@[simp] theorem AdjoinGreatest.le_greatest [LE α] {x : AdjoinGreatest α} : x ≤ greatest := True.intro
+@[simp] theorem AdjoinGreatest.to_le_to_iff [LE α] {a b : α} : to a ≤ to b ↔ a ≤ b := Iff.rfl
+instance [Preorder α] : Preorder (AdjoinGreatest α) where
+  le_refl a := by
+    cases a
+    · rfl
+    · trivial
+  le_trans := by
+    rintro (a|⟨⟩) (b|⟨⟩) (c|⟨⟩)
+    · exact le_trans
+    · exact fun h h' => True.intro
+    · exact fun h => nofun
+    · exact fun h h' => True.intro
+    · exact nofun
+    · exact nofun
+    · exact fun h => nofun
+    · exact fun h h' => True.intro
+
+instance [PartialOrder α] : PartialOrder (AdjoinGreatest α) where
+  le_antisymm := by
+    rintro (a|⟨⟩) (b|⟨⟩)
+    · exact fun h h' => congrArg Sum.inl $ le_antisymm h h'
+    · exact fun h => nofun
+    · exact nofun
+    · exact fun h h' => rfl
+
+@[simp] theorem AdjoinGreatest.greatest_is_greatest [Preorder α]: Greatest (greatest : AdjoinGreatest α) :=
+  fun _ => True.intro
+
+
+def AdjoinLeast (α : Type*) := Op (AdjoinGreatest (Op α))
+instance [LE α] : LE (AdjoinLeast α) := by unfold AdjoinLeast; infer_instance
+instance [Preorder α] : Preorder (AdjoinLeast α) := by unfold AdjoinLeast; infer_instance
+instance [PartialOrder α] : PartialOrder (AdjoinLeast α) := by unfold AdjoinLeast; infer_instance
+
+def AdjoinLeast.to : α → AdjoinLeast α := Sum.inl
+
+def AdjoinLeast.least : AdjoinLeast α := Sum.inr ()
+
+@[simp] theorem AdjoinLeast.least_le [LE α] {x : AdjoinLeast α} : least ≤ x := True.intro
+@[simp] theorem AdjoinLeast.to_le_to_iff [LE α] {a b : α} : to a ≤ to b ↔ a ≤ b := Iff.rfl
+
+@[simp] theorem AdjoinLeast.least_is_least [Preorder α]: Least (least : AdjoinLeast α) :=
+  fun _ => True.intro

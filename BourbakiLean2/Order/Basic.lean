@@ -42,12 +42,14 @@ instance {r : Relation α α} [inst : r.IsEquivalence] : IsPreorder r where
 
 instance [LE α] {p : α → Prop} : LE {x : α // p x} where
   le x y := (x : α) ≤ y
-
+--instance [LE α] {s : Set α} : LE s := by infer_instance
 
 @[simp] theorem Subtype.le_iff_val [LE α] {p : α → Prop} {x y : {x // p x}} : x ≤ y ↔ (x : α) ≤ y := Iff.rfl
 
 instance [LT α] {p : α → Prop} : LT {x : α // p x} where
   lt x y := (x : α) < y
+
+--instance [LT α] {s : Set α} : LT s := by infer_instance
 
 @[simp] theorem Subtype.lt_iff_val [LT α] {p : α → Prop} {x y : {x // p x}} : x < y ↔ (x : α) < y := Iff.rfl
 
@@ -56,8 +58,13 @@ instance [Preorder α] {p : α → Prop} : Preorder {x : α // p x} where
   le_refl _ := Preorder.le_refl _
   lt_iff_le_not_le _ _ := Preorder.lt_iff_le_not_le _ _
 
+--instance [Preorder α] {s : Set α} : Preorder s := by infer_instance
+
 instance [PartialOrder α] {p : α → Prop} : PartialOrder {x : α // p x} where
   le_antisymm _ _ h h' := Subtype.eq $ PartialOrder.le_antisymm _ _ h h'
+
+--instance [PartialOrder α] {s : Set α} : PartialOrder s := by infer_instance
+
 
 section Preorder
 variable [Preorder α] {a b c : α}
