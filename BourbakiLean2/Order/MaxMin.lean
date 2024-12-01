@@ -238,3 +238,9 @@ def AdjoinLeast.least : AdjoinLeast α := Sum.inr ()
 
 @[simp] theorem AdjoinLeast.least_is_least [Preorder α]: Least (least : AdjoinLeast α) :=
   fun _ => True.intro
+
+@[simp] theorem greatest_singleton [Preorder α] {a : α} : Greatest (⟨a, rfl⟩ : ({a} : Set α)) := by
+  simp only [Greatest, Subtype.le_iff_val, Subtype.forall, Set.mem_singleton_iff, forall_eq, le_rfl]
+
+@[simp] theorem least_singleton [Preorder α] {a : α} : Least (⟨a, rfl⟩ : ({a} : Set α)) := by
+  simp only [Least, Subtype.le_iff_val, Subtype.forall, Set.mem_singleton_iff, forall_eq, le_refl]

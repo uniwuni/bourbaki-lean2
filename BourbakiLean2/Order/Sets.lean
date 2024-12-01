@@ -1,7 +1,9 @@
 import BourbakiLean2.Order.MaxMin
+import BourbakiLean2.Order.GlbLub
 import BourbakiLean2.Order.Monotone
 
 variable {α : Type*}
+namespace Set
 @[simp] theorem greatest_iff_univ {x : Set α} : Greatest x ↔ x = Set.univ := by
   constructor
   · intro h
@@ -60,3 +62,20 @@ theorem greatest_eq_union {p : Set α → Prop} {x : {x // p x}} (h : Greatest x
   constructor
   · apply Set.subset_iUnion
   · rwa[Set.iUnion_subset_iff_all]
+
+@[simp] theorem iInter_isGLB {s : Set (Set α)} : IsGLB s (⋂ a : s, a) := by
+  simp only [IsGLB, Greatest, LowerBound, Subtype.le_iff_val, le_set_iff_subset,
+    subset_iInter_iff_all, Subtype.forall, imp_self, implies_true, exists_prop, and_true]
+  intro b hb
+  have : ⋂ a : s, a ⊆ (⟨b,hb⟩ : s).val := iInter_subset
+  exact this
+
+@[simp] theorem iUnion_isLUB {s : Set (Set α)} : IsLUB s (⋃ a : s, a) := by
+  simp only [IsLUB, Least, UpperBound, Subtype.le_iff_val, le_set_iff_subset, iUnion_subset_iff_all,
+    Subtype.forall, imp_self, implies_true, exists_prop, and_true]
+  intro b hb
+  have : (⟨b,hb⟩ : s).val ⊆ ⋃ a : s, a := subset_iUnion
+  exact this
+
+
+end Set

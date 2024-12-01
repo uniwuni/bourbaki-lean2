@@ -68,3 +68,9 @@ theorem lowerbound_iUnion_iff {ι : Type*} {s : ι → Set α} :
   simp only [Set.mem_iUnion_iff, forall_exists_index]
 
 theorem LowerBound.lowerBound_iInter {ι : Type*} {s : ι → Set α} {i} (h : LowerBound (s i) a) : LowerBound (⋂ i, s i) a := h.subset Set.iInter_subset
+@[simp] theorem UpperBound.empty {a : α} : UpperBound ∅ a := nofun
+@[simp] theorem LowerBound.empty {a : α} : LowerBound ∅ a := nofun
+@[simp] theorem UpperBound.singleton {a b : α} : UpperBound {a} b ↔ a ≤ b := by
+  simp only [UpperBound, Set.mem_singleton_iff, forall_eq]
+@[simp] theorem LowerBound.singleton {a b : α} : LowerBound {a} b ↔ b ≤ a := by
+  simp only [LowerBound, Set.mem_singleton_iff, forall_eq]
