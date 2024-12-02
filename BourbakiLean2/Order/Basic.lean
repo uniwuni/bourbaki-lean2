@@ -332,3 +332,11 @@ theorem pointwise_graph_product {β : α → Type*} [∀ x, LE (β x)] :
 @[simp] theorem Preorder.quotEquiv_le_iff [Preorder α] {a b : α} :
     (Preorder.QuotEquiv.mk a : Preorder.QuotEquiv α) ≤ (Preorder.QuotEquiv.mk b) ↔ a ≤ b := by
   simp only [LE.le, QuotEquiv.mk, Quot.lift2_same_val]
+
+instance {β : Type*} [Preorder α] [Preorder β] : Preorder (α × β) where
+  le a b := a.1 ≤ b.1 ∧ a.2 ≤ b.2
+  le_refl a := ⟨le_rfl, le_rfl⟩
+  le_trans a b c h h' := ⟨le_trans h.1 h'.1, le_trans h.2 h'.2⟩
+
+instance {β : Type*} [PartialOrder α] [PartialOrder β] : PartialOrder (α × β) where
+  le_antisymm _ _ h h' := congr_arg₂ Prod.mk (le_antisymm h.1 h'.1) (le_antisymm h.2 h'.2)
