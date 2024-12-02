@@ -172,4 +172,6 @@ theorem nonempty_iff_neq_empty {x : Set α} : x.Nonempty ↔ x ≠ ∅ := by
   specialize h a
   simp only [mem_singleton_iff, not_mem_empty, iff_false, not_true_eq_false] at h
 
+@[simp] theorem mem_pair_iff {a b c : α} : c ∈ ({a,b} : Set α) ↔ (c = a ∨ c = b) := Iff.rfl
+
 end Set
