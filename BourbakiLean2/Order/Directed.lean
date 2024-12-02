@@ -1,8 +1,8 @@
 import BourbakiLean2.Order.Bounds
-
+import BourbakiLean2.Order.Cofinal
 variable {α : Type*}
 class RightDirected (α : Type*) [Preorder α] where
- exists_ub : ∀ x y : α, ∃ a, x ≤ a ∧ y ≤ a
+  exists_ub : ∀ x y : α, ∃ a, x ≤ a ∧ y ≤ a
 
 noncomputable def RightDirected.ub [Preorder α] [RightDirected α] (x y : α) := Exists.choose (exists_ub x y)
 
@@ -48,6 +48,43 @@ theorem LeftDirected.minimal_least [PartialOrder α] [LeftDirected α] {a : α} 
 
 theorem rightDirected_op_iff_leftDirected [Preorder α] : RightDirected (Op α) ↔ LeftDirected α := ⟨fun ⟨h⟩ => ⟨h⟩, fun ⟨h⟩ => ⟨h⟩⟩
 theorem leftDirected_op_iff_rightDirected [Preorder α] : LeftDirected (Op α) ↔ RightDirected α := ⟨fun ⟨h⟩ => ⟨h⟩, fun ⟨h⟩ => ⟨h⟩⟩
+
+instance {ι : Type*} {α : ι → Type*} [∀ i, Preorder (α i)] [∀ i, RightDirected (α i)] : RightDirected (Pointwise ι α) where
+  exists_ub x y := by
+    conv =>
+      arg 1
+      intro a
+      simp only [LE.le]
+      rw[← forall_and]
+    apply Classical.axiomOfChoice (r := fun i a => x i ≤ a ∧ y i ≤ a)
+    intro i
+    apply RightDirected.exists_ub
+
+
+instance {ι : Type*} {α : ι → Type*} [∀ i, Preorder (α i)] [∀ i, LeftDirected (α i)] : LeftDirected (Pointwise ι α) where
+  exists_lb x y := by
+    conv =>
+      arg 1
+      intro a
+      simp only [LE.le]
+      rw[← forall_and]
+    apply Classical.axiomOfChoice (r := fun i a => a ≤ x i ∧ a ≤ y i)
+    intro i
+    apply LeftDirected.exists_lb
+
+theorem RightDirected.cofinal_subset [Preorder α] [RightDirected α] {s : Set α} (h : Cofinal s) : RightDirected s where
+  exists_ub x y := by
+    obtain ⟨a,hmem, hle⟩ := h (ub x y)
+    exists ⟨a,hmem⟩
+    exact ⟨le_trans (α := α) le_ub_left hle, le_trans (α := α) le_ub_right hle⟩
+
+theorem LeftDirected.cofinal_subset [Preorder α] [LeftDirected α] {s : Set α} (h : Coinitial s) : LeftDirected s where
+  exists_lb x y := by
+    obtain ⟨a,hmem, hle⟩ := h (lb x y)
+    exists ⟨a,hmem⟩
+    exact ⟨le_trans (α := α) hle lb_le_left, le_trans (α := α) hle lb_le_right⟩
+
+
 
 
 end
