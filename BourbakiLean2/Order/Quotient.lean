@@ -86,3 +86,18 @@ instance Quot.partialOrder_of [PartialOrder α] [r.IsEquivalence]
     obtain ⟨y',eqy,ordy⟩ := le x rfl
     obtain ⟨x',eqx,ordx⟩ := ge y' eqy
     rw[h' x y' x' ordy ordx eqx.symm, eqy]
+
+theorem Monotone.partialOrder_condition_quot {f : α → β} [Preorder α] [PartialOrder β] (h : Monotone f) {x y z}
+    (xy : x ≤ y) (yz : y ≤ z) (eq : Quot.mk (Function.curry f.identified_under) x = Quot.mk _ z) :
+    Quot.mk (Function.curry f.identified_under) x = Quot.mk _ y := by
+  simp only [Monotone, Quot.mk_eq_iff_rel, Function.mem_identified_under] at *
+  apply le_antisymm
+  · apply h xy
+  · rw[eq]
+    apply h yz
+
+theorem Monotone.identifiedUnder_weaklyOrderCompatible_iff {f : α → β} [Preorder α] [Preorder β] (h : Monotone f) :
+    WeaklyOrderCompatible f.identified_under ↔ (∀ x x' y, x ≤ y → f x' = f x → ∃y', f y' = f y ∧ x' ≤ y'):= by
+  unfold WeaklyOrderCompatible
+  rw[Quot.mk_monotone_iff]
+  simp only [Quot.mk_eq_iff_rel, Function.mem_identified_under]
