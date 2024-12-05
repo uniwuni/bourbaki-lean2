@@ -1,3 +1,9 @@
+universe u v
+
+@[simp] theorem Sigma.eta {α : Type u} {β : α → Type v} {x : Sigma β} : ⟨x.1, x.2⟩ = x := by
+  rcases x
+  rfl
+
 
 variable {p q : Prop}
 /-- Any implication is equivalent to its converse. -/
@@ -9,7 +15,6 @@ theorem imp_iff_not_imp_not : (p → q) ↔ (¬ q → ¬ p) := by
     · exact h''
     · exact (h h'' h').elim
 
-universe u v
 theorem func_subsingleton_iff_to_empty {α : Type u} {β : Type v} (h : α → Empty) : Subsingleton (α → β) := by
   constructor
   intro a b

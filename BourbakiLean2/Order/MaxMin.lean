@@ -27,6 +27,16 @@ theorem maximal_iff_no_lt : Maximal a ↔ ∀ b, ¬ a < b := by
     · exact (h h').elim
     · rfl
 
+theorem exists_lt_of_not_maximal (h : ¬ Maximal a) : ∃ b, a < b := by
+  rw[maximal_iff_no_lt, Classical.not_forall] at h
+  obtain ⟨x,lt⟩ := h
+  rw[Classical.not_not] at lt
+  exists x
+
+theorem exists_le_of_not_maximal (h : ¬ Maximal a) : ∃ b, a ≤ b := by
+  obtain ⟨b,lt⟩ := exists_lt_of_not_maximal h
+  exact ⟨b,le_of_lt lt⟩
+
 theorem maximal_toOp_iff_minimal : Maximal (toOp a) ↔ Minimal a := Iff.rfl
 theorem minimal_toOp_iff_maximal : Minimal (toOp a) ↔ Maximal a := Iff.rfl
 

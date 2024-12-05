@@ -39,6 +39,26 @@ theorem Antitone.comp_mono (h : Antitone f) (h' : Monotone g) : Antitone (f ∘ 
 theorem Antitone.restrict {x : Set β} (h : Antitone f) : Antitone (f.restriction x) :=
   fun _ _ h' => h h'
 
+theorem isOrderIso_iff_reflect : IsOrderIso f ↔ f.Bijective ∧ Monotone f ∧ (∀ x y, f x ≤ f y → x ≤ y) := by
+  constructor
+  · intro h
+    constructor
+    · exact h.bij
+    · constructor
+      · exact h.monotone
+      · intro x y le
+        have := h.monotone_inv le
+        simp only [Function.Bijective.inv_val_val] at this
+        exact this
+  · intro ⟨h1,h2,h3⟩
+    constructor
+    · assumption
+    swap
+    · assumption
+    · intro x y h
+      rw[← h1.val_inv_val (b := x), ← h1.val_inv_val (b := y)] at h
+      apply h3 _ _ h
+
 theorem IsOrderIso.le_iff (h : IsOrderIso f) {a b : β} : f a ≤ f b ↔ a ≤ b := by
   constructor
   · intro h'
