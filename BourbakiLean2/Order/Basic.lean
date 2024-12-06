@@ -75,6 +75,8 @@ variable [Preorder α] {a b c : α}
 /-- A version of `le_refl` where the argument is implicit -/
 theorem le_rfl : a ≤ a := le_refl a
 
+theorem le_of_eq (h : a = b) : a ≤ b := by cases h; exact le_rfl
+
 /-- The relation `≤` on a preorder is transitive. -/
 @[trans] theorem le_trans : a ≤ b → b ≤ c → a ≤ c := Preorder.le_trans _ _ _
 

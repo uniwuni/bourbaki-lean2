@@ -46,6 +46,12 @@ theorem LeftDirected.minimal_least [PartialOrder α] [LeftDirected α] {a : α} 
   rw[← this]
   exact lb_le_right
 
+theorem RightDirected.maximal_iff_greatest [PartialOrder α] [RightDirected α] {a : α} : Maximal a ↔ Greatest a :=
+  ⟨RightDirected.maximal_greatest, Greatest.maximal⟩
+
+theorem LeftDirected.minimal_iff_least [PartialOrder α] [LeftDirected α] {a : α} : Minimal a ↔ Least a :=
+  ⟨LeftDirected.minimal_least, Least.minimal⟩
+
 theorem rightDirected_op_iff_leftDirected [Preorder α] : RightDirected (Op α) ↔ LeftDirected α := ⟨fun ⟨h⟩ => ⟨h⟩, fun ⟨h⟩ => ⟨h⟩⟩
 theorem leftDirected_op_iff_rightDirected [Preorder α] : LeftDirected (Op α) ↔ RightDirected α := ⟨fun ⟨h⟩ => ⟨h⟩, fun ⟨h⟩ => ⟨h⟩⟩
 

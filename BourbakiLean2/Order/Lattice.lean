@@ -15,14 +15,13 @@ class InfSemilattice (α : Type*) extends PartialOrder α where
   inf_le_right {x y : α} : inf x y ≤ y
   le_inf_of {x y z : α} (h : z ≤ x) (h' : z ≤ y) : z ≤ inf x y
 
-attribute [simp] InfSemilattice.inf_le_left
-attribute [simp] InfSemilattice.inf_le_right
-
 instance [InfSemilattice α] : Min α where
   min := InfSemilattice.inf
-export InfSemilattice (inf_le_left inf_le_right le_inf_of)
+theorem le_inf_of [InfSemilattice α] {x y z : α} (h : z ≤ x) (h' : z ≤ y) : z ≤ x ⊓ y :=
+  InfSemilattice.le_inf_of h h'
 
-
+@[simp] theorem inf_le_left [InfSemilattice α] {x y : α} : x ⊓ y ≤ x := InfSemilattice.inf_le_left
+@[simp] theorem inf_le_right [InfSemilattice α] {x y : α} : x ⊓ y ≤ y := InfSemilattice.inf_le_right
 section
 variable [InfSemilattice α] {x y z w : α}
 instance : LeftDirected α where
@@ -67,8 +66,11 @@ class SupSemilattice (α : Type*) extends PartialOrder α where
 
 instance [SupSemilattice α] : Max α where
   max := SupSemilattice.sup
-export SupSemilattice (le_sup_left le_sup_right sup_le_of)
+theorem sup_le_of [SupSemilattice α] {x y z : α} (h : x ≤ z) (h' : y ≤ z) : x ⊔ y ≤ z :=
+  SupSemilattice.sup_le_of h h'
 
+@[simp] theorem le_sup_left [SupSemilattice α] {x y : α} : x ≤ x ⊔ y := SupSemilattice.le_sup_left
+@[simp] theorem le_sup_right [SupSemilattice α] {x y : α} : y ≤ x ⊔ y := SupSemilattice.le_sup_right
 
 section
 variable [SupSemilattice α] {x y z w : α}
@@ -106,3 +108,15 @@ theorem sup_assoc : x ⊔ (y ⊔ z) = (x ⊔ y) ⊔ z := by
   · apply sup_le_of (sup_le_of le_sup_left $ le_trans le_sup_left le_sup_right) $ le_trans le_sup_right le_sup_right
 
 end
+
+class Lattice (α : Type*) extends InfSemilattice α, SupSemilattice α where
+
+instance {α : Type*} : Lattice (Set α) where
+  inf x y := x ∩ y
+  sup x y := x ∪ y
+  inf_le_left := by simp only [le_set_iff_subset, Set.inter_subset_left, implies_true]
+  inf_le_right := by simp only [le_set_iff_subset, Set.inter_subset_right, implies_true]
+  le_inf_of x y := Set.subset_inter_iff.mpr ⟨x,y⟩
+  sup_le_of x y := Set.union_subset_iff.mpr ⟨x,y⟩
+  le_sup_left := by simp only [le_set_iff_subset, Set.subset_union_left, implies_true]
+  le_sup_right := by simp only [le_set_iff_subset, Set.subset_union_right, implies_true]
