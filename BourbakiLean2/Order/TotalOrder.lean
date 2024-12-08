@@ -1,8 +1,6 @@
 import BourbakiLean2.Order.Lattice
 variable {α β : Type*} {x y z : α}
 
-@[simp] def Comparable [Preorder α] (x y : α) := x ≤ y ∨ y ≤ x
-
 class TotalOrder (α : Type*) extends PartialOrder α where
   le_total : ∀ x y : α, Comparable x y
 

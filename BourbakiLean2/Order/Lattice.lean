@@ -56,6 +56,15 @@ theorem inf_assoc : x ⊓ (y ⊓ z) = (x ⊓ y) ⊓ z := by
   · apply le_inf_of (le_inf_of inf_le_left $ le_trans inf_le_right inf_le_left) $ le_trans inf_le_right inf_le_right
   · apply le_inf_of (le_trans inf_le_left inf_le_left) (le_inf_of (le_trans inf_le_left inf_le_right) inf_le_right)
 
+@[simp] theorem inf_eq_left_iff : x ⊓ y = x ↔ x ≤ y := by
+  rw[← le_antisymm_iff]
+  simp only [inf_le_left, le_inf_iff, le_rfl, true_and]
+
+@[simp] theorem inf_eq_right_iff : x ⊓ y = y ↔ y ≤ x := by
+  rw[← le_antisymm_iff]
+  simp only [inf_le_right, le_inf_iff, le_rfl, and_true, true_and]
+
+
 end
 
 class SupSemilattice (α : Type*) extends PartialOrder α where
@@ -106,6 +115,14 @@ theorem sup_assoc : x ⊔ (y ⊔ z) = (x ⊔ y) ⊔ z := by
   apply le_antisymm
   · apply sup_le_of (le_trans le_sup_left le_sup_left) $ sup_le_of (le_trans le_sup_right le_sup_left) le_sup_right
   · apply sup_le_of (sup_le_of le_sup_left $ le_trans le_sup_left le_sup_right) $ le_trans le_sup_right le_sup_right
+
+@[simp] theorem sup_eq_left_iff : x ⊔ y = x ↔ y ≤ x := by
+  rw[← le_antisymm_iff]
+  simp only [sup_le_iff, le_rfl, true_and, le_sup_left, and_true]
+
+@[simp] theorem sup_eq_right_iff : x ⊔ y = y ↔ x ≤ y := by
+  rw[← le_antisymm_iff]
+  simp only [sup_le_iff, le_rfl, and_true, le_sup_right]
 
 end
 

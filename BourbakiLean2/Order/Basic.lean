@@ -73,7 +73,7 @@ variable [Preorder α] {a b c : α}
 @[refl] theorem le_refl : ∀ a : α, a ≤ a := Preorder.le_refl
 
 /-- A version of `le_refl` where the argument is implicit -/
-theorem le_rfl : a ≤ a := le_refl a
+@[simp] theorem le_rfl : a ≤ a := le_refl a
 
 theorem le_of_eq (h : a = b) : a ≤ b := by cases h; exact le_rfl
 
@@ -342,3 +342,15 @@ instance {β : Type*} [Preorder α] [Preorder β] : Preorder (α × β) where
 
 instance {β : Type*} [PartialOrder α] [PartialOrder β] : PartialOrder (α × β) where
   le_antisymm _ _ h h' := congr_arg₂ Prod.mk (le_antisymm h.1 h'.1) (le_antisymm h.2 h'.2)
+
+section
+variable [Preorder α] {x y : α}
+@[simp] def Comparable (x y : α) := x ≤ y ∨ y ≤ x
+@[simp] def Incomparable (x y : α) := ¬ x ≤ y ∧ ¬ y ≤ x
+theorem incomparable_iff_not_comparable : Incomparable x y ↔ ¬ Comparable x y := by simp only [Incomparable,
+  Comparable, not_or]
+
+theorem not_incomparable_iff_comparable : Comparable x y ↔ ¬ Incomparable x y := by simp only [Comparable,
+  Classical.or_iff_not_imp_left, Incomparable, not_and, Classical.not_not]
+
+end

@@ -139,6 +139,28 @@ theorem Iio_strictAnti : StrictMonotone (Iio (α := α)) :=
       have : a ∈ Iio b := h
       simp only [← h', not_mem_Iio_self] at this
 
+@[simp] theorem Ioi_union_point_eq_Ici : Ioi a ∪ {a} = Ici a := by
+  ext b
+  simp only [mem_union_iff, mem_Ioi_iff, mem_singleton_iff, Eq.comm, mem_Ici_iff, le_iff_lt_or_eq]
+
+@[simp] theorem Iio_union_point_eq_Iic : Iio a ∪ {a} = Iic a := by
+  ext b
+  simp only [mem_union_iff, mem_Iio_iff, mem_singleton_iff, mem_Iic_iff, le_iff_lt_or_eq]
+
+@[simp] theorem Ioo_union_point_eq_Ioc_of_lt (h : a < b): Ioo a b ∪ {b} = Ioc a b := by
+  ext c
+  simp only [mem_union_iff, mem_Ioo_iff, mem_singleton_iff, mem_Ioc_iff]
+  constructor
+  · rintro (⟨h,h'⟩|rfl)
+    · exact ⟨h, le_of_lt h'⟩
+    · exact ⟨h,le_rfl⟩
+  · rw[le_iff_lt_or_eq]
+    rintro ⟨h,(h'|rfl)⟩
+    · exact Or.inl ⟨h, h'⟩
+    · exact Or.inr rfl
+
+/- and so on and so on i dont need that immediately  -/
+
 end
 
 section
@@ -171,6 +193,49 @@ variable {α : Type*}  {a b c d : α}
 @[simp] theorem Icc_inter_Icc [Lattice α] : Icc a b ∩ Icc c d = Icc (a ⊔ c) (b ⊓ d) := by
   ext e
   simp only [mem_inter_iff, mem_Icc_iff, and_left_comm, and_assoc, sup_le_iff, le_inf_iff]
+
+@[simp] theorem Ioi_inter_Ioi_of_le [PartialOrder α] (h : a ≤ b) : Ioi a ∩ Ioi b = Ioi b := by
+  ext
+  simp only [mem_inter_iff, mem_Ioi_iff, and_iff_right_iff_imp]
+  apply lt_of_le_lt h
+
+@[simp] theorem Ioi_inter_Ioi_of_ge [PartialOrder α] (h : b ≤ a) : Ioi a ∩ Ioi b = Ioi a := by
+  rw[inter_comm]
+  simp only [h, Ioi_inter_Ioi_of_le]
+
+@[simp] theorem Ioi_inter_Ioi_of_incomparable [SupSemilattice α] (h : Incomparable a b) : Ioi a ∩ Ioi b = Ici (a ⊔ b) := by
+  ext c
+  simp only [mem_inter_iff, mem_Ioi_iff, mem_Ici_iff]
+  constructor
+  · exact fun ⟨h, h'⟩ => sup_le_of (le_of_lt h) (le_of_lt h')
+  · rw[lt_iff_le_not_le, lt_iff_le_not_le]
+    simp only [sup_le_iff, and_imp]
+    intro h' h''
+    refine ⟨⟨h', ?_⟩, ⟨h'', ?_⟩⟩
+    · exact fun le => h.2 $ le_trans h'' le
+    · exact fun le => h.1 $ le_trans h' le
+
+@[simp] theorem Iio_inter_Iio_of_le [PartialOrder α] (h : a ≤ b) : Iio a ∩ Iio b = Iio a := by
+  ext
+  simp only [mem_inter_iff, mem_Iio_iff, and_iff_left_iff_imp]
+  exact fun h' => lt_of_lt_le h' h
+
+@[simp] theorem Iio_inter_Iio_of_ge [PartialOrder α] (h : b ≤ a) : Iio a ∩ Iio b = Iio b := by
+  ext
+  simp only [mem_inter_iff, mem_Iio_iff, and_iff_right_iff_imp]
+  exact fun h' => lt_of_lt_le h' h
+
+@[simp] theorem Iio_inter_Iio_of_incomparable [InfSemilattice α] (h : Incomparable a b) : Iio a ∩ Iio b = Iic (a ⊓ b) := by
+  ext c
+  simp only [mem_inter_iff, mem_Iio_iff, mem_Iic_iff, le_inf_iff]
+  constructor
+  · exact fun ⟨h, h'⟩ => ⟨le_of_lt h, le_of_lt h'⟩
+  · rw[lt_iff_le_not_le, lt_iff_le_not_le]
+    simp only [sup_le_iff, and_imp]
+    intro h' h''
+    refine ⟨⟨h', ?_⟩, ⟨h'', ?_⟩⟩
+    · exact fun le => h.1 $ le_trans le h''
+    · exact fun le => h.2 $ le_trans le h'
 
 
 end
