@@ -228,3 +228,14 @@ theorem isGLB_iff_lb_exists_gt [TotalOrder α] {s : Set α} : IsGLB s x ↔ (Low
     rw[← imp_iff_not_imp_not]
   rw[IsGLB]
   simp only [Greatest, Subtype.le_iff_val, Subtype.forall, exists_prop]
+
+instance [TotalOrder α] : TotalOrder (AdjoinGreatest α) where
+  le_total := by
+    rintro (x|a) (y|a)
+    · exact le_total x y
+    · left
+      trivial
+    · right
+      trivial
+    · left
+      exact le_rfl
