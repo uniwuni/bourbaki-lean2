@@ -1,5 +1,6 @@
 import BourbakiLean2.Order.Monotone
 import BourbakiLean2.Order.Lattice
+import BourbakiLean2.Order.TotalOrder
 namespace Set
 section
 variable {α : Type*} [Preorder α] {a b c : α}
@@ -237,6 +238,47 @@ variable {α : Type*}  {a b c d : α}
     · exact fun le => h.1 $ le_trans le h''
     · exact fun le => h.2 $ le_trans le h'
 
+@[simp] theorem Iio_compl [TotalOrder α] : (Iio a)ᶜ = Ici a := by
+  ext x
+  simp only [mem_compl_iff, mem_Iio_iff, not_gt_iff_le, mem_Ici_iff]
+
+@[simp] theorem Ici_compl [TotalOrder α] : (Ici a)ᶜ = Iio a := by
+  ext x
+  simp only [mem_compl_iff, mem_Ici_iff, not_ge_iff_lt, mem_Iio_iff]
+
+@[simp] theorem Iic_compl [TotalOrder α] : (Iic a)ᶜ = Ioi a := by
+  ext x
+  simp only [mem_compl_iff, mem_Iic_iff, not_ge_iff_lt, mem_Ioi_iff]
+
+@[simp] theorem Ioi_compl [TotalOrder α] : (Ioi a)ᶜ = Iic a := by
+  ext x
+  simp only [mem_compl_iff, mem_Ioi_iff, not_gt_iff_le, mem_Iic_iff]
+
+theorem iUnion_Iio_of_no_greatest [TotalOrder α] (h : ∀ a : α, ¬ Greatest a) : ⋃ a : α, Iio a = Set.univ := by
+  ext b
+  simp only [mem_iUnion_iff, mem_Iio_iff, mem_univ, iff_true]
+  by_contra h'
+  specialize h b
+  rw[Greatest, Classical.not_forall] at h
+  obtain ⟨x,h⟩ := h
+  rw[not_ge_iff_lt] at h
+  exact h' ⟨_,h⟩
+
+theorem iUnion_Iio_of_greatest [TotalOrder α] (h : Greatest a) : ⋃ a : α, Iio a = {a}ᶜ := by
+  ext b
+  simp only [mem_iUnion_iff, mem_Iio_iff, mem_compl_iff, mem_singleton_iff]
+  constructor
+  · rintro ⟨i,lt⟩ rfl
+    rw[← not_ge_iff_lt] at lt
+    apply lt $ h _
+  · rw[imp_iff_not_imp_not, Classical.not_not]
+    intro h'
+    apply Greatest.all_eq
+    · intro i
+      rw[not_exists] at h'
+      specialize h' i
+      rwa[not_gt_iff_le] at h'
+    · assumption
 
 end
 
@@ -244,28 +286,45 @@ end
 class IsInterval {α : Type*} [Preorder α] (s : Set α) where
   mem_of_mem_le_mem {a b c : α} (h : a ≤ b) (h' : b ≤ c) (ha : a ∈ s) (hc : c ∈ s) : b ∈ s
 
+class IsDownwardsClosed {α : Type*} [Preorder α] (s : Set α) where
+  mem_of_le_mem {a b : α} (h : a ≤ b) (hb : b ∈ s) : a ∈ s
+
+class IsUpwardsClosed {α : Type*} [Preorder α] (s : Set α) where
+  mem_of_mem_le {a b : α} (h : a ≤ b) (ha : a ∈ s) : b ∈ s
+
+instance {α : Type*} [Preorder α] {s : Set α} [IsUpwardsClosed s] : IsInterval s where
+  mem_of_mem_le_mem h _ ha _ := IsUpwardsClosed.mem_of_mem_le h ha
+
+instance {α : Type*} [Preorder α] {s : Set α} [IsDownwardsClosed s] : IsInterval s where
+  mem_of_mem_le_mem _ h _ hc := IsDownwardsClosed.mem_of_le_mem h hc
 
 section
 variable {α : Type*} [Preorder α] {a b c d : α}
 theorem mem_of_mem_le_mem {s : Set α} [IsInterval s] (h : a ≤ b) (h' : b ≤ c) (ha : a ∈ s) (hc : c ∈ s) : b ∈ s :=
   IsInterval.mem_of_mem_le_mem h h' ha hc
 
-instance : IsInterval (Ici a) where
-  mem_of_mem_le_mem := fun h1 _ h3 _ => le_trans h3 h1
+theorem mem_of_le_mem {s : Set α} [IsDownwardsClosed s] {a b : α} (h : a ≤ b) (hb : b ∈ s) : a ∈ s :=
+  IsDownwardsClosed.mem_of_le_mem h hb
 
-instance : IsInterval (Iic a) where
-  mem_of_mem_le_mem := fun _ h1 _ h3 => le_trans h1 h3
+theorem mem_of_mem_le {s : Set α} [IsUpwardsClosed s] {a b : α} (h : a ≤ b) (ha : a ∈ s) : b ∈ s :=
+  IsUpwardsClosed.mem_of_mem_le h ha
 
-instance : IsInterval (Ioi a) where
-  mem_of_mem_le_mem := fun h1 h2 h3 h4 => by
+instance : IsUpwardsClosed (Ici a) where
+  mem_of_mem_le := fun h1 h3 => le_trans h3 h1
+
+instance : IsDownwardsClosed (Iic a) where
+  mem_of_le_mem := fun h1 h3 => le_trans h1 h3
+
+instance : IsUpwardsClosed (Ioi a) where
+  mem_of_mem_le := fun h1 h3 => by
     simp only [mem_Ioi_iff, lt_iff_le_not_le] at *
     constructor
     · apply le_trans h3.1 h1
     · intro h
       apply h3.2 $ le_trans h1 h
 
-instance : IsInterval (Iio a) where
-  mem_of_mem_le_mem := fun h1 h2 h3 h4 => by
+instance : IsDownwardsClosed (Iio a) where
+  mem_of_le_mem := fun h2 h4 => by
     simp only [mem_Iio_iff, lt_iff_le_not_le] at *
     constructor
     · apply le_trans h2 h4.1
@@ -308,15 +367,92 @@ instance : IsInterval (Ico a b) where
 instance : IsInterval (Icc a b) where
   mem_of_mem_le_mem := fun h1 h2 h3 h4 => ⟨le_trans h3.1 h1, le_trans h2 h4.2⟩
 
-instance : IsInterval (∅ : Set α) where
-  mem_of_mem_le_mem := fun _ _ => nofun
+instance : IsDownwardsClosed (∅ : Set α) where
+  mem_of_le_mem := fun _ => nofun
 
-instance : IsInterval (Set.univ : Set α) where
-  mem_of_mem_le_mem := fun _ _ _ _ => True.intro
+instance : IsUpwardsClosed (∅ : Set α) where
+  mem_of_mem_le := fun _ => nofun
+
+instance : IsDownwardsClosed (Set.univ : Set α) where
+  mem_of_le_mem := fun _ _ => True.intro
+
+instance : IsUpwardsClosed (Set.univ : Set α) where
+  mem_of_mem_le := fun _ _ => True.intro
 
 instance {s t : Set α} [IsInterval s] [IsInterval t] : IsInterval (s ∩ t) where
   mem_of_mem_le_mem h1 h2 h3 h4 :=
     ⟨mem_of_mem_le_mem h1 h2 h3.1 h4.1, mem_of_mem_le_mem h1 h2 h3.2 h4.2⟩
+
+instance {ι : Type*} {s : ι → Set α} [∀ i, IsInterval (s i)] : IsInterval (⋂ i, s i) where
+  mem_of_mem_le_mem h1 h2 h3 h4 i := mem_of_mem_le_mem h1 h2 (h3 i) (h4 i)
+
+instance {s t : Set α} [IsDownwardsClosed s] [IsDownwardsClosed t] : IsDownwardsClosed (s ∩ t) where
+  mem_of_le_mem h1 h2 :=
+    ⟨mem_of_le_mem h1 h2.1, mem_of_le_mem h1 h2.2⟩
+
+instance {ι : Type*} {s : ι → Set α} [∀ i, IsDownwardsClosed (s i)] : IsDownwardsClosed (⋂ i, s i) where
+  mem_of_le_mem h1 h2 i := mem_of_le_mem h1 $ h2 i
+
+instance {s t : Set α} [IsUpwardsClosed s] [IsUpwardsClosed t] : IsUpwardsClosed (s ∩ t) where
+  mem_of_mem_le h1 h2 :=
+    ⟨mem_of_mem_le h1 h2.1, mem_of_mem_le h1 h2.2⟩
+
+instance {ι : Type*} {s : ι → Set α} [∀ i, IsUpwardsClosed (s i)] : IsUpwardsClosed (⋂ i, s i) where
+  mem_of_mem_le h1 h2 i := mem_of_mem_le h1 $ h2 i
+
+instance {s t : Set α} [IsDownwardsClosed s] [IsDownwardsClosed t] : IsDownwardsClosed (s ∪ t) where
+  mem_of_le_mem h1 h2 := by
+    rcases h2 with (h|h)
+    · left
+      apply mem_of_le_mem h1 h
+    · right
+      apply mem_of_le_mem h1 h
+
+
+instance {ι : Type*} {s : ι → Set α} [∀ i, IsDownwardsClosed (s i)] : IsDownwardsClosed (⋃ i, s i) where
+  mem_of_le_mem h1 h2 := by
+    rcases h2 with ⟨i,h2⟩
+    exists i
+    apply mem_of_le_mem h1 h2
+
+instance {s t : Set α} [IsUpwardsClosed s] [IsUpwardsClosed t] : IsUpwardsClosed (s ∪ t) where
+  mem_of_mem_le h1 h2 := by
+    rcases h2 with (h|h)
+    · left
+      apply mem_of_mem_le h1 h
+    · right
+      apply mem_of_mem_le h1 h
+
+instance {ι : Type*} {s : ι → Set α} [∀ i, IsUpwardsClosed (s i)] : IsUpwardsClosed (⋃ i, s i) where
+  mem_of_mem_le h1 h2 := by
+    rcases h2 with ⟨i,h2⟩
+    exists i
+    apply mem_of_mem_le h1 h2
+
+instance {s : Set α} [IsDownwardsClosed s] {t : Set s} [IsDownwardsClosed t] : IsDownwardsClosed (Subtype.val '' t : Set α) where
+  mem_of_le_mem h1 h2 := by
+    rw[mem_image_iff] at *
+    obtain ⟨⟨a,bs⟩,rfl, bt⟩ := h2
+    have as := mem_of_le_mem h1 bs
+    have at2 := mem_of_le_mem (s := t) (a := ⟨_,as⟩) h1 bt
+    exact ⟨_,rfl,at2⟩
+
+instance {s : Set α} [IsUpwardsClosed s] {t : Set s} [IsUpwardsClosed t] : IsUpwardsClosed (Subtype.val '' t : Set α) where
+  mem_of_mem_le h1 h2 := by
+    rw[mem_image_iff] at *
+    obtain ⟨⟨a,bs⟩,rfl, bt⟩ := h2
+    have as := mem_of_mem_le h1 bs
+    have at2 := mem_of_mem_le (s := t) (b := ⟨_,as⟩) h1 bt
+    exact ⟨_,rfl,at2⟩
+
+instance {s : Set α} [IsInterval s] {t : Set s} [IsInterval t] : IsInterval (Subtype.val '' t : Set α) where
+  mem_of_mem_le_mem h1 h2 h3 h4 := by
+    rw[mem_image_iff] at *
+    obtain ⟨⟨b,bs⟩,rfl, bt⟩ := h3
+    obtain ⟨⟨c,cs⟩,rfl, ct⟩ := h4
+    have bs := mem_of_mem_le_mem h1 h2 bs cs
+    have bt2 := mem_of_mem_le_mem (s := t) (b := ⟨_,bs⟩) h1 h2 bt ct
+    exact ⟨_,rfl,bt2⟩
 
 end
 section

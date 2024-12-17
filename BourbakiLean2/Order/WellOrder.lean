@@ -1,4 +1,5 @@
 import BourbakiLean2.Order.TotalOrder
+import BourbakiLean2.Order.Intervals
 variable {α β : Type*} {x y z : α}
 
 class WellOrder (α : Type*) extends TotalOrder α where
@@ -65,5 +66,28 @@ theorem hasLUB_of_bounded_above {s : Set α} (h : s.BoundedAbove) : ∃ x, IsLUB
   have h : t.Nonempty := h
   have ⟨a, h, least⟩ := existsLeast h
   exact ⟨a,⟨h,least⟩⟩
+
+theorem isIio_of_downwardsClosed {s : Set α} (h : s.IsDownwardsClosed) (h' : s ≠ Set.univ) :
+    ∃ x, s = Set.Iio x := by
+  have h' : (s ᶜ).Nonempty := by
+    by_contra h
+    rw[Set.nonempty_iff_neq_empty] at h
+    simp at h
+    rw[← Set.compl_compl (x := ∅), Set.compl_empty] at h
+    have h := Set.compl_inj h
+    exact h' h
+  have ⟨a,ha,least⟩ := existsLeast (s := sᶜ) h'
+  have: sᶜ = Set.Ici a := by
+    ext b
+    constructor
+    · intro h
+      exact least ⟨b,h⟩
+    · intro h' h''
+      exact (ha $ Set.mem_of_le_mem h' h'').elim
+  exists a
+  rw[← Set.compl_compl (x := s), this]
+  simp only [Set.Ici_compl]
+
+
 
 end WellOrder
