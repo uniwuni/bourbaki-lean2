@@ -280,6 +280,33 @@ theorem iUnion_Iio_of_greatest [TotalOrder α] (h : Greatest a) : ⋃ a : α, Ii
       rwa[not_gt_iff_le] at h'
     · assumption
 
+@[simp] theorem Iio_subset_Iio_iff {x y : α}  [TotalOrder α] : Set.Iio x ⊆ Set.Iio y ↔ x ≤ y := by
+  constructor
+  · intro h
+    by_cases h' : x = y
+    · rw[h']
+    · rw[← not_gt_iff_le]
+      intro h''
+      exact not_lt_self $ h h''
+  · intro h a ha
+    exact lt_of_lt_le ha h
+
+@[simp] theorem Ioi_subset_Ioi_iff {x y : α}  [TotalOrder α] : Set.Ioi x ⊆ Set.Ioi y ↔ y ≤ x := by
+  constructor
+  · intro h
+    by_cases h' : x = y
+    · rw[h']
+    · rw[← not_gt_iff_le]
+      intro h''
+      exact not_lt_self $ h h''
+  · intro h a ha
+    exact lt_of_le_lt h ha
+
+@[simp] theorem Iio_subset_Iic {x : α} [Preorder α] : Iio x ⊆ Iic x := by
+  intro y
+  simp only [mem_Iio_iff, mem_Iic_iff, lt_iff_le_not_le]
+  exact And.left
+
 end
 
 /-! interval class -/
@@ -409,7 +436,7 @@ instance {s t : Set α} [IsDownwardsClosed s] [IsDownwardsClosed t] : IsDownward
       apply mem_of_le_mem h1 h
 
 
-instance {ι : Type*} {s : ι → Set α} [∀ i, IsDownwardsClosed (s i)] : IsDownwardsClosed (⋃ i, s i) where
+instance IsDownwardsClosed.iUnion {ι : Type*} {s : ι → Set α} [∀ i, IsDownwardsClosed (s i)] : IsDownwardsClosed (⋃ i, s i) where
   mem_of_le_mem h1 h2 := by
     rcases h2 with ⟨i,h2⟩
     exists i

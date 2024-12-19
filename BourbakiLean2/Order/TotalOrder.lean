@@ -239,3 +239,13 @@ instance [TotalOrder α] : TotalOrder (AdjoinGreatest α) where
       trivial
     · left
       exact le_rfl
+
+def IsOrderIso.totalOrder {β : Type*} [TotalOrder α] [PartialOrder β] {f : α → β} (h : IsOrderIso f) : TotalOrder β where
+  le_total a b := by
+    obtain ⟨a', rfl⟩ := h.bij.surj.exists_preimage a
+    obtain ⟨b', rfl⟩ := h.bij.surj.exists_preimage b
+    rcases le_total a' b' with (h'|h')
+    · left
+      exact h.monotone h'
+    · right
+      exact h.monotone h'
