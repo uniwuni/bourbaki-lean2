@@ -284,6 +284,18 @@ theorem InitialSegment.induction {α : Type u} [WellOrder α] {p : InitialSegmen
     rw[eq2] at ha
     exact ha that
 
+theorem wf_induction {p : α → Prop} (h : ∀ x, (∀ y, y < x → p y) → p x) : ∀ x, p x := by
+  intro x
+  by_contra h'
+  let s := {x | ¬ p x}
+  have h' : s.Nonempty := ⟨x, h'⟩
+  obtain ⟨a,ha,least⟩ := existsLeast h'
+  by_contra h''
+  have := h a (λ y hy => by
+    by_contra h'''
+    have := least ⟨y,h'''⟩
+    apply not_lt_self $ lt_of_le_lt this hy)
+  exact ha this
 
 
 
