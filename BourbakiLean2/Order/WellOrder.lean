@@ -297,6 +297,12 @@ theorem wf_induction {p : α → Prop} (h : ∀ x, (∀ y, y < x → p y) → p 
     apply not_lt_self $ lt_of_le_lt this hy)
   exact ha this
 
+def wf_recursion {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x := by
+
+
+
+/- TODO TRANSFINITE RECURSION -/
+
 
 
 
