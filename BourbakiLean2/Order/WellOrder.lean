@@ -7,6 +7,12 @@ variable {α : Type u} {x y z : α}
 class WellOrder (α : Type*) extends TotalOrder α where
   existsLeast {s : Set α} (h : s.Nonempty) : ∃ a, ∃ h : a ∈ s, Least (⟨a,h⟩ : s)
 
+class IsWellOrder (r : Relation α α) extends IsTotalOrder r where
+  existsLeast {s : Set α} (h : s.Nonempty) : ∃ a, ∃ _h : a ∈ s, ∀ b : s, (a, b.val) ∈ r
+
+instance {r : Relation α α} [inst : IsWellOrder r] : WellOrder (RelAsLE r) where
+  existsLeast := inst.existsLeast
+
 instance: WellOrder Empty where
   existsLeast h := by rcases h with ⟨⟨⟩,h⟩
 
@@ -399,13 +405,32 @@ theorem wf_recursion_exists {p : α → Type u} (h : ∀ x, (∀ y, y < x → p 
   intro x
   simp only [hf ⟨x, True.intro⟩]
 
-def wf_recursion {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x := by
+noncomputable def wf_recursion {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x :=
+  Classical.choose (wf_recursion_exists h)
 
-
-
-/- TODO TRANSFINITE RECURSION -/
-
-
+theorem wf_recursion_eq {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) (x : α) :
+    (wf_recursion h x) = h x (fun y _ => wf_recursion h y) := by
+  unfold wf_recursion
+  rw[Classical.choose_spec $ wf_recursion_exists h]
 
 
 end WellOrder
+
+namespace ZermeloTheorem
+structure PartialWellOrder (α : Type*) (s : Set (Set α)) (p : s → α) where
+  domain : Set α
+  order : WellOrder domain
+  iic_mem : ∀ x, {↑ a | a ∈ @Set.Iic _ order.toPreorder x} ∈ s
+  iic_func : ∀ x : domain, p ⟨{↑ a | a ∈ @Set.Iic _ order.toPreorder x}, iic_mem x⟩ = (x : α)
+  domain_not_mem : domain ∉ s
+
+def make_partialWellOrder {s : Set (Set α)} (p : s → α) (hf : ∀ a, p a ∉ a.val) :
+    PartialWellOrder α s p := by
+  let M : Set (Sigma (α := Set α) (fun s => Relation s s)) :=
+    {pair | IsWellOrder pair.2 ∧ ∀ x : pair.1,
+      ∃ h : (Subtype.val : pair.1 → α) '' {y : pair.1 | (y,x) ∈ pair.2} ∈ s,
+        p ⟨_,h⟩ = x}
+
+
+
+end ZermeloTheorem
