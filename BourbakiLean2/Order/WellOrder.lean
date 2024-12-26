@@ -1,7 +1,8 @@
 import BourbakiLean2.Order.TotalOrder
 import BourbakiLean2.Order.Intervals
-universe u
-variable {α β : Type*} {x y z : α}
+
+universe u v
+variable {α : Type u} {x y z : α}
 
 class WellOrder (α : Type*) extends TotalOrder α where
   existsLeast {s : Set α} (h : s.Nonempty) : ∃ a, ∃ h : a ∈ s, Least (⟨a,h⟩ : s)
@@ -211,6 +212,7 @@ theorem InitialSegment.adjoinGreatest_iso_is_iso : IsOrderIso (InitialSegment.ad
 
 instance : WellOrder (InitialSegment α) := IsOrderIso.wellOrder InitialSegment.adjoinGreatest_iso_is_iso
 
+instance {a : InitialSegment α} : Set.IsDownwardsClosed a.val := a.property
 
 /- TODO IMPORTANT directed colimits for orders vgl abschnitt vor transfin induction -/
 
@@ -296,6 +298,106 @@ theorem wf_induction {p : α → Prop} (h : ∀ x, (∀ y, y < x → p y) → p 
     have := least ⟨y,h'''⟩
     apply not_lt_self $ lt_of_le_lt this hy)
   exact ha this
+
+theorem wf_recursion_all_eq {p : α → Type*} {f g : ∀ x, p x}
+    (h : ∀ x, (∀ y, y < x → p y) → p x)
+    (eqf : ∀ x, h x (fun y _ => f y) = f x)
+    (eqg : ∀ x, h x (fun y _ => g y) = g x) : f = g := by
+  ext a
+  apply wf_induction (p := fun x => f x = g x)
+  intro x h'
+  rw[← eqf x, ← eqg x]
+  have h'' : (fun y (_ : y < x) ↦ f y) = fun y (_ : y < x) ↦ g y := by
+    funext y lt
+    rw[h' y]
+    exact lt
+  rw[h'']
+
+theorem wf_recursion_exists {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) :
+    ∃ f : (x : α) → p x, ∀ x, f x = h x (fun y _ => f y) := by
+  let q : InitialSegment α → Prop := fun i => ∃ f : (x : i.val) → p x, ∀ x, f x = h x (fun y h' => f ⟨y, i.property.mem_of_le_mem (le_of_lt h') x.property⟩)
+  have h_union : ∀ ι : Type u, ∀ f : ι → InitialSegment α, ((i : ι) → q (f i)) →
+                  q ⟨⋃ i, (f i).val, @Set.IsDownwardsClosed.iUnion _ _ _ _ (fun i => (f i).property)⟩ := by
+    intro ι f h'
+    simp only [Subtype.forall, Set.mem_iUnion_iff, forall_exists_index, q] at *
+    have cover : Set.IsCovering (fun i => {a : { a // a ∈ ⋃ i, (f i).val } | a.val ∈ (f i).val}) := by
+      ext ⟨x, ⟨i, hi⟩⟩
+      simp only [Set.mem_iUnion_iff, Set.mem_setOf_iff, Set.mem_univ, iff_true]
+      exact ⟨i,hi⟩
+    let func : (i : ι) →
+    (a : { a : { a // a ∈ ⋃ i, (f i).val } // a ∈ (fun i ↦ {a | a.val ∈ (f i).val}) i }) →
+      (fun x ↦ p x.val) a.val := by
+      rintro i ⟨a,hi'⟩
+      apply Classical.choose (h' i) ⟨_,hi'⟩
+    let o : (x : { a // a ∈ ⋃ i, (f i).val }) → p x.val :=
+      Set.IsCovering.glue (x := fun i => {a : { a // a ∈ ⋃ i, (f i).val } | a.val ∈ (f i).val}) (β := fun x => p x.val) cover func
+
+    exists o
+    intro a i ha
+    simp only [Set.mem_setOf_iff, implies_true, o]
+    have := fun a i (ha : a ∈ (f i).val) => cover.glue_agrees (β := fun x => p x.val) (f := func) (i := i) (a := ⟨a, ⟨i,by simp only [ha]⟩⟩) (by
+      rintro ⟨b,hb⟩ j j' h1 h2
+      have := wf_recursion_all_eq
+        (α := {a : { a // a ∈ ⋃ i, (f i).val } | a.val ∈ (f j).val ∧ a.val ∈ (f j').val})
+        (p := fun a => p a.val.val)
+        (f := fun ⟨⟨a,hi⟩,hj,hj'⟩ => func j ⟨⟨a,hi⟩,hj⟩)
+        (g := fun ⟨⟨a,hi⟩,hj,hj'⟩ => func j' ⟨⟨a,hi⟩,hj'⟩)
+        (by
+          intro a hind
+          apply h
+          intro y hy
+          apply hind ⟨⟨y,_⟩,_,_⟩ hy
+          · apply Set.IsDownwardsClosed.mem_of_le_mem (le_of_lt hy) a.val.property
+          · apply Set.IsDownwardsClosed.mem_of_le_mem (le_of_lt hy) a.property.1
+          · apply Set.IsDownwardsClosed.mem_of_le_mem (le_of_lt hy) a.property.2)
+        (by
+          rintro ⟨⟨a,⟨i, ai⟩⟩,aj,aj'⟩
+          simp only [Classical.choose_spec (h' j) a aj, func])
+        (by
+          rintro ⟨⟨a,⟨i, ai⟩⟩,aj,aj'⟩
+          simp only [Classical.choose_spec (h' j') a aj', func])
+      exact congrFun this ⟨⟨b,hb⟩,h1,h2⟩) ha
+
+    rw[this a i ha]
+    apply Eq.trans
+    · simp only [func]
+      rw[Classical.choose_spec (h' i) a ha]
+    · congr
+      ext b hb
+      specialize this b i (Set.IsDownwardsClosed.mem_of_le_mem (le_of_lt hb) ha)
+      rw[this]
+  have h_succ : ∀ a, q (InitialSegment.mk a) → q (InitialSegment.succ_mk a) := by
+    intro a ⟨f,hf⟩
+    exists (by
+      intro ⟨b,hb⟩
+      have hb2 := hb
+      simp only [InitialSegment.succ_mk, Set.mem_union_iff] at hb2
+      classical
+      apply hb.by_cases
+      · intro hb1
+        apply f ⟨_,hb1⟩
+      · intro path
+        apply h
+        intro a lta
+        apply f ⟨_,path ▸ lta⟩)
+    rintro ⟨b,(hb|hb)⟩
+    · simp only [Or.by_cases, hb, ↓reduceDIte, Set.mem_Iio_iff]
+      rw[hf]
+      congr
+      ext y h'
+      have : y ∈ Set.Iio a := lt_of_lt_lt h' hb
+      simp only [this, ↓reduceDIte]
+    · rcases hb
+      simp only [Or.by_cases, Set.not_mem_Iio_self, ↓reduceDIte, Set.mem_Iio_iff]
+      congr
+      ext b hb
+      rw[hf ⟨b,hb⟩]
+      simp[hb]
+      rw[hf ⟨b,hb⟩]
+  obtain ⟨f,hf⟩ := InitialSegment.induction h_union h_succ (x := InitialSegment.univ)
+  exists fun x => f ⟨x, True.intro⟩
+  intro x
+  simp only [hf ⟨x, True.intro⟩]
 
 def wf_recursion {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x := by
 
