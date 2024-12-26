@@ -4,6 +4,12 @@ variable {α β : Type*} {x y z : α}
 class TotalOrder (α : Type*) extends PartialOrder α where
   le_total : ∀ x y : α, Comparable x y
 
+class IsTotalOrder (r : Relation α α) extends IsPartialOrder r where
+  le_total : ∀ a b, (a,b) ∈ r ∨ (b,a) ∈ r
+
+instance {r : Relation α α} [inst : IsTotalOrder r] : TotalOrder (RelAsLE r) where
+  le_total := inst.le_total
+
 theorem le_total [TotalOrder α] (x y : α) : x ≤ y ∨ y ≤ x := TotalOrder.le_total x y
 
 theorem lt_trichotomy [TotalOrder α] (x y : α) : x < y ∨ x = y ∨ y < x := by
