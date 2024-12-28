@@ -26,8 +26,17 @@ class Preorder (α : Type*) extends LE α, LT α where
   lt := fun a b => a ≤ b ∧ ¬b ≤ a
   lt_iff_le_not_le : ∀ a b : α, a < b ↔ a ≤ b ∧ ¬b ≤ a := by intros; rfl
 
+theorem Preorder.isPreorder [Preorder α] : IsPreorder ({p | p.1 ≤ p.2} : Relation α α) where
+  le_refl := Preorder.le_refl
+  le_trans := Preorder.le_trans
+
 class PartialOrder (α : Type*) extends Preorder α where
   le_antisymm : ∀ a b : α, a ≤ b → b ≤ a → a = b
+
+theorem PartialOrder.isPartialOrder [PartialOrder α] : IsPartialOrder ({p | p.1 ≤ p.2} : Relation α α) where
+  le_antisymm := PartialOrder.le_antisymm
+  le_refl := Preorder.le_refl
+  le_trans := Preorder.le_trans
 
 instance {r : Relation α α} [inst : IsPreorder r] : Preorder (RelAsLE r) where
   le_refl := inst.le_refl
@@ -148,7 +157,7 @@ theorem isPreorder_of_graph_prop {r : Relation α α} (h : r.comp r = r) (h' : R
 
 
 section PartialOrder
-variable [PartialOrder α] {a b c : α}
+variable [inst : PartialOrder α] {a b c : α}
 theorem le_antisymm_iff : (a ≤ b ∧ b ≤ a) ↔ a = b :=
   ⟨fun ⟨h,h'⟩ => PartialOrder.le_antisymm _ _ h h',
    fun h => ⟨h ▸ le_refl a, h ▸ le_refl b⟩⟩

@@ -10,6 +10,12 @@ class IsTotalOrder (r : Relation α α) extends IsPartialOrder r where
 instance {r : Relation α α} [inst : IsTotalOrder r] : TotalOrder (RelAsLE r) where
   le_total := inst.le_total
 
+theorem TotalOrder.isTotalOrder [TotalOrder α] : IsTotalOrder ({p | p.1 ≤ p.2} : Relation α α) where
+  le_antisymm := PartialOrder.le_antisymm
+  le_refl := Preorder.le_refl
+  le_trans := Preorder.le_trans
+  le_total := TotalOrder.le_total
+
 theorem le_total [TotalOrder α] (x y : α) : x ≤ y ∨ y ≤ x := TotalOrder.le_total x y
 
 theorem lt_trichotomy [TotalOrder α] (x y : α) : x < y ∨ x = y ∨ y < x := by
@@ -181,6 +187,18 @@ theorem TotalOrder.inj_of_strictAnti [TotalOrder α] [Preorder β] {f : α → �
   have: StrictMonotone (f ∘ fromOp) := by rwa[strictAnti_iff_fromOp_strictMono] at h
   have := TotalOrder.inj_of_strictMono this
   exact this
+
+theorem TotalOrder.strictMono_reflect [TotalOrder α] [PartialOrder β] {f : α → β} (h : StrictMonotone f) : f x ≤ f y → x ≤ y := by
+  rw[imp_iff_not_imp_not, not_ge_iff_lt]
+  intro h'
+  have := h h'
+  rw[lt_iff_le_not_le] at this
+  exact this.2
+
+theorem TotalOrder.strictMono_le_iff [TotalOrder α] [PartialOrder β] {f : α → β} (h : StrictMonotone f) : f x ≤ f y ↔ x ≤ y := by
+  constructor
+  · apply TotalOrder.strictMono_reflect h
+  · apply h.monotone
 
 theorem TotalOrder.strictMono_iso_image [TotalOrder α] [PartialOrder β] {f : α → β} (h : StrictMonotone f) (h' : f.Surjective):
     IsOrderIso f := by

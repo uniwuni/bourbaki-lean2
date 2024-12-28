@@ -13,6 +13,13 @@ class IsWellOrder (r : Relation α α) extends IsTotalOrder r where
 instance {r : Relation α α} [inst : IsWellOrder r] : WellOrder (RelAsLE r) where
   existsLeast := inst.existsLeast
 
+theorem WellOrder.isWellOrder [WellOrder α] : IsWellOrder ({p | p.1 ≤ p.2} : Relation α α) where
+  le_antisymm := PartialOrder.le_antisymm
+  le_refl := Preorder.le_refl
+  le_trans := Preorder.le_trans
+  le_total := TotalOrder.le_total
+  existsLeast := WellOrder.existsLeast
+
 instance: WellOrder Empty where
   existsLeast h := by rcases h with ⟨⟨⟩,h⟩
 
@@ -524,5 +531,5 @@ def zermelo : WellOrder α := by
   exact WellOrder.carry_bij Function.bijection_univ
 
 
-
 end ZermeloTheorem
+export ZermeloTheorem (zermelo)
