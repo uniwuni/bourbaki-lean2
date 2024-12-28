@@ -23,3 +23,15 @@ import BourbakiLean2.Order.BoundedFunctions
 import BourbakiLean2.Order.MaxMin
 import BourbakiLean2.Order.Sets
 import BourbakiLean2.Order.GlbLub
+import BourbakiLean2.Order.TotalOrder
+import BourbakiLean2.Order.Quotient
+import BourbakiLean2.Order.Lattice
+import BourbakiLean2.Order.Cofinal
+import BourbakiLean2.Order.Coverings
+import BourbakiLean2.Order.Directed
+import BourbakiLean2.Order.Hom
+import BourbakiLean2.Order.Inductive
+import BourbakiLean2.Order.Intervals
+import BourbakiLean2.Order.Sum
+import BourbakiLean2.Order.WellOrder
+import BourbakiLean2.Order.WellOrderIso
