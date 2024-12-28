@@ -687,6 +687,10 @@ noncomputable def Bijection.inv (f : Bijection α β) : Bijection β α := ⟨f.
   simp only [inv, Bijective.inv_val_val]
 @[simp] def bijection_of_funcs (f : α → β) (g : β → α) (h : ∀ b, f (g b) = b) (h' : ∀ a, g (f a) = a) : Bijection α β :=
   ⟨f, IsInverseOf.bij ⟨funext h', funext h⟩⟩
+
+def bijection_univ : Bijection (Set.univ : Set α) α :=
+  bijection_of_funcs Subtype.val (fun x => ⟨x,True.intro⟩) (by intro; rfl) (by intro; rfl)
+
 end Function
 
 theorem Subtype.coe.inj {p : α → Prop}: Function.Injective (fun ⟨x, _⟩ => x : { x // p x } → α) := by

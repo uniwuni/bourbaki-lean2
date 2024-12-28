@@ -127,6 +127,12 @@ def Preorder.QuotEquiv (α : Type u) [inst : Preorder α] : Type u := Quot (α :
 def Preorder.QuotEquiv.from {α : Type u} [Preorder α] (h : Preorder.QuotEquiv α) : Quot (α := α) (Function.curry Preorder.equivalent_rel) := h
 def Preorder.QuotEquiv.to {α : Type u} [Preorder α] (h : Quot (α := α) (Function.curry Preorder.equivalent_rel)) : Preorder.QuotEquiv α := h
 def Preorder.QuotEquiv.mk {α : Type u} [Preorder α] (h : α) : Preorder.QuotEquiv α := Quot.mk _ h
+
+def Preorder.carry_bij {β : Type*} (f : Function.Bijection α β) : Preorder β where
+  le a b := f.invfun a ≤ f.invfun b
+  le_refl a := le_refl _
+  le_trans a b c h h' := le_trans _ _ _ h h'
+
 end Preorder
 
 theorem isPreorder_of_graph_prop {r : Relation α α} (h : r.comp r = r) (h' : Relation.diag ⊆ r) :
@@ -194,6 +200,11 @@ theorem lt_of_lt_le (h : a < b) (h' : b ≤ c) : a < c := by
   · apply lt_of_lt_lt h h'
   · exact h
 
+def PartialOrder.carry_bij {β : Type*} (f : Function.Bijection α β) : PartialOrder β where
+  le := (Preorder.carry_bij f).le
+  le_refl := (Preorder.carry_bij f).le_refl
+  le_trans := (Preorder.carry_bij f).le_trans
+  le_antisymm x y h h' := f.inv.2.inj _ _ $ le_antisymm _ _ h h'
 
 @[simp] theorem PartialOrder.equivalent_rel_diag : Preorder.equivalent_rel = (Relation.diag (α := α)) := by
   ext ⟨a,b⟩

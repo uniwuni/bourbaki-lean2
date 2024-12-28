@@ -85,6 +85,29 @@ def IsOrderIso.wellOrder {β : Type*} [WellOrder α] [PartialOrder β] {f : α �
 
 namespace WellOrder
 variable [WellOrder α]
+def carry_bij {β : Type*} (f : Function.Bijection α β) : WellOrder β where
+  le := (Preorder.carry_bij f).le
+  le_refl := (Preorder.carry_bij f).le_refl
+  le_trans := (Preorder.carry_bij f).le_trans
+  le_antisymm := (PartialOrder.carry_bij f).le_antisymm
+  le_total := (TotalOrder.carry_bij f).le_total
+  existsLeast := by
+    intro s h
+    obtain ⟨a,ha,least⟩ := WellOrder.existsLeast (s := f ⁻¹' s) (by
+      obtain ⟨b,hb⟩ := h
+      exists f.inv b
+      simp only [Set.mem_preimage_iff, Function.Bijection.val_inv_val, hb])
+    exists f a
+    simp only [Set.mem_preimage_iff] at ha
+    exists ha
+    intro ⟨b,hb⟩
+    specialize least ⟨f.inv b, (by simp only [Set.mem_preimage_iff,
+      Function.Bijection.val_inv_val, hb])⟩
+    simp only [Subtype.le_iff_val] at least
+    rw[← f.inv_val_val (a := a)] at least
+    exact least
+
+
 theorem hasLUB_of_bounded_above {s : Set α} (h : s.BoundedAbove) : ∃ x, IsLUB s x := by
   let t := {a | UpperBound s a}
   have h : t.Nonempty := h
@@ -219,8 +242,6 @@ theorem InitialSegment.adjoinGreatest_iso_is_iso : IsOrderIso (InitialSegment.ad
 instance : WellOrder (InitialSegment α) := IsOrderIso.wellOrder InitialSegment.adjoinGreatest_iso_is_iso
 
 instance {a : InitialSegment α} : Set.IsDownwardsClosed a.val := a.property
-
-/- TODO IMPORTANT directed colimits for orders vgl abschnitt vor transfin induction -/
 
 theorem InitialSegment.induction {α : Type u} [WellOrder α] {p : InitialSegment α → Prop} {x}
     (h_union : ∀ ι : Type u, ∀ f : ι → InitialSegment α, ((i : ι) → p (f i)) →
@@ -500,7 +521,7 @@ def zermelo : WellOrder α := by
   simp[s] at this
   have order := pwo.order
   rw[this] at order
-  sorry
+  exact WellOrder.carry_bij Function.bijection_univ
 
 
 

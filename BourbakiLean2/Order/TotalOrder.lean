@@ -246,6 +246,13 @@ instance [TotalOrder α] : TotalOrder (AdjoinGreatest α) where
     · left
       exact le_rfl
 
+def TotalOrder.carry_bij [TotalOrder α] {β : Type*} (f : Function.Bijection α β) : TotalOrder β where
+  le := (Preorder.carry_bij f).le
+  le_refl := (Preorder.carry_bij f).le_refl
+  le_trans := (Preorder.carry_bij f).le_trans
+  le_antisymm := (PartialOrder.carry_bij f).le_antisymm
+  le_total x y := le_total _ _
+
 def IsOrderIso.totalOrder {β : Type*} [TotalOrder α] [PartialOrder β] {f : α → β} (h : IsOrderIso f) : TotalOrder β where
   le_total a b := by
     obtain ⟨a', rfl⟩ := h.bij.surj.exists_preimage a
