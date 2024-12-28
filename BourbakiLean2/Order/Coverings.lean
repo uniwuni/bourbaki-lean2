@@ -96,4 +96,5 @@ instance isTotalOrderColimit [RightDirected (x '' Set.univ)]
     exact (inst l).le_total ⟨a,ak⟩ ⟨b,bk⟩
 
 
+
 end Set

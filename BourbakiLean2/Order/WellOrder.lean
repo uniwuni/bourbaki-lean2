@@ -1,6 +1,6 @@
 import BourbakiLean2.Order.TotalOrder
 import BourbakiLean2.Order.Intervals
-
+import BourbakiLean2.Order.Coverings
 universe u v
 variable {α : Type u} {x y z : α}
 
@@ -417,6 +417,39 @@ theorem wf_recursion_eq {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) �
 end WellOrder
 
 namespace ZermeloTheorem
+
+instance isWellOrderColimit {ι} {x : ι → Set α} [RightDirected (x '' Set.univ)]
+    (h : Set.IsCovering x) {f : (i : ι) → Relation (x i) (x i)} [inst: ∀ i, IsWellOrder $ f i]
+    (h' : ∀ i j, (sub : x i ⊆ x j) → ∀ a b, (ha : a ∈ x i) → (hb : b ∈ x i) →
+      (⟨a,ha⟩,⟨b,hb⟩) ∈ f i ↔ (⟨a, sub ha⟩,⟨b, sub hb⟩) ∈ f j)
+    (h'' : ∀ i j, (sub : x i ⊆ x j) → ∀ a b, (ha : a ∈ x i) → (hb : b ∈ x j) → (⟨b,hb⟩,⟨a,sub ha⟩) ∈ f j → b ∈ x i)
+    (h''' : ∀ i j, x i ⊆ x j ∨ x j ⊆ x i):
+    IsWellOrder (h.glue_rel f) where
+  le_trans := (Set.isPreorderColimit h h').le_trans
+  le_refl := (Set.isPreorderColimit h h').le_refl
+  le_antisymm := (Set.isPartialOrderColimit h h').le_antisymm
+  le_total := (Set.isTotalOrderColimit h h').le_total
+  existsLeast := by
+    rintro s ⟨n, hn⟩
+    have ⟨i,hi⟩ := h.mem_exists n
+    have ⟨⟨min, minmemi⟩, minmems, ismin⟩ := (inst i).existsLeast (s := {x | x.val ∈ s}) ⟨⟨n,hi⟩,hn⟩
+    exists min
+    exists minmems
+    intro ⟨b,hb⟩
+    have ⟨j,hj⟩ := h.mem_exists b
+    rcases h''' i j with (sb|sb)
+    · have hi' := sb minmemi
+      rw[Set.IsCovering.glue_rel_agrees h h' _ _ hi' hj]
+      specialize h'' _ _ sb min b minmemi hj
+      rcases (inst j).le_total ⟨b,hj⟩ ⟨min, hi'⟩ with (le|le)
+      · specialize h'' le
+        rw[← h' i j sb _ _ minmemi h'']
+        apply ismin ⟨⟨b,h''⟩,hb⟩
+      · exact le
+    · have hi' := sb hj
+      rw[Set.IsCovering.glue_rel_agrees h h' _ _ minmemi hi']
+      apply ismin ⟨⟨b,hi'⟩,hb⟩
+
 structure PartialWellOrder (α : Type*) (s : Set (Set α)) (p : s → α) where
   domain : Set α
   order : WellOrder domain
@@ -430,6 +463,44 @@ def make_partialWellOrder {s : Set (Set α)} (p : s → α) (hf : ∀ a, p a ∉
     {pair | IsWellOrder pair.2 ∧ ∀ x : pair.1,
       ∃ h : (Subtype.val : pair.1 → α) '' {y : pair.1 | (y,x) ∈ pair.2} ∈ s,
         p ⟨_,h⟩ = x}
+  let x : (i : M) → Set α := fun a => a.val.1
+  let f : (i : M) → Relation (x i) (x i) := fun a => a.val.2
+  sorry
+  /-
+  have total : ∀ i j, x i ⊆ x j ∨ x j ⊆ x i := by
+    intro i j
+    rw[← Set.inter_eq_iff_subset_left, ← Set.inter_eq_iff_subset_right]
+    let v := {a | ∃ (h : a ∈ x i ∩ x j), Subtype.val '' {b | ⟨b,⟨a,h.1⟩⟩ ∈ f i} = Subtype.val '' {b | ⟨b,⟨a,h.2⟩⟩ ∈ f j} ∧
+      ∀ b c, (hb : b ∈ x i ∩ x j) → (hc : c ∈ x i ∩ x j) → ⟨⟨b,hb.1⟩,⟨c,hc.1⟩⟩ ∈ f i ↔  ⟨⟨b,hb.2⟩,⟨c,hc.2⟩⟩ ∈ f j}
+
+    suffices eq : v = x i ∨ v = x j by
+      rcases eq with (eq|eq)
+      · rw[← eq]
+        left
+
+-/
+def zermelo : WellOrder α := by
+  let s := {Set.univ (α := α)} ᶜ
+  let p : s → α := fun a => Exists.choose (p := fun x => x ∈ a.1 ᶜ) (by
+    rcases a with ⟨a,p⟩
+    unfold s at p
+    simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.ext_iff, Set.mem_univ, iff_true,
+      Classical.not_forall] at p
+    exact p)
+  have notin : ∀ a, p a ∉ a.1 := by
+    intro a
+    apply Exists.choose_spec (p := fun x => x ∈ a.1 ᶜ) (by
+      rcases a with ⟨a,p⟩
+      unfold s at p
+      simp only [Set.mem_compl_iff, Set.mem_singleton_iff, Set.ext_iff, Set.mem_univ, iff_true,
+        Classical.not_forall] at p
+      exact p)
+  have pwo := make_partialWellOrder p notin
+  have := pwo.domain_not_mem
+  simp[s] at this
+  have order := pwo.order
+  rw[this] at order
+  sorry
 
 
 
