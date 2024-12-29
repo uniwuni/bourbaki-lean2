@@ -206,3 +206,65 @@ theorem WellOrder.segment_less_strictly_monotone {f g : α → β} (hdc : (f '' 
     exact not_lt_self $ lt_of_le_lt (least ⟨g a, by trivial⟩) this
   apply this
   apply hdc.mem_of_le_mem (least ⟨f a, by trivial⟩) (by simp only [Set.val_mem_image_univ])
+
+theorem WellOrder.segment_embedding_all_eq' {x y : InitialSegment α} {f : x.val → β} {g : y.val → β}
+    (hs : x.val ⊆ y.val)
+    (hf : IsOrderIso f) (hg : IsOrderIso g) (hf' : (f '' Set.univ).IsDownwardsClosed)
+    (hg' : (g '' Set.univ).IsDownwardsClosed) : ∃ h : x = y, h ▸ f = g := by
+  let g' : x.val → β := fun a => g ⟨a, hs a.property⟩
+  have smg : StrictMonotone g' := by
+    intro a b h
+    exact hg.strictMonotone h
+  have dcg : (g' '' Set.univ).IsDownwardsClosed := by
+    constructor
+    intro a b h
+    rw[Set.mem_image_iff, Set.mem_image_iff]
+    rintro ⟨⟨a',mem⟩,rfl,_⟩
+    have := hg'.mem_of_le_mem h (by simp only [Set.val_mem_image_univ])
+    rw[Set.mem_image_iff] at this
+    obtain ⟨b',rfl,_⟩ := this
+    have : b' ≤ a' := by
+      rw[← not_gt_iff_le]
+      intro h'
+      have := hg.strictMonotone (a := ⟨a', hs mem⟩) (b := b') h'
+      exact not_lt_self $ lt_of_le_lt h this
+    have := x.2.mem_of_le_mem this mem
+    exists ⟨_,this⟩
+
+  have this x := WellOrder.segment_less_strictly_monotone hf' hf.monotone smg (x := x)
+  have that x := WellOrder.segment_less_strictly_monotone dcg smg.monotone hf.strictMonotone (x := x)
+  have fg := funext (fun a => le_antisymm (this a) (that a))
+  have : x.val = y.val := by
+    by_contra neq
+    obtain ⟨a,ay,nax⟩ : ∃ a, a ∈ y.val ∧ a ∉ x.val := by
+      by_contra na
+      simp only [not_exists, not_and, Classical.not_not] at na
+      apply neq $ Set.eq_iff_subset_subset.mpr ⟨hs,na⟩
+    have oops : g ⟨a,ay⟩ ∉ f '' Set.univ := by
+      intro h
+      rw[Set.mem_image_iff] at h
+      obtain ⟨b,eq,_⟩ := h
+      rw[fg] at eq
+      have := hg.bij.inj _ _ eq
+      simp only [Subtype.eq_iff] at this
+      exact nax (this ▸ b.property)
+    have ie : g ⟨a,ay⟩ ∈ f '' Set.univ := by
+        have := hf.bij.surj
+        rw[Function.Surjective] at this
+        rw[this]
+        trivial
+    exact oops ie
+  have eq := Subtype.eq_iff.mpr this
+  rcases eq
+  simp only [exists_const]
+  rw[fg]
+
+theorem WellOrder.segment_embedding_all_eq {x y : InitialSegment α} {f : x.val → β} {g : y.val → β}
+    (hf : IsOrderIso f) (hg : IsOrderIso g) (hf' : (f '' Set.univ).IsDownwardsClosed)
+    (hg' : (g '' Set.univ).IsDownwardsClosed) : ∃ h : x = y, h ▸ f = g := by
+  rcases le_total x y with (h|h)
+  · exact WellOrder.segment_embedding_all_eq' h hf hg hf' hg'
+  · obtain ⟨rfl,p⟩ := WellOrder.segment_embedding_all_eq' h hg hf hg' hf'
+    exists rfl
+    simp only [le_rfl] at *
+    exact p.symm
