@@ -1,6 +1,6 @@
 import BourbakiLean2.Order.MaxMin
 
-variable {α : Type*} [Preorder α]
+variable {α β : Type*} [Preorder α] [Preorder β]
 
 def UpperBound (s : Set α) (a : α) := ∀ b ∈ s, b ≤ a
 def LowerBound (s : Set α) (a : α) := ∀ b ∈ s, a ≤ b
@@ -74,3 +74,16 @@ theorem LowerBound.lowerBound_iInter {ι : Type*} {s : ι → Set α} {i} (h : L
   simp only [UpperBound, Set.mem_singleton_iff, forall_eq]
 @[simp] theorem LowerBound.singleton {a b : α} : LowerBound {a} b ↔ b ≤ a := by
   simp only [LowerBound, Set.mem_singleton_iff, forall_eq]
+
+
+theorem Monotone.upperBound_of_upperBound {f : α → β} (h : Monotone f) (h' : UpperBound s a) : UpperBound (f '' s) (f a) := by
+  intro b hb
+  rw[Set.mem_image_iff] at hb
+  obtain ⟨c,rfl,hc⟩ := hb
+  apply h $ h' _ hc
+
+theorem Monotone.lowerBound_of_lowerBound {f : α → β} (h : Monotone f) (h' : LowerBound s a) : LowerBound (f '' s) (f a) := by
+  intro b hb
+  rw[Set.mem_image_iff] at hb
+  obtain ⟨c,rfl,hc⟩ := hb
+  apply h $ h' _ hc

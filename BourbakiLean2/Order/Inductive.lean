@@ -1,4 +1,5 @@
 import BourbakiLean2.Order.WellOrder
+import BourbakiLean2.Order.Sets
 universe u
 
 class InductiveOrder (α : Type*) [PartialOrder α] where
@@ -40,6 +41,47 @@ instance [PartialOrder α] [InductiveOrder α] {a : α} : InductiveOrder (Set.Ic
     apply ub
     simp only [Set.mem_image_iff, Subtype.exists, Set.mem_Ici_iff, exists_and_left, exists_eq_left']
     exists c.property
+
+noncomputable def PartialMap.iUnion {ι : Type*} (f : ι → PartialMap α β) : PartialMap α β :=
+  { carrier := ⋃ i, (f i).carrier,
+    function := fun x => (f (Classical.choose $ x.2)).function ⟨x, Classical.choose_spec x.2⟩ }
+
+@[simp] theorem PartialMap.iUnion_lub {ι : Type*} {f : ι → PartialMap α β} (h : ∀ i j, Comparable (f i) (f j)) :
+    IsLUB (f '' Set.univ) (PartialMap.iUnion f) := by
+  constructor
+  swap
+  · intro x h'
+    rw[Set.mem_image_iff] at h'
+    obtain ⟨i,rfl,_⟩ := h'
+    simp only [LE.le, iUnion]
+    exists Set.subset_iUnion (x := fun i => (f i).carrier)
+    intro a ha
+    let j := @Classical.choose ι (fun x ↦ a ∈ (f x).carrier) (Set.mem_iUnion_iff.2 ⟨_,ha⟩)
+    change (f j).function ⟨a,_⟩ = (f i).function ⟨a,ha⟩
+    rcases h i j with (h|h)
+    · exact (h.2 a ha)
+    · exact (h.2 a _).symm
+  · intro ⟨ub, hub⟩
+    have := carrier_monotone.upperBound_of_upperBound (f := (PartialMap.carrier : PartialMap α β → Set α)) (a := ub) hub
+    constructor
+    swap
+    · intro a h'
+      simp only
+      obtain ⟨i,hi⟩ := Set.mem_iUnion_iff.1 h'
+      apply this (f i).carrier
+      apply Set.val_mem_image_of_mem
+      apply Set.val_mem_image_of_mem
+      trivial
+      assumption
+    · intro a h'
+      obtain ⟨i,hi⟩ := Set.mem_iUnion_iff.1 h'
+      rw[(hub (f i) (Set.val_mem_image_of_mem True.intro)).2 a hi]
+      let j := @Classical.choose ι (fun x ↦ a ∈ (f x).carrier) (Set.mem_iUnion_iff.2 ⟨_,hi⟩)
+      simp[iUnion]
+      change (f i).function ⟨a,_⟩ = (f j).function ⟨a,_⟩
+      rcases h i j with (h|h)
+      · exact (h.2 a _).symm
+      · exact (h.2 a _)
 
 instance: InductiveOrder (PartialMap α β) where
   chain_boundedAbove := by

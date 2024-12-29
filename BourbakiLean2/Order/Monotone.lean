@@ -185,3 +185,10 @@ theorem Subtype.val_monotone {p : α → Prop} [LE α] : Monotone (Subtype.val :
 
 theorem Subtype.val_strictMonotone {p : α → Prop} [LT α] : StrictMonotone (Subtype.val : {x // p x} → α) :=
   fun _ _ h => h
+
+theorem PartialMap.carrier_monotone {β : α → Type*} : Monotone (PartialMap.carrier : PartialMap α β → Set α) :=
+  fun _ _ h => h.1
+
+theorem IsOrderIso.lt_iff [Preorder α] [Preorder β] {f : α → β} (h : IsOrderIso f) {a b : α} : f a < f b ↔ a < b := by
+  rw[lt_iff_le_not_le, lt_iff_le_not_le]
+  rw[← h.le_iff, ← h.le_iff]
