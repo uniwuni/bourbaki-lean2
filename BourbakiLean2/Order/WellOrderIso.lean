@@ -16,8 +16,7 @@ theorem WellOrder.either_embeds :
         obtain ⟨⟨x,hx⟩,rfl,hx'⟩ := hx
         obtain ⟨⟨y,hy⟩,rfl,hy'⟩ := hy
         exact h ⟨x,hx⟩ hx' ⟨y,hy⟩ hy'
-    have hcurried := (fun (i : t) (j : t) => h i.val i.property j.val j.property)
-    obtain ⟨ub,least⟩ := PartialMap.iUnion_lub (f := fun (x : t) => x.val.val) hcurried
+    obtain ⟨ub,least⟩ := PartialMap.iUnion_lub (f := fun (x : t) => x.val.val) (fun (i : t) (j : t) => h i.val i.property j.val j.property)
     have fins : (PartialMap.iUnion fun x : t ↦ x.val.val) ∈ s := by
         constructor
         · simp only [PartialMap.iUnion]
@@ -161,3 +160,49 @@ theorem WellOrder.either_embeds :
   apply Set.not_mem_Iio_self (a := enda)
   rw[this]
   exact Set.mem_Iic_self
+
+theorem WellOrder.segment_less_strictly_monotone {f g : α → β} (hdc : (f '' Set.univ).IsDownwardsClosed)
+    (hf : Monotone f) (hg : StrictMonotone g) {x} : f x ≤ g x := by
+  by_contra h
+  rw[not_ge_iff_lt] at h
+  obtain ⟨a,amem,aleast⟩ := existsLeast (s := {x | g x < f x}) ⟨_,h⟩
+  have : ∀ x, x < a → False := by
+    intro x lt
+    have fxgx : f x ≤ g x := by
+      rw[← not_gt_iff_le]
+      intro h
+      exact not_lt_self $ lt_of_le_lt (aleast ⟨x,h⟩) lt
+    have gxga := hg lt
+    have := lt_of_lt_lt (lt_of_le_lt fxgx gxga) amem
+    have img := hdc.mem_of_le_mem (le_of_lt amem) (by simp only [Set.val_mem_image_univ])
+    rw[Set.mem_image_iff] at img
+    obtain ⟨z,eq,_⟩ := img
+    change g a < f a at amem
+    have amem' := amem
+    rw[eq] at amem
+    have := TotalOrder.mono_lt_reflect hf amem
+    have fzgz : f z ≤ g z := by
+      rw[← not_gt_iff_le]
+      intro h
+      exact not_lt_self $ lt_of_le_lt (aleast ⟨z,h⟩) this
+    have := lt_of_le_lt fzgz $ hg this
+    rw[eq] at this
+    apply not_lt_self this
+  have a_least : Least a := by
+    intro x
+    rw[← not_gt_iff_le]
+    intro h
+    apply this x h
+  have ⟨l,_,least⟩ := existsLeast (s := Set.univ) ⟨f a,trivial⟩
+  have : l ∉ f '' Set.univ := by
+    intro h
+    rw[Set.mem_image_iff] at h
+    obtain ⟨w,rfl,_⟩ := h
+    have := hf $ a_least w
+    have := le_antisymm this (least ⟨f a, by trivial⟩)
+    have : g a < f w := by
+      rw[← this]
+      exact amem
+    exact not_lt_self $ lt_of_le_lt (least ⟨g a, by trivial⟩) this
+  apply this
+  apply hdc.mem_of_le_mem (least ⟨f a, by trivial⟩) (by simp only [Set.val_mem_image_univ])

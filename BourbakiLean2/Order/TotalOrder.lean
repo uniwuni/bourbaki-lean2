@@ -195,6 +195,13 @@ theorem TotalOrder.strictMono_reflect [TotalOrder α] [PartialOrder β] {f : α 
   rw[lt_iff_le_not_le] at this
   exact this.2
 
+theorem TotalOrder.mono_lt_reflect [TotalOrder α] [PartialOrder β] {f : α → β} (h : Monotone f) : f x < f y → x < y := by
+  rw[← not_ge_iff_lt]
+  rw[lt_iff_le_not_eq]
+  intro ⟨h1,h2⟩ h3
+  exact h2 $ le_antisymm h1 $ h h3
+
+
 theorem TotalOrder.strictMono_le_iff [TotalOrder α] [PartialOrder β] {f : α → β} (h : StrictMonotone f) : f x ≤ f y ↔ x ≤ y := by
   constructor
   · apply TotalOrder.strictMono_reflect h
