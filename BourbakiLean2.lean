@@ -35,3 +35,5 @@ import BourbakiLean2.Order.Intervals
 import BourbakiLean2.Order.Sum
 import BourbakiLean2.Order.WellOrder
 import BourbakiLean2.Order.WellOrderIso
+import BourbakiLean2.Order.Lex
+import BourbakiLean2.Set.Cardinal
