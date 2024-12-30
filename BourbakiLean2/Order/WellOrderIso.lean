@@ -2,7 +2,7 @@ import BourbakiLean2.Order.Inductive
 
 variable {α β : Type*} [WellOrder α] [WellOrder β]
 
-theorem WellOrder.either_embeds :
+theorem WellOrder.either_embeds (α β : Type*) [WellOrder α] [WellOrder β] :
     (∃ x : InitialSegment β, ∃ f : α → x.val, IsOrderIso f) ∨ (∃ x : InitialSegment α, ∃ f : x.val → β, IsOrderIso f) := by
   let s : Set (PartialMap α $ fun _ => β) := { f | f.carrier.IsDownwardsClosed ∧ StrictMonotone f.function ∧ (f.function '' Set.univ).IsDownwardsClosed}
   have ind : InductiveOrder s := by
@@ -209,8 +209,9 @@ theorem WellOrder.segment_less_strictly_monotone {f g : α → β} (hdc : (f '' 
 
 theorem WellOrder.segment_embedding_all_eq' {x y : InitialSegment α} {f : x.val → β} {g : y.val → β}
     (hs : x.val ⊆ y.val)
-    (hf : IsOrderIso f) (hg : IsOrderIso g) (hf' : (f '' Set.univ).IsDownwardsClosed)
-    (hg' : (g '' Set.univ).IsDownwardsClosed) : ∃ h : x = y, h ▸ f = g := by
+    (hf : IsOrderIso f) (hg : IsOrderIso g) : ∃ h : x = y, h ▸ f = g := by
+  have hf' : (f '' Set.univ).IsDownwardsClosed := by rw[hf.bij.surj]; infer_instance
+  have hg' : (g '' Set.univ).IsDownwardsClosed := by rw[hg.bij.surj]; infer_instance
   let g' : x.val → β := fun a => g ⟨a, hs a.property⟩
   have smg : StrictMonotone g' := by
     intro a b h
@@ -260,11 +261,144 @@ theorem WellOrder.segment_embedding_all_eq' {x y : InitialSegment α} {f : x.val
   rw[fg]
 
 theorem WellOrder.segment_embedding_all_eq {x y : InitialSegment α} {f : x.val → β} {g : y.val → β}
-    (hf : IsOrderIso f) (hg : IsOrderIso g) (hf' : (f '' Set.univ).IsDownwardsClosed)
-    (hg' : (g '' Set.univ).IsDownwardsClosed) : ∃ h : x = y, h ▸ f = g := by
+    (hf : IsOrderIso f) (hg : IsOrderIso g) : ∃ h : x = y, h ▸ f = g := by
   rcases le_total x y with (h|h)
-  · exact WellOrder.segment_embedding_all_eq' h hf hg hf' hg'
-  · obtain ⟨rfl,p⟩ := WellOrder.segment_embedding_all_eq' h hg hf hg' hf'
+  · exact WellOrder.segment_embedding_all_eq' h hf hg
+  · obtain ⟨rfl,p⟩ := WellOrder.segment_embedding_all_eq' h hg hf
     exists rfl
     simp only [le_rfl] at *
     exact p.symm
+
+theorem WellOrder.into_segment_embedding_all_eq' {x y : InitialSegment β} {f : α → x.val} {g : α → y.val}
+    (hs : x.val ⊆ y.val)
+    (hf : IsOrderIso f) (hg : IsOrderIso g) : ∃ h : x = y, h ▸ f = g := by
+  have hf' : (f '' Set.univ).IsDownwardsClosed := by rw[hf.bij.surj]; infer_instance
+  have hg' : (g '' Set.univ).IsDownwardsClosed := by rw[hg.bij.surj]; infer_instance
+  let f' : α → y.val := fun a => ⟨f a, hs (f a).property⟩
+  have smg : StrictMonotone f' := by
+    intro a b h
+    exact hf.strictMonotone h
+  have dcg : (f' '' Set.univ).IsDownwardsClosed := by
+    constructor
+    intro a b h
+    rw[Set.mem_image_iff, Set.mem_image_iff]
+    rintro ⟨a',rfl,_⟩
+    simp only [Subtype.le_iff_val, f'] at h
+    have := x.2.mem_of_le_mem (a := a) h $ (f a').property
+    obtain ⟨b,eq⟩ := hf.bij.surj.exists_preimage ⟨a.val,this⟩
+    exists b
+    simp only [Subtype.eq_iff, Set.mem_univ, and_true]
+    simp only [← eq]
+  have this x := WellOrder.segment_less_strictly_monotone hg' hg.monotone smg (x := x)
+  have that x := WellOrder.segment_less_strictly_monotone dcg smg.monotone hg.strictMonotone (x := x)
+  have fg := funext (fun a => le_antisymm (this a) (that a))
+  have : x.val = y.val := by
+    ext a
+    constructor
+    · intro h
+      exact hs h
+    · intro h
+      have ⟨x,y⟩ := hg.bij.surj.exists_preimage ⟨a,h⟩
+      rw[fg] at y
+      unfold f' at y
+      simp only [Subtype.eq_iff] at y
+      rw[y]
+      exact (f x).property
+  have eq := Subtype.eq_iff.mpr this
+  rcases eq
+  exists rfl
+  simp only [fg]
+
+theorem WellOrder.into_segment_embedding_all_eq {x y : InitialSegment β} {f : α → x.val} {g : α → y.val}
+    (hf : IsOrderIso f) (hg : IsOrderIso g) : ∃ h : x = y, h ▸ f = g := by
+  rcases le_total x y with (h|h)
+  · exact WellOrder.into_segment_embedding_all_eq' h hf hg
+  · obtain ⟨rfl,p⟩ := WellOrder.into_segment_embedding_all_eq' h hg hf
+    exists rfl
+    simp only [le_rfl] at *
+    exact p.symm
+
+theorem WellOrder.segment_into_self_iso {x : InitialSegment α} {f : x.val → α}
+    (h : IsOrderIso f) : ∃ h : x = InitialSegment.univ, h ▸ f = Subtype.val :=
+  WellOrder.segment_embedding_all_eq' (f := f) (g := (Subtype.val : InitialSegment.univ.val → α))
+    (by simp only [InitialSegment.univ, Set.subset_univ]) h InitialSegment.univ_val_isOrderIso
+
+theorem WellOrder.self_into_segment_iso {x : InitialSegment α} {f : α → x.val}
+    (h : IsOrderIso f) : ∃ h : x = InitialSegment.univ, h ▸ f = (fun x => ⟨x,True.intro⟩) :=
+    WellOrder.into_segment_embedding_all_eq' (f := f) (g := (fun x : α => (⟨x,True.intro⟩ : InitialSegment.univ.val)))
+    (by simp only [InitialSegment.univ, Set.subset_univ]) h InitialSegment.mk_unit_isOrderIso
+
+theorem WellOrder.iso_all_eq {f g : α → β} (hf : IsOrderIso f) (hg : IsOrderIso g) : f = g := by
+  rcases WellOrder.either_embeds α β with (⟨x,h,iso⟩|⟨x,h,iso⟩)
+  · have hcompf := hf.comp iso.inv
+    have ⟨eqf,hf⟩ := segment_into_self_iso hcompf
+    rcases eqf
+    have hcompg := hg.comp iso.inv
+    have ⟨eqg,hg⟩ := segment_into_self_iso hcompg
+    rcases eqg
+    simp only at *
+    rw[← hg] at hf
+    exact iso.bij.inv_bij.surj.comp_right_inj f g hf
+  · have hcompf := iso.inv.comp hf
+    have ⟨eqf,hf⟩ := self_into_segment_iso hcompf
+    rcases eqf
+    have hcompg := iso.inv.comp hg
+    have ⟨eqg,hg⟩ := self_into_segment_iso hcompg
+    rcases eqg
+    simp only at *
+    rw[← hg] at hf
+    exact iso.bij.inv_bij.inj.comp_left_inj f g hf
+
+theorem WellOrder.iso_same_eq_id {f : α → α} (h : IsOrderIso f) : f = id := WellOrder.iso_all_eq h id_isOrderIso
+
+theorem WellOrder.subset_iso_segment {s : Set α} : ∃ t : InitialSegment α, ∃ f : s → t.val, IsOrderIso f := by
+  rcases WellOrder.either_embeds s α with (⟨x,h,iso⟩|⟨x,h,iso⟩)
+  · exists x
+    exists h
+  · let f' : α → α := fun x => (iso.bij.inv x).val
+    rcases x.mk_or_univ with (⟨a,rfl⟩|rfl)
+    · have strict : StrictMonotone f' := by
+        intro a b g
+        exact iso.inv.strictMonotone g
+      have : f' a < a := (iso.bij.inv a).property
+      have f := WellOrder.segment_less_strictly_monotone (f := id) (hdc := by simp only [Function.image_id]; infer_instance)  (hf := id_mono) (hg := strict) (x := a.val)
+      apply (not_lt_self $ lt_of_le_lt f this).elim
+    · exists InitialSegment.univ
+      exists fun x => ⟨h ⟨x,True.intro⟩, True.intro⟩
+      apply isOrderIso_iff_reflect.mpr
+      constructor
+      · constructor
+        · intro x y eq
+          simp only [Subtype.eq_iff] at eq
+          have := iso.bij.inj _ _ eq
+          simp only [Subtype.eq_iff] at this
+          simp only [Subtype.eq_iff, this]
+        · rw[Function.surj_iff]
+          intro ⟨b,_⟩
+          have ⟨a,h'⟩ := iso.bij.surj.exists_preimage b
+          exists a
+          simp only [h']
+      · constructor
+        · intro x y h
+          apply iso.monotone h
+        · intro x y h
+          apply iso.le_iff.mp h
+
+
+/- TODO
+theorem WellOrder.iso_pairs_all_id {x : InitialSegment α} {y : InitialSegment β}
+    {f : α → y.val} {g : β → x.val} (hf : IsOrderIso f) (hg : IsOrderIso g) :
+    ∃ h : x = InitialSegment.univ, ∃ h' : y = InitialSegment.univ,
+        Subtype.val ∘ f ∘ Subtype.val ∘ g = id ∧ Subtype.val ∘ g ∘ Subtype.val ∘ f = id := by
+  have : IsOrderIso (g ∘ Subtype.val ∘ f) := by
+    apply isOrderIso_iff_reflect.mpr
+    · constructor
+
+      · constructor
+        · exact hg.monotone.comp hf.monotone
+        · intro x y h
+          rw[← hg, ← hf]
+          exact h
+
+
+-/

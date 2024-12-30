@@ -97,6 +97,14 @@ theorem preimage_mono {y y' : Set β} (h : y ⊆ y'): f ⁻¹' y ⊆ f ⁻¹' y'
   ext a
   simp only [Set.mem_preimage_iff, comp_apply]
 
+@[simp] theorem image_id {x} : id '' (x : Set α) = x := by
+  ext a
+  simp only [Set.mem_image_iff, id_eq, exists_eq_left']
+
+@[simp] theorem preimage_id {x} : id ⁻¹' (x : Set α) = x := by
+  ext a
+  simp only [Set.mem_preimage_iff, id_eq]
+
 /- const -/
 def IsConstant (f : α → β) := ∀ a a', f a = f a'
 @[simp] theorem Function.const_isConstant {a : α} : IsConstant (Function.const β a) :=

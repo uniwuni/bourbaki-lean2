@@ -246,6 +246,34 @@ theorem InitialSegment.adjoinGreatest_iso_is_iso : IsOrderIso (InitialSegment.ad
         exact (InitialSegment.univ_neq_mk this.symm).elim
       · simp only [adjoinGreatest_iso, le_rfl]
 
+theorem InitialSegment.univ_val_isOrderIso : IsOrderIso (Subtype.val : InitialSegment.univ.val → α) := by
+  apply isOrderIso_iff_reflect.mpr
+  constructor
+  · constructor
+    · intro a b
+      exact Subtype.eq
+    · rw[Function.Surjective, Subtype.val_image]
+      simp only [univ]
+  · constructor
+    · apply Subtype.val_monotone
+    · intro x y h
+      exact h
+
+theorem InitialSegment.mk_unit_isOrderIso : IsOrderIso ((fun x => ⟨x, True.intro⟩) : α → InitialSegment.univ.val) := by
+  apply isOrderIso_iff_reflect.mpr
+  constructor
+  · constructor
+    · intro a b
+      exact Subtype.eq_iff.mp
+    · rw[Function.surj_iff]
+      intro ⟨b,a⟩
+      exists b
+  · constructor
+    · intro x y h
+      exact h
+    · intro x y h
+      exact h
+
 instance : WellOrder (InitialSegment α) := IsOrderIso.wellOrder InitialSegment.adjoinGreatest_iso_is_iso
 
 instance {a : InitialSegment α} : Set.IsDownwardsClosed a.val := a.property

@@ -77,6 +77,14 @@ theorem IsOrderIso.comp (h : IsOrderIso f) (h' : IsOrderIso g) : IsOrderIso (f �
   monotone := h.monotone.comp h'.monotone
   monotone_inv := h.bij.comp_inv h'.bij ▸ h'.monotone_inv.comp h.monotone_inv
 
+theorem id_isOrderIso : IsOrderIso (id : α → α) := by
+  apply isOrderIso_iff_reflect.mpr
+  constructor
+  · exact Function.bij_id
+  · constructor
+    · exact id_mono
+    · exact fun _ _ h => h
+
 end
 section
 variable [LT α] [LT β] [LT γ]
