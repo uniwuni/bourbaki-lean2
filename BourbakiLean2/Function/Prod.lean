@@ -23,7 +23,7 @@ def prod (f : α → β) (f' : α' → β') := fun (x,y) => (f x, f' y)
     exists a
     exists a'
     simp only [prod_val, and_self, ha, ha', h'a, h'a']
-1
+
 @[simp] theorem prod_surj_iff [Nonempty β] [Nonempty β']: (prod f f').Surjective ↔ (f.Surjective ∧ f'.Surjective) := by
   simp only [surj_iff, Prod.exists, prod_val, Prod.forall, Prod.mk.injEq, exists_and_left,
     exists_and_right]
