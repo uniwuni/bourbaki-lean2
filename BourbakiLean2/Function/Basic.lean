@@ -682,8 +682,11 @@ theorem curry_uncurry_inverse : (curry : (α × β → γ) → α → β → γ)
   constructor <;> (ext; simp)
 
 def Injection (α β : Type*) := {f : α → β // f.Injective}
+def Surjection (α β : Type*) := {f : α → β // f.Surjective}
 def Bijection (α β : Type*) := {f : α → β // f.Bijective}
 instance {α β} : CoeFun (Bijection α β) (fun _ => α → β) where
+  coe f := f.1
+instance {α β} : CoeFun (Surjection α β) (fun _ => α → β) where
   coe f := f.1
 instance {α β} : CoeFun (Injection α β) (fun _ => α → β) where
   coe f := f.1

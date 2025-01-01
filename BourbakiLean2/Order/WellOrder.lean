@@ -7,6 +7,15 @@ variable {α : Type u} {x y z : α}
 class WellOrder (α : Type*) extends TotalOrder α where
   existsLeast {s : Set α} (h : s.Nonempty) : ∃ a, ∃ h : a ∈ s, Least (⟨a,h⟩ : s)
 
+noncomputable def WellOrder.least [WellOrder α] {s : Set α} (h : s.Nonempty) : α :=
+  Classical.choose $ WellOrder.existsLeast h
+
+@[simp] theorem WellOrder.least_mem [WellOrder α] {s : Set α} (h : s.Nonempty) : WellOrder.least h ∈ s :=
+  (Classical.choose_spec $ WellOrder.existsLeast h).1
+
+@[simp] theorem WellOrder.least_least [WellOrder α] {s : Set α} (h : s.Nonempty) {x : s} :
+  WellOrder.least h ≤ x := (Classical.choose_spec $ WellOrder.existsLeast h).2 ⟨_,x.2⟩
+
 class IsWellOrder (r : Relation α α) extends IsTotalOrder r where
   existsLeast {s : Set α} (h : s.Nonempty) : ∃ a, ∃ _h : a ∈ s, ∀ b : s, (a, b.val) ∈ r
 
@@ -75,7 +84,8 @@ def totalOrder_of_exists_least [PartialOrder α] (h : ∀ {s : Set α} (_ : s.No
       assumption
 
 
-def IsOrderIso.wellOrder {β : Type*} [WellOrder α] [PartialOrder β] {f : α → β} (h : IsOrderIso f) : WellOrder β where
+def IsOrderIso.wellOrder {β : Type*} [WellOrder α] [Preorder β] {f : α → β} (h : IsOrderIso f) : WellOrder β where
+  le_antisymm a b := h.totalOrder.le_antisymm a b
   le_total a b := h.totalOrder.le_total a b
   existsLeast {s} h' := by
     rcases h' with ⟨w,h'⟩
@@ -469,6 +479,56 @@ theorem wf_recursion_eq {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) �
   unfold wf_recursion
   rw[Classical.choose_spec $ wf_recursion_exists h]
 
+def InitialSegment.lift_double {x : InitialSegment α} (y : InitialSegment x.val) :
+  InitialSegment α := ⟨Subtype.val '' y.val, by
+    constructor
+    intro a ha le mem
+    rw[Set.mem_image_iff] at mem |-
+    obtain ⟨b,rfl,hb'⟩ := mem
+    have := x.property.mem_of_le_mem le b.property
+    let a' : x.val := ⟨a,this⟩
+    exists a'
+    apply And.intro rfl
+    apply y.property.mem_of_le_mem le hb'⟩
+
+@[simp] theorem InitialSegment.lift_double_val {x : InitialSegment α} (y : InitialSegment x.val) :
+  (InitialSegment.lift_double y).val = Subtype.val '' y.val := rfl
+
+@[simp] theorem InitialSegment.lift_double_mono {x : InitialSegment α} :
+  Monotone (InitialSegment.lift_double : InitialSegment x.val → InitialSegment α) := by
+  intros z y h a ha
+  simp only [lift_double, Set.mem_image_iff, Subtype.exists, exists_and_left, exists_eq_left'] at *
+  obtain ⟨b,hb⟩ := ha
+  exact ⟨b,h hb⟩
+
+theorem InitialSegment.lift_double_iso {x : InitialSegment α} (y : InitialSegment x.val) :
+    ∃ f : y.val → y.lift_double.val, IsOrderIso f := by
+  exists fun x => ⟨x.val.val, Set.val_mem_image_of_mem x.property⟩
+  apply isOrderIso_iff_reflect.mpr
+  constructor
+  · constructor
+    · intro x y h
+      simp only [lift_double_val, Subtype.eq_iff] at h
+      apply Subtype.eq $ Subtype.eq h
+    · rw[Function.surj_iff]
+      intro ⟨b,h⟩
+      simp only [lift_double, Subtype.eq_iff, Subtype.exists, exists_prop, exists_and_right, exists_eq_right'] at *
+      simp only [lift_double, Set.mem_image_iff, Subtype.exists, exists_and_left,
+        exists_eq_left'] at h
+      exact h
+  · constructor
+    · intro x y h
+      simp only [Subtype.le_iff_val, lift_double_val, Subtype.eq_iff] at h
+      exact h
+    · intro x y h
+      simp only [Subtype.le_iff_val, lift_double_val, Subtype.eq_iff] at h
+      exact h
+
+@[simp] theorem InitialSegment.lift_double_le {x : InitialSegment α} (y : InitialSegment x.val) :
+    x.lift_double y ≤ x := by
+  intro a h
+  simp only [lift_double, Set.mem_image_iff, Subtype.exists, exists_and_left, exists_eq_left'] at h
+  exact h.1
 
 end WellOrder
 

@@ -278,7 +278,12 @@ def TotalOrder.carry_bij [TotalOrder α] {β : Type*} (f : Function.Bijection α
   le_antisymm := (PartialOrder.carry_bij f).le_antisymm
   le_total x y := le_total _ _
 
-def IsOrderIso.totalOrder {β : Type*} [TotalOrder α] [PartialOrder β] {f : α → β} (h : IsOrderIso f) : TotalOrder β where
+def IsOrderIso.totalOrder {β : Type*} [TotalOrder α] [Preorder β] {f : α → β} (h : IsOrderIso f) : TotalOrder β where
+  le_antisymm a b le le' := by
+    obtain ⟨a', rfl⟩ := h.bij.surj.exists_preimage a
+    obtain ⟨b', rfl⟩ := h.bij.surj.exists_preimage b
+    rw[h.le_iff] at le le'
+    exact congrArg _ $ le_antisymm le le'
   le_total a b := by
     obtain ⟨a', rfl⟩ := h.bij.surj.exists_preimage a
     obtain ⟨b', rfl⟩ := h.bij.surj.exists_preimage b
