@@ -32,6 +32,10 @@ theorem func_subsingleton_iff_to_empty {α : Type u} {β : Type v} (h : α → E
   rcases h
   rfl
 
+theorem heq_mpr (α β : Sort u) (e : α = β) (a : β) : HEq a (e.mpr a) := by
+  rcases e
+  rfl
+
 
 attribute [simp] Subtype.eq_iff
 

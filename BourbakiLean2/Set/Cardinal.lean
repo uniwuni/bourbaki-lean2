@@ -1,7 +1,13 @@
 import BourbakiLean2.Order.WellOrderIso
+import BourbakiLean2.Set.Sum
 universe u v
 
 def Equipotent (α : Type u) (β : Type v) := Nonempty (Function.Bijection α β)
+theorem Equipotent.of_eq {α β : Type u} (h : α = β) : Equipotent α β := by
+  subst h
+  constructor
+  exact ⟨_,Function.bij_id⟩
+
 def equipotent_rel : Relation (Type u) (Type u) := fun ⟨α,β⟩ => Nonempty (Function.Bijection α β)
 @[simp] theorem mem_equipotent_rel_iff {α β : Type u} : ⟨α,β⟩ ∈ equipotent_rel ↔ Equipotent α β := Iff.rfl
 instance : Equivalence @Equipotent.{u} where
@@ -383,3 +389,38 @@ theorem Cardinal.iUnion_le_sigma {ι : Type u} {β : Type u} {α : ι → Set β
   intro ⟨b,i,mem⟩
   simp only [Subtype.eq_iff]
   exists ⟨i,b,mem⟩
+
+section
+variable {ι ι' : Type u} {α : ι → Cardinal.{u}}
+theorem Cardinal.sigma_reindex (f : Function.Bijection ι' ι) : Cardinal.sigma (α ∘ f) = Cardinal.sigma α := by
+  simp only [sigma, eq_iff]
+  apply Equivalence.trans inferInstance
+  swap
+  · constructor
+    apply sigma_reindex_bij f
+  · apply Equipotent.of_eq
+    congr
+
+theorem Cardinal.prod_reindex (f : Function.Bijection ι' ι) : Cardinal.prod (fun i => α (f i)) = Cardinal.prod α := by
+  simp only [prod, eq_iff]
+  apply Equivalence.trans inferInstance
+  swap
+  · apply Equivalence.symm inferInstance
+    constructor
+    apply Function.reindex_by_bij f
+  · apply Equipotent.of_eq
+    congr
+
+/-theorem Cardinal.prod_assoc {α : ι → Cardinal.{u}} {p : ι' → Set ι}
+    (h : Set.IsPartition p) : Cardinal.prod α = Cardinal.prod (fun i' : ι' => Cardinal.prod (fun i : p i' => α i)) := by
+  simp only [prod, eq_iff]
+  apply Equivalence.trans inferInstance
+  · constructor
+    apply h.prod_assoc
+  · constructor
+    exists fun a i' => by
+      rw[Classical.choose_spec]-/
+
+
+
+end
