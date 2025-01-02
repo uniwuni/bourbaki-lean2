@@ -44,3 +44,27 @@ def sigma_reindex_bij {x : ι → Type u} (f : Function.Bijection ι' ι) : Func
       · exact this.symm
       · generalize congrArg x this = e
         apply heq_mpr⟩
+
+namespace Set.IsPartition
+noncomputable def sigma_assoc {p : ι' → Set ι} (h : IsPartition p) : Function.Bijection ((i : ι) × x i) ((i' : ι') × ((i : p i') × x i)) :=
+  Function.bijection_of_funcs
+    (fun ⟨i,x⟩ => ⟨Classical.choose (h.1.mem_exists i),
+      ⟨⟨i,Classical.choose_spec (h.1.mem_exists i)⟩, x⟩⟩)
+    (fun ⟨i',i,x⟩ => ⟨_,x⟩)
+    (by rintro ⟨a,⟨b,h'⟩,c⟩
+        simp only [IsCovering.eq_1, Disjoint.eq_1, ne_eq]
+        have := h.eq_of_mem (Classical.choose_spec (h.1.mem_exists b)) h'
+        rcases this
+        simp only [IsCovering.eq_1, Disjoint.eq_1, ne_eq])
+    (by rintro ⟨i,x⟩
+        simp only [IsCovering.eq_1, Disjoint.eq_1, ne_eq])
+
+
+end Set.IsPartition
+
+def Sigma.prod_distrib {ι' : ι → Type*} {x : (i : ι) → ι' i → Type*} :
+    Function.Bijection ((i : ι) → (i' : ι' i) × x i i') ((y : (i : ι) → ι' i) × ((i : ι) → x i (y i))) :=
+  Function.bijection_of_funcs (fun f => ⟨fun i => (f i).1,fun i => (f i).2⟩)
+  (fun ⟨y,f⟩ i => ⟨y i, f i⟩)
+  (by rintro f; simp only [Sigma.eta])
+  (by rintro f; simp only [Sigma.eta])

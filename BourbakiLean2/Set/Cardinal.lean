@@ -21,6 +21,12 @@ instance equipotent_equiv : equipotent_rel.IsEquivalence := by
 
 def Cardinal : Type (u+1) := Quot Equipotent
 def Cardinal.mk : Type* → Cardinal := Quot.mk Equipotent
+
+@[simp] theorem Cardinal.mk_surj : Function.Surjective Cardinal.mk := by
+  unfold Cardinal.mk
+  change Function.Surjective (Quot.mk $ Function.curry equipotent_rel)
+  apply Quot.mk_surj
+
 theorem Cardinal.alt : @Cardinal.{u} = Quot (Function.curry equipotent_rel) := rfl
 theorem Cardinal.mk_alt {α : Type u} : Cardinal.mk α = Quot.mk (Function.curry equipotent_rel) α := rfl
 @[simp] theorem Cardinal.eq_iff {α β : Type u} : Cardinal.mk α = Cardinal.mk β ↔ Equipotent α β := by
@@ -131,6 +137,13 @@ theorem Cardinal.one_le_iff_neq_zero {x : Cardinal.{u}} : 1 ≤ x ↔ x ≠ 0 :=
     exists fun x => a
     rintro ⟨⟩ ⟨⟩ _
     rfl
+
+theorem Cardinal.factors_through_mk {α : Type v} {f : α → Cardinal.{u}} : ∃ g : α → Type u, f = Cardinal.mk ∘ g := by
+  have ⟨s,iss⟩ := Cardinal.mk_surj.hasSection
+  exists s ∘ f
+  simp only [Function.comp_assoc]
+  rw[iss]
+  exact Function.comp_id_left
 
 def Cardinal.ind_mk {p : Cardinal.{u} → Prop} (h : ∀ α : Type u, p (Cardinal.mk α)) (x : Cardinal.{u}) : p x := by
   rcases x with ⟨x⟩
@@ -411,16 +424,236 @@ theorem Cardinal.prod_reindex (f : Function.Bijection ι' ι) : Cardinal.prod (f
   · apply Equipotent.of_eq
     congr
 
-/-theorem Cardinal.prod_assoc {α : ι → Cardinal.{u}} {p : ι' → Set ι}
+theorem Cardinal.prod_assoc {α : ι → Cardinal.{u}} {p : ι' → Set ι}
     (h : Set.IsPartition p) : Cardinal.prod α = Cardinal.prod (fun i' : ι' => Cardinal.prod (fun i : p i' => α i)) := by
-  simp only [prod, eq_iff]
-  apply Equivalence.trans inferInstance
-  · constructor
-    apply h.prod_assoc
-  · constructor
-    exists fun a i' => by
-      rw[Classical.choose_spec]-/
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := α)
+  rcases eq
+  unfold Function.comp
+  simp only [prod_mk, eq_iff]
+  constructor
+  apply h.prod_assoc
 
+theorem Cardinal.sigma_assoc {α : ι → Cardinal.{u}} {p : ι' → Set ι}
+    (h : Set.IsPartition p) : Cardinal.sigma α = Cardinal.sigma (fun i' : ι' => Cardinal.sigma (fun i : p i' => α i)) := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := α)
+  rcases eq
+  unfold Function.comp
+  simp only [sigma_mk, eq_iff]
+  constructor
+  apply h.sigma_assoc
+
+theorem Cardinal.sigma_prod_distrib {ι' : ι → Type u} {x : (i : ι) → ι' i → Cardinal.{u}} :
+    Cardinal.prod (fun (i : ι) => Cardinal.sigma (fun (i' : ι' i) => x i i')) =
+     Cardinal.sigma (fun (y : (i : ι) → ι' i) => Cardinal.prod (fun (i : ι) => x i (y i))) := by
+  have this i := Classical.choose_spec $ Cardinal.factors_through_mk (f := x i)
+  conv => lhs; rhs; intro i; rhs; intro i'; rw[this i]
+  conv => rhs; rhs; intro i; rhs; intro i'; rw[this i']
+  unfold Function.comp
+  simp only [sigma_mk, prod_mk, eq_iff]
+  constructor
+  apply Sigma.prod_distrib (x := fun i => Classical.choose $ Cardinal.factors_through_mk (f := x i))
+
+instance : Add Cardinal.{u} where
+  add x y := Cardinal.mk $ x.exists_rep.choose ⊕ y.exists_rep.choose
+
+instance : Mul Cardinal.{u} where
+  mul x y := Cardinal.mk $ x.exists_rep.choose × y.exists_rep.choose
+
+
+@[simp] theorem Cardinal.add_mk {α β : Type u} : Cardinal.mk α + Cardinal.mk β = Cardinal.mk (α ⊕ β) := by
+  simp only [HAdd.hAdd, Add.add]
+  rw[eq_iff]
+  have hα := (Quot.exists_rep (mk α)).choose_spec
+  have hβ := (Quot.exists_rep (mk β)).choose_spec
+  change mk _ = mk α at hα
+  change mk _ = mk β at hβ
+  simp only [eq_iff] at hα hβ
+  obtain ⟨fα,bα⟩ := hα
+  obtain ⟨fβ,bβ⟩ := hβ
+  constructor
+  exists Sum.map fα fβ
+  constructor
+  · intro a a' h
+    rcases a
+    · rcases a'
+      · simp only [Sum.map_inl, Sum.inl.injEq] at h
+        rw[bα.inj _ _ h]
+      · simp only [Sum.map_inl, Sum.map_inr, reduceCtorEq] at h
+    · rcases a'
+      · simp only [Sum.map_inr, Sum.map_inl, reduceCtorEq] at h
+      · simp only [Sum.map_inr, Sum.inr.injEq] at h
+        rw[bβ.inj _ _ h]
+  · rw[Function.surj_iff]
+    rintro (a|a)
+    · exists (Sum.inl $ bα.inv a)
+      simp only [Sum.map_inl, Function.Bijective.val_inv_val]
+    · exists (Sum.inr $ bβ.inv a)
+      simp only [Sum.map_inr, Function.Bijective.val_inv_val]
+
+@[simp] theorem Cardinal.mul_mk {α β : Type u} : Cardinal.mk α * Cardinal.mk β = Cardinal.mk (α × β) := by
+  simp only [HMul.hMul, Mul.mul]
+  rw[eq_iff]
+  have hα := (Quot.exists_rep (mk α)).choose_spec
+  have hβ := (Quot.exists_rep (mk β)).choose_spec
+  change mk _ = mk α at hα
+  change mk _ = mk β at hβ
+  simp only [eq_iff] at hα hβ
+  obtain ⟨fα,bα⟩ := hα
+  obtain ⟨fβ,bβ⟩ := hβ
+  constructor
+  exists Prod.map fα fβ
+  constructor
+  · intro ⟨a,b⟩ ⟨c,d⟩ h
+    simp only [Prod.map_apply, Prod.mk.injEq] at h
+    congr
+    · exact bα.inj _ _ h.1
+    · exact bβ.inj _ _ h.2
+  · rw[Function.surj_iff]
+    intro ⟨a,b⟩
+    exists (Prod.mk (bα.inv a) (bβ.inv b))
+    simp only [Prod.map_apply, Function.Bijective.val_inv_val]
+
+theorem Cardinal.add_comm {a b : Cardinal.{u}} : a + b = b + a := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [add_mk, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs Sum.swap Sum.swap
+  · simp only [Sum.swap_swap, implies_true]
+  · simp only [Sum.swap_swap, implies_true]
+
+theorem Cardinal.mul_comm {a b : Cardinal.{u}} : a * b = b * a := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [mul_mk, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs Prod.swap Prod.swap
+  · simp only [Prod.swap_swap, implies_true]
+  · simp only [Prod.swap_swap, implies_true]
+
+
+@[simp] theorem Cardinal.add_assoc {a b c : Cardinal.{u}} : a + (b + c) = a + b + c := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  obtain ⟨c,rfl⟩ := mk_surj.exists_preimage c
+  simp only [add_mk, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs (Sum.elim (Sum.inl ∘ Sum.inl) $ Sum.elim (Sum.inl ∘ Sum.inr) Sum.inr)
+    (Sum.elim (Sum.elim Sum.inl (Sum.inr ∘ Sum.inl)) $ Sum.inr ∘ Sum.inr)
+  · rintro ((x|x)|x) <;> simp only [Sum.elim_inl, Sum.elim_inr, Function.comp_apply]
+  · rintro (x|(x|x)) <;> simp only [Sum.elim_inl, Sum.elim_inr, Function.comp_apply]
+
+@[simp] theorem Cardinal.mul_assoc {a b c : Cardinal.{u}} : a * (b * c) = a * b * c := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  obtain ⟨c,rfl⟩ := mk_surj.exists_preimage c
+  simp only [mul_mk, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs (fun ⟨a,b,c⟩ => ⟨⟨a,b⟩,c⟩) (fun ⟨⟨a,b⟩,c⟩ => ⟨a,b,c⟩)
+  · simp only [implies_true]
+  · simp only [implies_true]
+
+theorem Cardinal.mul_add_distrib_right {a b c : Cardinal.{u}} : (a + b) * c = a * c + b * c := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  obtain ⟨c,rfl⟩ := mk_surj.exists_preimage c
+  simp only [mul_mk, eq_iff, add_mk]
+  constructor
+  apply Function.bijection_of_funcs (fun ⟨a,c⟩ => Sum.elim (fun x => Sum.inl ⟨x,c⟩) (fun x => Sum.inr ⟨x,c⟩) a)
+    (Sum.elim (fun ⟨x,c⟩ => ⟨Sum.inl x,c⟩) (fun ⟨x,c⟩ => ⟨Sum.inr x,c⟩))
+  · rintro (⟨x,y⟩|⟨x,y⟩) <;> simp only [Sum.elim_inr, Sum.elim_inl]
+  · rintro ⟨(x|x),y⟩ <;> simp only [Sum.elim_inr, Sum.elim_inl]
+
+theorem Cardinal.mul_add_distrib_left {a b c : Cardinal.{u}} : a * (b + c) = a * b + a * c := by
+  rw[mul_comm, mul_add_distrib_right, mul_comm, mul_comm (a := c)]
+
+theorem Cardinal.sigma_zeros {α : ι → Cardinal.{u}} {s : Set ι} (h : ∀ x, x ∉ s → α x = 0) :
+  Cardinal.sigma α = Cardinal.sigma (fun x : s => α x.val) := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := α)
+  rcases eq
+  unfold Function.comp
+  simp only [sigma_mk, eq_iff]
+  apply Equivalence.symm inferInstance
+  constructor
+  exists fun ⟨i,x⟩ => ⟨i.val, x⟩
+  constructor
+  · intro ⟨a,b⟩ ⟨c,d⟩ h
+    simp only at h
+    have : a = c := by injection h with h'; apply Subtype.eq h'
+    rcases this
+    injection h with h' h''
+    rw[h'']
+  · rw[Function.surj_iff]
+    intro ⟨a,b⟩
+    by_cases mem : a ∈ s
+    · exists ⟨⟨a,mem⟩,b⟩
+    · specialize h _ mem
+      simp only [Function.comp_apply, eq_zero_iff] at h
+      exact (h b).elim
+
+theorem Cardinal.prod_ones {α : ι → Cardinal.{u}} {s : Set ι} (h : ∀ x, x ∉ s → α x = 1) :
+    Cardinal.prod α = Cardinal.prod (fun x : s => α x.val) := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := α)
+  rcases eq
+  unfold Function.comp
+  simp only [prod_mk, eq_iff]
+  constructor
+  exists fun f x => f x.val
+  constructor
+  · intro x y h'
+    ext i
+    simp only at h'
+    by_cases mem : i ∈ s
+    · exact congrFun h' ⟨i,mem⟩
+    · specialize h _ mem
+      simp only [Function.comp_apply, eq_one_iff] at h
+      obtain ⟨h⟩ := h
+      exact Subsingleton.allEq (x i) (y i)
+  · rw[Function.surj_iff]
+    intro f
+    simp only [Function.comp_apply, eq_one_iff] at h
+    classical
+    exists fun x => if h' : x ∈ s then f ⟨x,h'⟩ else (Classical.choice (h _ h')).default
+    ext x
+    simp only
+    split
+    · rfl
+    · apply (Classical.choice (h _ ‹¬ x.val ∈ s›)).eq_default
+
+@[simp] theorem Cardinal.add_zero {a : Cardinal.{u}} : a + 0 = a := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  simp only [add_mk, zero_eq, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs (Sum.elim id PEmpty.elim) Sum.inl
+  · simp only [Sum.elim_inl, id_eq, implies_true]
+  · rintro (a|a)
+    · simp only [Sum.elim_inl, id_eq]
+    · cases a
+
+@[simp] theorem Cardinal.zero_add {a : Cardinal.{u}} : 0 + a = a := by
+  rw[add_comm, Cardinal.add_zero]
+
+@[simp] theorem Cardinal.mul_one {a : Cardinal.{u}} : a * 1 = a := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  simp only [mul_mk, one_eq, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs Prod.fst (fun x => ⟨x,PUnit.unit⟩)
+   <;> (rintro a; rfl)
+
+@[simp] theorem Cardinal.one_mul {a : Cardinal.{u}} : 1 * a = a := by
+  rw[mul_comm, Cardinal.mul_one]
+
+@[simp] theorem Cardinal.sigma_constant {α : Type u} {b : Cardinal.{u}} :
+    Cardinal.sigma (fun _ : α => b) = Cardinal.mk α * b := by
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [mul_mk, sigma_mk, eq_iff]
+  constructor
+  apply Function.bijection_of_funcs (fun ⟨a,b⟩ => ⟨a,b⟩) (fun ⟨a,b⟩ => ⟨a,b⟩) <;> simp only [Sigma.eta,
+    implies_true]
+
+@[simp] theorem Cardinal.sigma_constant_one {α : Type u} :
+    Cardinal.sigma (fun _ : α => 1) = Cardinal.mk α := by
+  simp only [sigma_constant, mul_one]
 
 
 end
