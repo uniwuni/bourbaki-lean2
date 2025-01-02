@@ -655,5 +655,178 @@ theorem Cardinal.prod_ones {α : ι → Cardinal.{u}} {s : Set ι} (h : ∀ x, x
     Cardinal.sigma (fun _ : α => 1) = Cardinal.mk α := by
   simp only [sigma_constant, mul_one]
 
+@[simp] theorem Cardinal.prod_zero_iff {x : ι → Cardinal.{u}} :
+    Cardinal.prod x = 0 ↔ ∃ i, x i = 0 := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := x)
+  rw[eq]
+  unfold Function.comp
+  simp only [prod_mk, eq_zero_iff]
+  constructor
+  · rintro h
+    by_contra h'
+    simp only [not_exists, Classical.not_forall, not_false_eq_true] at h'
+    exact h (fun i => (h' i).choose)
+  · rintro ⟨i,h⟩ f
+    exact h $ f i
+
+@[simp] theorem Cardinal.sigma_zero_iff {x : ι → Cardinal.{u}} :
+    Cardinal.sigma x = 0 ↔ ∀ i, x i = 0 := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := x)
+  rw[eq]
+  unfold Function.comp
+  simp only [sigma_mk, eq_zero_iff]
+  constructor
+  · intro h i f
+    exact h ⟨_, f⟩
+  · intro f ⟨i,h⟩
+    exact f i h
+
+@[simp] theorem Cardinal.mul_zero {a : Cardinal.{u}} : a * 0 = 0 := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  change mk a * mk PEmpty = 0
+  simp only [mul_mk, eq_zero_iff, Prod.forall]
+  exact fun _ h => h.elim
+
+@[simp] theorem Cardinal.zero_mul {a : Cardinal.{u}} : 0 * a = 0 := by
+  rw[mul_comm, Cardinal.mul_zero]
+
+theorem Cardinal.zero_of_mul_zero {a b : Cardinal.{u}} (h : a * b = 0) : a = 0 ∨ b = 0 := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [mul_mk, eq_zero_iff, Prod.forall] at h
+  simp only [mul_mk, eq_zero_iff, Prod.forall]
+  by_cases h' : a → False
+  · left
+    exact h'
+  · right
+    intro x
+    simp only [Classical.not_forall, not_false_eq_true] at h'
+    exact h h'.choose x
+
+@[simp] theorem Cardinal.mul_zero_iff {a b : Cardinal.{u}} : a * b = 0 ↔ a = 0 ∨ b = 0 := by
+  constructor
+  · apply zero_of_mul_zero
+  · rintro (rfl|rfl)
+    · rw[zero_mul]
+    · rw[mul_zero]
+
+@[simp] theorem Cardinal.sum_zero_iff {a b : Cardinal.{u}} : a + b = 0 ↔ a = 0 ∧ b = 0 := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [add_mk, eq_zero_iff]
+  constructor
+  · intro h
+    constructor
+    · exact h ∘ Sum.inl
+    · exact h ∘ Sum.inr
+  · intro ⟨h,h'⟩
+    exact Sum.elim h h'
+
+theorem Cardinal.sum_one_cancel {a b : Cardinal.{u}} (h : a + 1 = b + 1) : a = b := by
+  obtain ⟨α,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨β,rfl⟩ := mk_surj.exists_preimage b
+  simp[one_eq] at *
+  obtain ⟨f,bij⟩ := h
+  by_cases h : f (Sum.inr PUnit.unit) = Sum.inr PUnit.unit
+  · have : ∀ x, ∃ y, f (Sum.inl x) = Sum.inl y := by
+      intro x
+      rcases eq : f $ Sum.inl x with (h'|h')
+      · exact ⟨h', rfl⟩
+      · rcases h'
+        rw[← eq] at h
+        have := bij.inj _ _ h
+        injection this
+    obtain ⟨g,hg⟩ := Classical.axiomOfChoice this
+    exists g
+    constructor
+    · intro x y h
+      have : Sum.inl (g x) = Sum.inl (β := PUnit) (g y) := by rw[h]
+      rw[← hg, ← hg] at this
+      have := bij.inj _ _ this
+      injection this
+    · rw[Function.surj_iff]
+      intro x
+      obtain ⟨y,eq⟩ := bij.surj.exists_preimage $ Sum.inl x
+      rcases y with (y|y)
+      · rw[hg] at eq
+        injection eq with eq
+        exists y
+      · rcases y
+        rw[h] at eq
+        injection eq
+  · obtain ⟨b, eq⟩ : ∃ a, f (Sum.inr PUnit.unit) = Sum.inl a := by
+      rcases eq : f (Sum.inr PUnit.unit) with (a|a)
+      · exists a
+      · rcases a
+        exact (h eq).elim
+    obtain ⟨a, eq'⟩ : ∃ a, bij.inv (Sum.inr PUnit.unit) = Sum.inl a := by
+      rcases eq : bij.inv (Sum.inr PUnit.unit) with (c|c)
+      · exists c
+      · rcases c
+        rw[bij.inv_val_iff] at eq
+        exact (h eq).elim
+    classical
+    let g : α → β ⊕ PUnit := fun x => if h : f (Sum.inl x) = Sum.inr PUnit.unit then Sum.inl b else f $ Sum.inl x
+    have : ∀ x, ∃ y, g x = Sum.inl y := by
+      intro x
+      simp only [dite_eq_ite, g]
+      split <;> rename_i ite
+      · exists b
+      · rcases eq : f (Sum.inl x) with (a|a)
+        · exists a
+        · rcases a
+          exact (ite eq).elim
+    obtain ⟨g',hg'⟩ := Classical.axiomOfChoice this
+    constructor
+    exists g'
+    constructor
+    · intro x y h
+      replace h := congrArg (Sum.inl (β := PUnit)) h
+      rw[← hg', ← hg'] at h
+      simp only [dite_eq_ite, g] at h
+      by_cases c : f (Sum.inl x) = Sum.inr PUnit.unit
+      · simp only [c, ↓reduceIte] at h
+        by_cases c' : f (Sum.inl y) = Sum.inr PUnit.unit
+        · have : Sum.inl x = Sum.inl y := bij.inj _ _ $ c.trans c'.symm
+          injection this
+        · simp only [c', ↓reduceIte] at h
+          rw[← eq] at h
+          have := bij.inj _ _ h
+          injection this
+      · simp only [c, ↓reduceIte] at h
+        by_cases c' : f (Sum.inl y) = Sum.inr PUnit.unit
+        · simp only [c', ↓reduceIte] at h
+          rw[← eq] at h
+          have := bij.inj _ _ h
+          injection this
+        · simp only [c', ↓reduceIte] at h
+          have := bij.inj _ _ h
+          injection this
+    · rw[Function.surj_iff]
+      intro x
+      obtain ⟨a,eq2⟩ := bij.surj.exists_preimage $ Sum.inl x
+      rcases a with (a|a)
+      · exists a
+        suffices h : Sum.inl x = Sum.inl (g' a) (β := PUnit) by injection h
+        rw[← hg']
+        simp only [dite_eq_ite, g]
+        by_cases h : x = b
+        · rcases h
+          simp only [eq2, ite_self]
+        · rw[eq2]
+          split <;> rename_i ite
+          · rw[ite] at eq2
+            injection eq2
+          · rfl
+      · rcases a
+        exists a
+        suffices h : Sum.inl x = Sum.inl (g' a) (β := PUnit) by injection h
+        rw[eq2, ← hg']
+        simp only [dite_eq_ite, g]
+        rw[eq]
+        suffices eq : f (Sum.inl a) = Sum.inr PUnit.unit by
+          simp only [eq, ↓reduceIte]
+        rwa[bij.inv_val_iff] at eq'
+
 
 end
