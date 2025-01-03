@@ -25,6 +25,9 @@ noncomputable instance: WellOrder FiniteCardinal := by unfold FiniteCardinal; in
 class Finite (α : Type u) where
   finite : Cardinal.Finite (Cardinal.mk α)
 
+instance {α : Type u} [Finite α] : Cardinal.Finite (Cardinal.mk α) := by
+  exact Finite.finite
+
 @[simp] theorem Finite.iff {α : Type u} : Finite α ↔ Cardinal.Finite (Cardinal.mk α) := by
   constructor
   · intro h
@@ -204,7 +207,7 @@ instance Finite.inter_right {s t : Set α} [h : Finite t] : Finite (s ∩ t : Se
   rw[Set.inter_comm]
   infer_instance
 
-instance Finite.empty : Finite (∅ : Set α) := by
+instance Finite.empty_set : Finite (∅ : Set α) := by
   have : (Cardinal.mk (∅ : Set α) : Cardinal.{u}) = 0 := by
     simp only [Set.not_mem_empty, Cardinal.eq_zero_iff, Subtype.forall, imp_self, implies_true]
   constructor
@@ -387,10 +390,10 @@ noncomputable def FiniteCardinal.recursion {p : FiniteCardinal.{u} → Type*} (h
 section Nat
 variable {x y : FiniteCardinal.{u}} {n m : Nat}
 namespace FiniteCardinal
-@[simp] noncomputable def to_nat : FiniteCardinal.{u} → Nat :=
+noncomputable def to_nat : FiniteCardinal.{u} → Nat :=
   recursion Nat.zero (fun _ f => Nat.succ f)
 
-@[simp] noncomputable def of_nat : Nat → FiniteCardinal.{u}
+noncomputable def of_nat : Nat → FiniteCardinal.{u}
 | 0 => ⟨0, Cardinal.Finite.zero⟩
 | n+1 => ⟨(of_nat n).1 + (1 : Cardinal.{u}), Cardinal.Finite.succ (h := (of_nat n).2)⟩
 
