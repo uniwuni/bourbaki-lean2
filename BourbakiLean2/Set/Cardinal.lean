@@ -738,7 +738,7 @@ theorem Cardinal.zero_of_mul_zero {a b : Cardinal.{u}} (h : a * b = 0) : a = 0 �
     · rw[zero_mul]
     · rw[mul_zero]
 
-@[simp] theorem Cardinal.sum_zero_iff {a b : Cardinal.{u}} : a + b = 0 ↔ a = 0 ∧ b = 0 := by
+@[simp] theorem Cardinal.add_zero_iff {a b : Cardinal.{u}} : a + b = 0 ↔ a = 0 ∧ b = 0 := by
   obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
   obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
   simp only [add_mk, eq_zero_iff]
@@ -750,7 +750,7 @@ theorem Cardinal.zero_of_mul_zero {a b : Cardinal.{u}} (h : a * b = 0) : a = 0 �
   · intro ⟨h,h'⟩
     exact Sum.elim h h'
 
-theorem Cardinal.sum_one_cancel {a b : Cardinal.{u}} (h : a + 1 = b + 1) : a = b := by
+theorem Cardinal.add_one_cancel {a b : Cardinal.{u}} (h : a + 1 = b + 1) : a = b := by
   obtain ⟨α,rfl⟩ := mk_surj.exists_preimage a
   obtain ⟨β,rfl⟩ := mk_surj.exists_preimage b
   simp[one_eq] at *
@@ -962,7 +962,7 @@ theorem Cardinal.set_eq_two_pow {α : Type u} : Cardinal.mk (Set α) = ((1 + 1) 
     simp only [ite_eq_left_iff, reduceCtorEq, imp_false, Decidable.not_not]
     rfl
 
-theorem Cardinal.exists_sum_iff_le {a b : Cardinal.{u}} : (∃ c, b = a + c) ↔ a ≤ b := by
+theorem Cardinal.exists_add_iff_le {a b : Cardinal.{u}} : (∃ c, b = a + c) ↔ a ≤ b := by
   constructor
   · rintro ⟨c,rfl⟩
     obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
@@ -1204,8 +1204,34 @@ theorem Cardinal.higher_universe {α : Type u} : ¬ Equipotent α Cardinal.{u} :
   rw[← not_gt_iff_le] at this
   exact this Cardinal.cantor
 
+@[simp] theorem Cardinal.add_one_neq_zero {a : Cardinal.{u}} : a + 1 ≠ 0 := by
+  intro h
+  have := Cardinal.add_zero_iff.mp h
+  exact (zero_neq_one this.2.symm).elim
 
+@[simp] theorem Cardinal.le_add_left {a b : Cardinal.{u}} : a ≤ a + b := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [add_mk, mk_le_iff]
+  constructor
+  exists Sum.inl
+  intro x y h
+  injection h
 
+@[simp] theorem Cardinal.le_add_right {a b : Cardinal.{u}} : b ≤ a + b := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  simp only [add_mk, mk_le_iff]
+  constructor
+  exists Sum.inr
+  intro x y h
+  injection h
 
+@[simp] theorem Cardinal.mk_le_of_subset {α : Type*} {x y : Set α} (h : x ⊆ y) : Cardinal.mk x ≤ Cardinal.mk y := by
+  constructor
+  exists fun x => ⟨x, h x.property⟩
+  intro x y h
+  simp only [Subtype.eq_iff] at h
+  exact Subtype.eq h
 
 end

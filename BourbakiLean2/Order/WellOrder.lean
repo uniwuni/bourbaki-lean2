@@ -385,7 +385,7 @@ theorem wf_recursion_all_eq {p : α → Type*} {f g : ∀ x, p x}
     exact lt
   rw[h'']
 
-theorem wf_recursion_exists {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) :
+theorem wf_recursion_exists {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) :
     ∃ f : (x : α) → p x, ∀ x, f x = h x (fun y _ => f y) := by
   let q : InitialSegment α → Prop := fun i => ∃ f : (x : i.val) → p x, ∀ x, f x = h x (fun y h' => f ⟨y, i.property.mem_of_le_mem (le_of_lt h') x.property⟩)
   have h_union : ∀ ι : Type u, ∀ f : ι → InitialSegment α, ((i : ι) → q (f i)) →
@@ -471,10 +471,10 @@ theorem wf_recursion_exists {p : α → Type u} (h : ∀ x, (∀ y, y < x → p 
   intro x
   simp only [hf ⟨x, True.intro⟩]
 
-noncomputable def wf_recursion {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x :=
+noncomputable def wf_recursion {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) : (x : α) → p x :=
   Classical.choose (wf_recursion_exists h)
 
-theorem wf_recursion_eq {p : α → Type u} (h : ∀ x, (∀ y, y < x → p y) → p x) (x : α) :
+theorem wf_recursion_eq {p : α → Type*} (h : ∀ x, (∀ y, y < x → p y) → p x) (x : α) :
     (wf_recursion h x) = h x (fun y _ => wf_recursion h y) := by
   unfold wf_recursion
   rw[Classical.choose_spec $ wf_recursion_exists h]

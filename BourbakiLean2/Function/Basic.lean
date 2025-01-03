@@ -708,6 +708,12 @@ theorem Subtype.coe.inj {p : α → Prop}: Function.Injective (fun ⟨x, _⟩ =>
   rintro ⟨a,_⟩ ⟨a',_⟩ h
   simp only [mk.injEq] at *
   exact h
+
+theorem Subtype.val_inj {p : α → Prop} : Function.Injective (Subtype.val : { x // p x } → α) := by
+  rintro ⟨a,_⟩ ⟨a',_⟩ h
+  simp only [mk.injEq] at *
+  exact h
+
 theorem Eq.rec_of_inj {ι' : Type*} {ι : Type*} {x : ι → Type*}   {i i' : ι'} (f : ι' → ι) (h : f i = f i') (h' : f.Injective) (a : (i : ι') → x (f i)) : Eq.rec (a i) h = a i' := by
   replace h := h' _ _ h
   cases h
