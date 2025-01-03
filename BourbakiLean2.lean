@@ -37,3 +37,5 @@ import BourbakiLean2.Order.WellOrder
 import BourbakiLean2.Order.WellOrderIso
 import BourbakiLean2.Order.Lex
 import BourbakiLean2.Set.Cardinal
+import BourbakiLean2.Set.FiniteCardinal
+import BourbakiLean2.Data.Nat.Basic
