@@ -20,6 +20,7 @@ theorem Cardinal.finite_iff {a : Cardinal.{u}} : a.Finite ↔ a ≠ a + 1 := by
     · exact h
 
 @[simp] def FiniteCardinal := {a : Cardinal.{u} // a.Finite}
+instance : Coe FiniteCardinal.{u} Cardinal.{u} := ⟨fun x => x.val⟩
 noncomputable instance: WellOrder FiniteCardinal := by unfold FiniteCardinal; infer_instance
 class Finite (α : Type u) where
   finite : Cardinal.Finite (Cardinal.mk α)
@@ -33,7 +34,7 @@ class Finite (α : Type u) where
     exact h
 
 @[simp] def FiniteType := {α : Type u // Finite α}
-def FiniteType.cardinality' : FiniteType.{u} → FiniteCardinal.{u} := fun ⟨x,h⟩ => ⟨Cardinal.mk x, h⟩
+def FiniteType.cardinality' : FiniteType.{u} → FiniteCardinal.{u} := fun ⟨x,h⟩ => ⟨Cardinal.mk x, h.finite⟩
 
 theorem Cardinal.finite_iff_add_one_finite {a : Cardinal.{u}} : (a + 1).Finite ↔ a.Finite := by
   simp only [finite_iff, ne_eq]
@@ -339,7 +340,7 @@ theorem Cardinal.Finite.induction {p : FiniteCardinal.{u} → Prop} (h0 : p ⟨0
     apply this
     simp only [Subtype.lt_iff_val, lt_plus_one]
 
-noncomputable def Cardinal.Finite.recursion {p : FiniteCardinal.{u} → Type*} (h0 : p ⟨0, zero⟩)
+theorem Cardinal.Finite.recursion_ex {p : FiniteCardinal.{u} → Type*} (h0 : p ⟨0, zero⟩)
     (hs : ∀ a, p a → p ⟨a.1 + (1 : Cardinal.{u}), succ (h := a.2)⟩) :
     ∃ f : (x : FiniteCardinal.{u}) → p x, f ⟨0,zero⟩ = h0 ∧
       ∀ a, f ⟨a.1 + (1 : Cardinal.{u}), succ (h := a.2)⟩ = (hs a (f a)) := by
@@ -367,3 +368,126 @@ noncomputable def Cardinal.Finite.recursion {p : FiniteCardinal.{u} → Type*} (
       congr
       · simp only [pred_of_plus_one]
       · simp only [pred_of_plus_one]
+
+
+noncomputable def FiniteCardinal.recursion {p : FiniteCardinal.{u} → Type*} (h0 : p ⟨0, Cardinal.Finite.zero⟩)
+    (hs : ∀ a, p a → p ⟨a.1 + (1 : Cardinal.{u}), Cardinal.Finite.succ (h := a.2)⟩) (a : FiniteCardinal.{u}) : p a :=
+  (Cardinal.Finite.recursion_ex h0 hs).choose a
+
+@[simp] theorem FiniteCardinal.recursion_zero {p : FiniteCardinal.{u} → Type*} (h0 : p ⟨0, Cardinal.Finite.zero⟩)
+    (hs : ∀ a, p a → p ⟨a.1 + (1 : Cardinal.{u}), Cardinal.Finite.succ (h := a.2)⟩) : FiniteCardinal.recursion h0 hs ⟨0, Cardinal.Finite.zero⟩ = h0 :=
+  (Cardinal.Finite.recursion_ex h0 hs).choose_spec.1
+
+@[simp] theorem FiniteCardinal.recursion_succ {p : FiniteCardinal.{u} → Type*} {x : FiniteCardinal.{u}} (h0 : p ⟨0, Cardinal.Finite.zero⟩)
+    (hs : ∀ a, p a → p ⟨a.1 + (1 : Cardinal.{u}), Cardinal.Finite.succ (h := a.2)⟩)
+    : FiniteCardinal.recursion h0 hs ⟨x.1 + 1, Cardinal.Finite.succ (h := x.2)⟩ = hs x (FiniteCardinal.recursion h0 hs x) :=
+  (Cardinal.Finite.recursion_ex h0 hs).choose_spec.2 _
+
+/-! correspondence to normal nats -/
+section Nat
+variable {x y : FiniteCardinal.{u}} {n m : Nat}
+namespace FiniteCardinal
+@[simp] noncomputable def to_nat : FiniteCardinal.{u} → Nat :=
+  recursion Nat.zero (fun _ f => Nat.succ f)
+
+@[simp] noncomputable def of_nat : Nat → FiniteCardinal.{u}
+| 0 => ⟨0, Cardinal.Finite.zero⟩
+| n+1 => ⟨(of_nat n).1 + (1 : Cardinal.{u}), Cardinal.Finite.succ (h := (of_nat n).2)⟩
+
+@[simp high] theorem to_nat_of_nat : FiniteCardinal.to_nat (FiniteCardinal.of_nat n) = n := by
+  induction n with
+  | zero => simp only [to_nat, FiniteCardinal, Nat.zero_eq, Nat.succ_eq_add_one, of_nat,
+    recursion_zero]
+  | succ n ih => simp only [to_nat, FiniteCardinal, Nat.zero_eq, Nat.succ_eq_add_one, of_nat,
+    recursion_succ, Nat.add_right_cancel_iff]; exact ih
+
+@[simp high] theorem of_nat_to_nat: FiniteCardinal.of_nat (FiniteCardinal.to_nat x) = x := by
+  apply Cardinal.Finite.induction (p := fun x => FiniteCardinal.of_nat (FiniteCardinal.to_nat x) = x)
+  · simp only [FiniteCardinal, to_nat, Nat.zero_eq, Nat.succ_eq_add_one, recursion_zero, of_nat]
+  · intro a h
+    simp only [FiniteCardinal, to_nat, Nat.zero_eq, Nat.succ_eq_add_one, recursion_succ, of_nat,
+      Subtype.eq_iff]
+    congr
+
+@[simp] theorem of_nat_bij : Function.Bijective FiniteCardinal.of_nat := by
+  apply Function.hasInverse_iff_bij.mp
+  exists FiniteCardinal.to_nat
+  constructor
+  · ext x; exact to_nat_of_nat
+  · ext x; exact of_nat_to_nat
+
+@[simp] theorem to_nat_bij : Function.Bijective FiniteCardinal.to_nat := by
+  apply Function.hasInverse_iff_bij.mp
+  exists FiniteCardinal.of_nat
+  constructor
+  · ext x; exact of_nat_to_nat
+  · ext x; exact to_nat_of_nat
+
+@[simp] theorem of_nat_add : FiniteCardinal.of_nat (n + m) = (FiniteCardinal.of_nat n : Cardinal.{u}) + FiniteCardinal.of_nat m := by
+  induction n with
+  | zero => simp only [Nat.zero_add, of_nat, Cardinal.zero_add]
+  | succ n ih => rw[Nat.add_assoc, Nat.add_comm 1 m, ← Nat.add_assoc]
+                 simp only [of_nat]
+                 rw[ih]
+                 rw[← Cardinal.add_assoc, Cardinal.add_comm (b := 1), Cardinal.add_assoc]
+
+@[simp] theorem of_nat_mul : FiniteCardinal.of_nat (n * m) = (FiniteCardinal.of_nat n : Cardinal.{u}) * FiniteCardinal.of_nat m := by
+  induction n with
+  | zero => simp only [Nat.zero_mul, of_nat, Cardinal.zero_mul]
+  | succ n ih => rw[Nat.add_mul _ _ _]
+                 simp only [Nat.one_mul, of_nat_add, of_nat]
+                 rw[ih, Cardinal.mul_add_distrib_right, Cardinal.one_mul]
+
+@[simp] theorem of_nat_pow : FiniteCardinal.of_nat (n ^ m) = (FiniteCardinal.of_nat n : Cardinal.{u}) ^ (FiniteCardinal.of_nat m : Cardinal.{u}):= by
+  induction m with
+  | zero => simp only [of_nat, Cardinal.zero_add, Cardinal.pow_zero]
+  | succ m ih => rw[Nat.pow_add _ _ _]
+                 simp only [Nat.pow_one, of_nat_mul, ih, of_nat, Cardinal.pow_add, Cardinal.pow_one]
+
+@[simp] theorem of_nat_isOrderIso : IsOrderIso of_nat := by
+  apply isOrderIso_iff_reflect.mpr
+  · constructor
+    · exact of_nat_bij
+    · constructor
+      · intro x y h
+        induction h with
+        | refl => rfl
+        | step h' ih => simp only [FiniteCardinal, of_nat, Subtype.le_iff_val] at *;
+                        apply le_trans ih Cardinal.le_add_left
+      · intro x y h
+        have h' := h
+        rw[Subtype.le_iff_val, ← Cardinal.exists_add_iff_le] at h
+        obtain ⟨c,eq⟩ := h
+        have : c ≤ (of_nat y) := by
+          rw[← Cardinal.exists_add_iff_le]
+          exists (of_nat x).val
+          rw[eq, Cardinal.add_comm]
+        have fin : c.Finite := Cardinal.Finite.of_le_finite (of_nat y).2 this
+        change _ = _ + (⟨c,fin⟩ : FiniteCardinal).val at eq
+        rw[← of_nat_to_nat (x := ⟨c,fin⟩), ← of_nat_add, ← Subtype.eq_iff] at eq
+        have eq := of_nat_bij.inj _ _ eq
+        rw[eq]
+        simp only [to_nat, FiniteCardinal, Nat.zero_eq, Nat.succ_eq_add_one, Nat.le_add_right]
+
+@[simp] theorem to_nat_isOrderIso : IsOrderIso to_nat := by
+  have: of_nat_bij.inv = to_nat := by
+    apply Function.IsInverseOf.eq_inv
+    constructor
+    · ext x; exact of_nat_to_nat
+    · ext x; exact to_nat_of_nat
+  rw[← this]
+  apply IsOrderIso.inv of_nat_isOrderIso
+
+@[simp] theorem to_nat_le_iff : to_nat x ≤ to_nat y ↔ x ≤ y := to_nat_isOrderIso.le_iff
+@[simp] theorem to_nat_lt_iff : to_nat x < to_nat y ↔ x < y := by
+  rw[Nat.lt_iff_le_not_le]
+  rw[to_nat_le_iff, lt_iff_le_not_le, to_nat_le_iff]
+
+@[simp] theorem of_nat_le_iff : of_nat n ≤ of_nat m ↔ n ≤ m := of_nat_isOrderIso.le_iff
+@[simp] theorem of_nat_lt_iff : of_nat n < of_nat m ↔ n < m := by
+  rw[Nat.lt_iff_le_not_le, lt_iff_le_not_le]
+  rw[of_nat_le_iff, of_nat_le_iff]
+
+
+end FiniteCardinal
+end Nat
