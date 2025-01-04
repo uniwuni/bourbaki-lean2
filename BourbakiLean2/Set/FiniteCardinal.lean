@@ -25,6 +25,8 @@ noncomputable instance: WellOrder FiniteCardinal := by unfold FiniteCardinal; in
 class Finite (α : Type u) where
   finite : Cardinal.Finite (Cardinal.mk α)
 
+instance {a : FiniteCardinal.{u}} : Cardinal.Finite a.val := a.property
+
 instance {α : Type u} [Finite α] : Cardinal.Finite (Cardinal.mk α) := by
   exact Finite.finite
 
@@ -206,6 +208,19 @@ instance Finite.inter_left {s t : Set α} [h : Finite s] : Finite (s ∩ t : Set
 instance Finite.inter_right {s t : Set α} [h : Finite t] : Finite (s ∩ t : Set α) := by
   rw[Set.inter_comm]
   infer_instance
+
+instance Finite.sdiff {s t : Set α} [h : Finite s] : Finite (s \ t : Set α) := by
+  apply Finite.subset (s := s)
+  exact Set.sdiff_subset
+
+
+instance Finite.iInter_all [ne : Nonempty ι] {x : ι → Set α} [h : ∀ i, Finite (x i)] : Finite (⋂ i, x i) := by
+  obtain ⟨i⟩ := ne
+  apply Finite.subset (s := x i)
+  exact fun ⦃a⦄ a ↦ a i
+
+theorem Finite.iInter_one {x : ι → Set α} {i : ι} [h : Finite (x i)] : Finite (⋂ i, x i) := by
+  exact subset fun ⦃a⦄ a ↦ a i
 
 instance Finite.empty_set : Finite (∅ : Set α) := by
   have : (Cardinal.mk (∅ : Set α) : Cardinal.{u}) = 0 := by
@@ -494,3 +509,154 @@ noncomputable def of_nat : Nat → FiniteCardinal.{u}
 
 end FiniteCardinal
 end Nat
+instance : Finite Empty where
+  finite := by
+    have : Cardinal.mk Empty = 0 := by
+      simp only [Cardinal.eq_zero_iff]
+      exact Empty.elim
+    rw[this]
+    infer_instance
+
+instance : Finite.{u} PEmpty where
+  finite := by
+    have : Cardinal.mk PEmpty = 0 := by
+      simp only [Cardinal.eq_zero_iff]
+      exact PEmpty.elim
+    rw[this]
+    infer_instance
+
+instance : Finite.{u} PUnit where
+  finite := by
+    have : Cardinal.mk PUnit = 1 := by
+      simp only [Cardinal.eq_one_iff]
+      constructor
+      infer_instance
+    rw[this]
+    infer_instance
+
+instance : Finite Unit where
+  finite := by
+    have : Cardinal.mk Unit = 1 := by
+      simp only [Cardinal.eq_one_iff]
+      constructor
+      infer_instance
+    rw[this]
+    infer_instance
+
+instance : Finite Bool where
+  finite := by
+    have : Cardinal.mk Bool = 1 + 1 := by
+      simp only [Cardinal.one_eq, Cardinal.add_mk, Cardinal.eq_iff]
+      constructor
+      apply Function.bijection_of_funcs (λ b => if b then Sum.inl default else Sum.inr default)
+        (Sum.elim (fun x => true) (fun x => false))
+      · rintro (b|b) <;> rfl
+      · rintro (b|b) <;> rfl
+    rw[this]
+    infer_instance
+
+instance {α β : Type u} [Finite α] [Finite β] : Finite (α ⊕ β) where
+  finite := by
+    have : Cardinal.mk (α ⊕ β) = Cardinal.mk α + Cardinal.mk β := by
+      simp only [Cardinal.add_mk, Cardinal.eq_iff]
+    rw[this]
+    have : (Cardinal.mk α + Cardinal.mk β) = (FiniteCardinal.of_nat $
+        FiniteCardinal.to_nat ⟨Cardinal.mk α, inferInstance⟩ + FiniteCardinal.to_nat ⟨Cardinal.mk β, inferInstance⟩).1 := by
+      rw[FiniteCardinal.of_nat_add]
+      simp only [Cardinal.add_mk, FiniteCardinal.of_nat_to_nat]
+    rw[this]
+    apply (fun x : FiniteCardinal => x.property)
+
+instance {α β : Type u} [Finite α] [Finite β] : Finite (α × β) where
+  finite := by
+    have : Cardinal.mk (α × β) = Cardinal.mk α * Cardinal.mk β := by
+      simp only [Cardinal.mul_mk, Cardinal.eq_iff]
+    rw[this]
+    have : (Cardinal.mk α * Cardinal.mk β) = (FiniteCardinal.of_nat $
+        FiniteCardinal.to_nat ⟨Cardinal.mk α, inferInstance⟩ * FiniteCardinal.to_nat ⟨Cardinal.mk β, inferInstance⟩).1 := by
+      rw[FiniteCardinal.of_nat_mul]
+      simp only [Cardinal.mul_mk, FiniteCardinal.of_nat_to_nat]
+    rw[this]
+    apply (fun x : FiniteCardinal => x.property)
+
+instance {α β : Type u} [Finite α] [Finite β] : Finite (α → β) where
+  finite := by
+    have : Cardinal.mk (α → β) = Cardinal.mk β ^ Cardinal.mk α := by
+      simp only [Cardinal.pow_mk, Cardinal.eq_iff]
+    rw[this]
+    have : (Cardinal.mk β ^ Cardinal.mk α) = (FiniteCardinal.of_nat $
+        FiniteCardinal.to_nat ⟨Cardinal.mk β, inferInstance⟩ ^ FiniteCardinal.to_nat ⟨Cardinal.mk α, inferInstance⟩).1 := by
+      rw[FiniteCardinal.of_nat_pow]
+      simp only [Cardinal.pow_mk, FiniteCardinal.of_nat_to_nat]
+    rw[this]
+    apply (fun x : FiniteCardinal => x.property)
+
+instance {α : Type u} [Subsingleton α] : Finite α where
+  finite := by
+    have : Cardinal.mk α ≤ 1 := by
+      simp only [Cardinal.one_eq, Cardinal.mk_le_iff]
+      constructor
+      exists fun x => default
+      intro x x' _
+      apply Subsingleton.allEq
+    apply Cardinal.Finite.of_le_finite _ this
+    infer_instance
+
+section
+variable {a b : Cardinal.{u}} [ha : Cardinal.Finite a] [hb : Cardinal.Finite b]
+
+instance sum_finite : Cardinal.Finite (a + b) := by
+  obtain ⟨a,rfl⟩ := Cardinal.mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := Cardinal.mk_surj.exists_preimage b
+  have : Finite a := ⟨ha⟩
+  have : Finite b := ⟨hb⟩
+  simp only [Cardinal.add_mk]
+  infer_instance
+
+instance mul_finite : Cardinal.Finite (a * b) := by
+  obtain ⟨a,rfl⟩ := Cardinal.mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := Cardinal.mk_surj.exists_preimage b
+  have : Finite a := ⟨ha⟩
+  have : Finite b := ⟨hb⟩
+  simp only [Cardinal.mul_mk]
+  infer_instance
+
+instance pow_finite : Cardinal.Finite (a ^ b) := by
+  obtain ⟨a,rfl⟩ := Cardinal.mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := Cardinal.mk_surj.exists_preimage b
+  have : Finite a := ⟨ha⟩
+  have : Finite b := ⟨hb⟩
+  simp only [Cardinal.pow_mk]
+  infer_instance
+
+end
+variable {x y : FiniteCardinal.{u}} {n m : Nat}
+namespace FiniteCardinal
+@[simp] theorem to_nat_add : to_nat ⟨x.val + y.val, inferInstance⟩ = to_nat x + to_nat y := by
+  apply of_nat_bij.inj _ _
+  simp only [FiniteCardinal, Subtype.eq_iff, of_nat_add]
+  rw[of_nat_to_nat,of_nat_to_nat,of_nat_to_nat]
+
+@[simp] theorem to_nat_mul : to_nat ⟨x.val * y.val, inferInstance⟩ = to_nat x * to_nat y := by
+  apply of_nat_bij.inj _ _
+  simp only [FiniteCardinal, Subtype.eq_iff, of_nat_mul]
+  rw[of_nat_to_nat,of_nat_to_nat,of_nat_to_nat]
+
+@[simp] theorem to_nat_pow : to_nat ⟨x.val ^ y.val, inferInstance⟩ = to_nat x ^ to_nat y := by
+  apply of_nat_bij.inj _ _
+  simp only [FiniteCardinal, Subtype.eq_iff, of_nat_pow]
+  rw[of_nat_to_nat,of_nat_to_nat,of_nat_to_nat]
+
+
+end FiniteCardinal
+instance {α : Type u} {a b : Set α} [Finite a] [Finite b] : Finite ((a ∪ b) : Set α) where
+  finite := by
+    apply Cardinal.Finite.of_le_finite (b := Cardinal.mk a + Cardinal.mk b)
+    · infer_instance
+    · simp only [Cardinal.add_mk]
+      apply Cardinal.ge_of_surj
+      exists Sum.elim (fun ⟨x,h⟩ => ⟨x, Or.inl h⟩) (fun ⟨x,h⟩ => ⟨x, Or.inr h⟩)
+      rw[Function.surj_iff]
+      rintro ⟨x,(h|h)⟩
+      · exists Sum.inl ⟨x,h⟩
+      · exists Sum.inr ⟨x,h⟩

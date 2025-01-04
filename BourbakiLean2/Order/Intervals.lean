@@ -327,6 +327,31 @@ instance {α : Type*} [Preorder α] {s : Set α} [IsDownwardsClosed s] : IsInter
 
 section
 variable {α : Type*} [Preorder α] {a b c d : α}
+
+instance: HasLeast (Ici a) where
+  least := ⟨a,le_rfl⟩
+  least_le := fun ⟨_,h⟩ => h
+
+instance (h : a < b): HasLeast (Ico a b) where
+  least := ⟨a,le_rfl, h⟩
+  least_le := fun ⟨_,h⟩ => h.1
+
+instance (h : a ≤ b): HasLeast (Icc a b) where
+  least := ⟨a,le_rfl, h⟩
+  least_le := fun ⟨_,h⟩ => h.1
+
+instance: HasGreatest (Iic a) where
+  greatest := ⟨a,le_rfl⟩
+  le_greatest := fun ⟨_,h⟩ => h
+
+instance (h : a < b): HasGreatest (Ioc a b) where
+  greatest := ⟨b,h,le_rfl⟩
+  le_greatest := fun ⟨_,h⟩ => h.2
+
+instance (h : a ≤ b): HasGreatest (Icc a b) where
+  greatest := ⟨b,h,le_rfl⟩
+  le_greatest := fun ⟨_,h⟩ => h.2
+
 theorem mem_of_mem_le_mem {s : Set α} [IsInterval s] (h : a ≤ b) (h' : b ≤ c) (ha : a ∈ s) (hc : c ∈ s) : b ∈ s :=
   IsInterval.mem_of_mem_le_mem h h' ha hc
 
@@ -491,4 +516,14 @@ instance [PartialOrder α] : IsInterval ({a} : Set α) where
     rw[h4] at h2
     apply le_antisymm h2 h1
 
+end
+section
+variable {α : Type} [Preorder α]
+instance downwards_has_least {s : Set α} [IsDownwardsClosed s] (h : s.Nonempty) [HasLeast α] : HasLeast s where
+  least := ⟨⊥, mem_of_le_mem (least_le _) h.choose_spec⟩
+  least_le := by simp only [Subtype.le_iff_val, least_le, implies_true]
+
+instance upwards_has_greatest {s : Set α} [IsUpwardsClosed s] (h : s.Nonempty) [HasGreatest α] : HasGreatest s where
+  greatest := ⟨⊤, mem_of_mem_le (le_greatest _) h.choose_spec⟩
+  le_greatest := by simp only [Subtype.le_iff_val, le_greatest, implies_true]
 end

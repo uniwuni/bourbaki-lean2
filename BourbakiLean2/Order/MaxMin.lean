@@ -254,3 +254,79 @@ def AdjoinLeast.least : AdjoinLeast α := Sum.inr ()
 
 @[simp] theorem least_singleton [Preorder α] {a : α} : Least (⟨a, rfl⟩ : ({a} : Set α)) := by
   simp only [Least, Subtype.le_iff_val, Subtype.forall, Set.mem_singleton_iff, forall_eq, le_refl]
+
+
+
+class HasLeast (α : Type*) [Preorder α] where
+  least : α
+  least_le (x : α) : least ≤ x
+
+class HasGreatest (α : Type*) [Preorder α] where
+  greatest : α
+  le_greatest (x : α) : x ≤ greatest
+
+/-- The top (`⊤`, `\top`) element -/
+notation "⊤" => HasGreatest.greatest
+
+/-- The bot (`⊥`, `\bot`) element -/
+notation "⊥" => HasLeast.least
+
+instance (priority := 100) greatest_nonempty (α : Type*) [Preorder α] [HasGreatest α] : Nonempty α :=
+  ⟨⊤⟩
+
+instance (priority := 100) least_nonempty (α : Type*) [Preorder α] [HasLeast α] : Nonempty α :=
+  ⟨⊥⟩
+attribute [match_pattern] HasGreatest.greatest HasLeast.least
+
+variable {β : Type*}
+@[simp] theorem least_le [Preorder α] [HasLeast α] (x : α) : ⊥ ≤ x := HasLeast.least_le x
+@[simp] theorem le_greatest [Preorder α] [HasGreatest α] (x : α) : x ≤ ⊤ := HasGreatest.le_greatest x
+theorem least_least [Preorder α] [HasLeast α] : Least (⊥ : α) := least_le
+theorem greatest_greatest [Preorder α] [HasGreatest α] : Greatest (⊤ : α) := le_greatest
+@[simp] theorem le_least_iff [PartialOrder α] [HasLeast α] {x : α} : x ≤ ⊥ ↔ x = ⊥ := by
+  constructor
+  · apply least_least.minimal
+  · rintro rfl; rfl
+
+@[simp] theorem greatest_le_iff [PartialOrder α] [HasGreatest α] {x : α} : ⊤ ≤ x ↔ x = ⊤ := by
+  constructor
+  · apply greatest_greatest.maximal
+  · rintro rfl; rfl
+
+@[simp] theorem ne_least_iff [PartialOrder α] [HasLeast α] {x : α} : x ≠ ⊥ ↔ ⊥ < x := by
+  rw[lt_iff_le_not_eq]
+  simp only [ne_eq, least_le, Eq.comm, true_and]
+
+@[simp] theorem ne_greatest_iff [PartialOrder α] [HasGreatest α] {x : α} : x ≠ ⊤ ↔ x < ⊤  := by
+  rw[lt_iff_le_not_eq]
+  simp only [ne_eq, le_greatest, true_and]
+
+@[simp] theorem IsOrderIso.greatest [PartialOrder α] [PartialOrder β]
+    [HasGreatest α] [HasGreatest β] {f : α → β} (h : IsOrderIso f) : f ⊤ = ⊤ := by
+  apply le_antisymm
+  · exact le_greatest (f ⊤)
+  · rw[← h.bij.val_inv_val (b := ⊤),h.le_iff]
+    exact le_greatest (h.bij.inv ⊤)
+
+@[simp] theorem IsOrderIso.least [PartialOrder α] [PartialOrder β]
+    [HasLeast α] [HasLeast β] {f : α → β} (h : IsOrderIso f) : f ⊥ = ⊥ := by
+  apply le_antisymm
+  · rw[← h.bij.val_inv_val (b := ⊥),h.le_iff]
+    exact least_le _
+  · exact least_le (f ⊥)
+
+instance [Preorder α] : HasLeast (AdjoinLeast α) where
+  least := AdjoinLeast.least
+  least_le _ := AdjoinLeast.least_le
+
+instance [Preorder α] : HasGreatest (AdjoinGreatest α) where
+  greatest := AdjoinGreatest.greatest
+  le_greatest _ := AdjoinGreatest.le_greatest
+
+instance [Preorder α] [HasLeast α] : HasGreatest (Op α) where
+  greatest := (⊥ : α)
+  le_greatest _ := least_le _
+
+instance [Preorder α] [HasGreatest α] : HasLeast (Op α) where
+  least := (⊤ : α)
+  least_le _ := le_greatest _

@@ -29,6 +29,13 @@ theorem WellOrder.isWellOrder [WellOrder α] : IsWellOrder ({p | p.1 ≤ p.2} : 
   le_total := TotalOrder.le_total
   existsLeast := WellOrder.existsLeast
 
+noncomputable instance [ne : Nonempty α] [WellOrder α] : HasLeast α where
+  least := (WellOrder.existsLeast (s := Set.univ) ⟨Classical.choice ne, trivial⟩).choose
+  least_le := by
+    have ⟨a,least⟩ := (WellOrder.existsLeast (s := Set.univ) ⟨Classical.choice ne, trivial⟩).choose_spec
+    intro x
+    apply least ⟨x,trivial⟩
+
 instance: WellOrder Empty where
   existsLeast h := by rcases h with ⟨⟨⟩,h⟩
 

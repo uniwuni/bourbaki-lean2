@@ -77,5 +77,15 @@ theorem greatest_eq_union {p : Set α → Prop} {x : {x // p x}} (h : Greatest x
   have : (⟨b,hb⟩ : s).val ⊆ ⋃ a : s, a := subset_iUnion
   exact this
 
+noncomputable instance: HasLeast (Set α) where
+  least := ∅
+  least_le _ := Set.empty_subset
+
+noncomputable instance : HasGreatest (Set α) where
+  greatest := Set.univ
+  le_greatest _ _ _ := trivial
+
+@[simp] theorem Set.least_eq : ⊥ = (∅ : Set α) := rfl
+@[simp] theorem Set.greatest_eq : ⊤ = (Set.univ : Set α) := rfl
 
 end Set

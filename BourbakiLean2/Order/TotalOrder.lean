@@ -76,6 +76,10 @@ noncomputable instance [TotalOrder α] : Max α where
     simp only [max, ite_eq_right_iff]
     apply le_antisymm h
 
+theorem max_eq_either [TotalOrder α] (x y : α) : max x y = x ∨ max x y = y := by
+  simp only [max_eq_right_iff, max_eq_left_iff]
+  apply le_total
+
 noncomputable instance [TotalOrder α] : Min α where
   min (x y : α) := by classical exact if x ≤ y then x else y
 
@@ -101,6 +105,10 @@ noncomputable instance [TotalOrder α] : Min α where
     simp only [min, ite_eq_left_iff]
     intro h'
     apply (h' h).elim
+
+theorem min_eq_either [TotalOrder α] (x y : α) : max x y = x ∨ max x y = y := by
+  simp only [max_eq_right_iff, max_eq_left_iff]
+  apply le_total
 
 noncomputable instance [TotalOrder α] : Lattice α where
   inf := min

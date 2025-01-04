@@ -87,3 +87,11 @@ theorem Monotone.lowerBound_of_lowerBound {f : α → β} (h : Monotone f) (h' :
   rw[Set.mem_image_iff] at hb
   obtain ⟨c,rfl,hc⟩ := hb
   apply h $ h' _ hc
+
+@[simp] theorem HasGreatest.upperBound [HasGreatest α] {s : _} : UpperBound s (⊤ : α) := by
+  intro x
+  simp only [le_greatest, implies_true]
+
+@[simp] theorem HasLeast.lowerBound [HasLeast α] {s : _} : LowerBound s (⊥ : α) := by
+  intro x
+  simp only [least_le, implies_true]
