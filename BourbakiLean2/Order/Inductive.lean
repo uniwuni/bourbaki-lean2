@@ -184,20 +184,23 @@ theorem InductiveOrder.has_maximal_above [PartialOrder α] [InductiveOrder α] (
     exact this
   · exact le
 
-
-theorem subset_totally_ordered_maximum {s : Set (Set α)}
-    (h : ∀ t, t ⊆ s → (∀ x ∈ t, ∀ y ∈ t, x ⊆ y ∨ y ⊆ x) → ⋃ a : t, a ∈ s) : ∃ x : s, Maximal x := by
-  have inst : InductiveOrder s := by
-    constructor
-    rintro t ht
-    let t' : Set (Set α) := Subtype.val '' t
+theorem subset_chain_iUnion_inductive {s : Set (Set α)} (h1 : s.Nonempty)
+    (h : ∀ t, t.Nonempty → t ⊆ s → (∀ x ∈ t, ∀ y ∈ t, x ⊆ y ∨ y ⊆ x) → ⋃ a : t, a ∈ s) :
+    InductiveOrder s := by
+  constructor
+  rintro t ht
+  by_cases ne : t.Nonempty
+  · let t' : Set (Set α) := Subtype.val '' t
     exists ⟨⋃ a : t', a.val, ?wah⟩
     · have sub : t' ⊆ s := by
         intro x hx
         rw[Set.mem_image_iff] at hx
         obtain ⟨⟨a,ha⟩,eq⟩ := hx
         simp only [eq.1, ha]
+      obtain ⟨ne,nemem⟩ := ne
+      have : t'.Nonempty := ⟨_,Set.val_mem_image_of_mem nemem⟩
       apply h
+      · exact this
       · exact sub
       · intro x hx y hy
         have hx' := hx
@@ -211,37 +214,56 @@ theorem subset_totally_ordered_maximum {s : Set (Set α)}
       have : x.val ∈ t' := by simp[t', Set.mem_image_iff]; exists x.property
       have : _ ⊆ ⋃ a : t', a.val := Set.subset_iUnion (i := ⟨x.val, this⟩)
       exact this
+  · rw[Set.nonempty_iff_neq_empty, Ne, Classical.not_not] at ne
+    rw[ne]
+    obtain ⟨a,mem⟩ := h1
+    exists ⟨a,mem⟩
+    simp only [UpperBound.empty]
+
+
+theorem subset_totally_ordered_maximum {s : Set (Set α)} (h1 : s.Nonempty)
+    (h : ∀ t, t.Nonempty → t ⊆ s → (∀ x ∈ t, ∀ y ∈ t, x ⊆ y ∨ y ⊆ x) → ⋃ a : t, a ∈ s) : ∃ x : s, Maximal x := by
+  have inst : InductiveOrder s := subset_chain_iUnion_inductive h1 h
   exact InductiveOrder.has_maximal (α := s)
 
-theorem subset_totally_ordered_minimum {s : Set (Set α)}
-    (h : ∀ t, t ⊆ s → (∀ x ∈ t, ∀ y ∈ t, x ⊆ y ∨ y ⊆ x) → ⋂ a : t, a ∈ s) : ∃ x : s, Minimal x := by
+theorem subset_totally_ordered_minimum {s : Set (Set α)} (h1 : s.Nonempty)
+    (h : ∀ t, t.Nonempty → t ⊆ s → (∀ x ∈ t, ∀ y ∈ t, x ⊆ y ∨ y ⊆ x) → ⋂ a : t, a ∈ s) : ∃ x : s, Minimal x := by
   have inst : InductiveOrder (Op s) := by
     constructor
     rintro t ht
-    let t' : Set (Set α) := Subtype.val '' t
-    exists ⟨toOp $ ⋂ a : t', a.val, ?wah⟩
-    · have sub : t' ⊆ s := by
-        intro x hx
-        rw[Set.mem_image_iff] at hx
-        obtain ⟨⟨a,ha⟩,eq⟩ := hx
-        simp only [eq.1, ha]
-      apply h
-      · exact sub
-      · intro x hx y hy
-        have hx' := hx
-        have hy' := hy
-        rw[Set.mem_image_iff] at hx hy
-        obtain ⟨⟨a,ha⟩,rfl,haa⟩ := hx
-        obtain ⟨⟨b,hb⟩,rfl,hbb⟩ := hy
-        have := ht ⟨x,ha⟩ haa ⟨y,hb⟩ hbb
-        rcases this with (h|h)
-        · right
-          exact h
-        · left
-          exact h
-    · intro x hx
-      simp only [LE.le, toOp]
-      have : x.val ∈ t' := by simp[t', Set.mem_image_iff]; exists x.property
-      have : ⋂ a : t', a.val ⊆ _ := Set.iInter_subset (i := ⟨x.val, this⟩)
-      exact this
+    by_cases ne : t.Nonempty
+    · let t' : Set (Set α) := Subtype.val '' t
+      exists ⟨toOp $ ⋂ a : t', a.val, ?wah⟩
+      · have sub : t' ⊆ s := by
+          intro x hx
+          rw[Set.mem_image_iff] at hx
+          obtain ⟨⟨a,ha⟩,eq⟩ := hx
+          simp only [eq.1, ha]
+        obtain ⟨ne,nemem⟩ := ne
+        have : t'.Nonempty := ⟨_,Set.val_mem_image_of_mem nemem⟩
+        apply h
+        · exact this
+        · exact sub
+        · intro x hx y hy
+          have hx' := hx
+          have hy' := hy
+          rw[Set.mem_image_iff] at hx hy
+          obtain ⟨⟨a,ha⟩,rfl,haa⟩ := hx
+          obtain ⟨⟨b,hb⟩,rfl,hbb⟩ := hy
+          have := ht ⟨x,ha⟩ haa ⟨y,hb⟩ hbb
+          rcases this with (h|h)
+          · right
+            exact h
+          · left
+            exact h
+      · intro x hx
+        simp only [LE.le, toOp]
+        have : x.val ∈ t' := by simp[t', Set.mem_image_iff]; exists x.property
+        have : ⋂ a : t', a.val ⊆ _ := Set.iInter_subset (i := ⟨x.val, this⟩)
+        exact this
+    · rw[Set.nonempty_iff_neq_empty, Ne, Classical.not_not] at ne
+      rw[ne]
+      obtain ⟨a,mem⟩ := h1
+      exists ⟨a,mem⟩
+      simp only [UpperBound.empty]
   exact InductiveOrder.has_maximal (α := Op s)

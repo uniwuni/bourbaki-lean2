@@ -660,3 +660,7 @@ instance {α : Type u} {a b : Set α} [Finite a] [Finite b] : Finite ((a ∪ b) 
       rintro ⟨x,(h|h)⟩
       · exists Sum.inl ⟨x,h⟩
       · exists Sum.inr ⟨x,h⟩
+
+instance {α : Type u} {a : Set α} {b : α} [Finite a] : Finite (insert b a : Set α) := by
+  change Finite ({b} ∪ a : Set α)
+  infer_instance

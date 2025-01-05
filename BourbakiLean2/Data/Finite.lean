@@ -159,11 +159,11 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
   · rintro ⟨⟩; rfl
   · rintro ⟨x,h⟩; exact Subtype.eq h.symm
 
-@[simp] theorem cardinality_insert {a : Set α} [Finite a] {x : α} (h' : x ∉ a):
-    (Finite.ftype (a ∪ {x} : Set α)).cardinality = (Finite.ftype a).cardinality + 1 := by
+@[simp] theorem cardinality_manual_insert {a : Set α} [Finite a] {x : α} (h' : x ∉ a):
+    (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1 := by
   rw[← cardinality_punit, ← cardinality_sum, Eq.comm, cardinality_eq_iff]
   constructor
-  exists Sum.elim (fun ⟨a,h⟩ => ⟨a,Or.inl h⟩) (fun a => ⟨x, Or.inr rfl⟩)
+  exists Sum.elim (fun ⟨a,h⟩ => ⟨a,Or.inr h⟩) (fun a => ⟨x, Or.inl rfl⟩)
   constructor
   · rintro (y|y) (z|z) h
     · simp only [Sum.elim_inl] at h
@@ -180,14 +180,19 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
       exact (h' this).elim
     · congr
   · rw[Function.surj_iff]
-    rintro ⟨y,(hy|rfl)⟩
-    · exists Sum.inl ⟨y,hy⟩
+    rintro ⟨y,(rfl|hy)⟩
     · exists Sum.inr default
+    · exists Sum.inl ⟨y,hy⟩
+
+@[simp] theorem cardinality_insert {a : Set α} [Finite a] {x : α} (h' : x ∉ a):
+    (Finite.ftype (insert x a : Set α)).cardinality = (Finite.ftype a).cardinality + 1 := by
+  change (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1
+  exact cardinality_manual_insert h'
 
 end FiniteType
 theorem Finite.set_induction {α : Type*} {p : Set α → Prop}
     (he : p ∅) (hs : ∀ x : α, ∀ a : Set α, Finite a → x ∉ a → p a → p (a ∪ {x}))
-    : (a : Set α) → [h : Finite a] → p a := by
+    : (a : Set α) → [_h : Finite a] → p a := by
   have res : (n : Nat) → (a : Set α) →  (h : Finite a) → (eq : (h.ftype).cardinality = n) → p a := by
     intro n
     induction n with
@@ -202,28 +207,28 @@ theorem Finite.set_induction {α : Type*} {p : Set α → Prop}
           rintro rfl
           rw[FiniteType.cardinality_empty_set] at eq
           injection eq
-        have eq2 : a = (a \ {x}) ∪ {x} := by
+        have eq2 : a = {x} ∪ (a \ {x}) := by
           ext y
           simp only [Set.mem_union_iff, Set.mem_sdiff_iff, Set.mem_singleton_iff]
           constructor
           · by_cases eq : y = x
-            · simp only [eq, not_true_eq_false, and_false, or_true, implies_true]
-            · simp only [eq, not_false_eq_true, and_true, or_false, imp_self]
+            · simp only [eq, not_true_eq_false, and_false, or_false, implies_true]
+            · simp only [eq, not_false_eq_true, and_true, false_or, imp_self]
           · rintro (h|h)
-            · exact h.left
             · exact h ▸ hx
-        have : (ftype ((a \ {x}) ∪ {x} : Set α)).cardinality = n + 1 := by
+            · exact h.left
+        have : (ftype ({x} ∪ (a \ {x}) : Set α)).cardinality = n + 1 := by
           rw[← eq, FiniteType.cardinality_eq_iff]
           simp only [ftype]
           rw[← eq2]
           apply Equipotent.of_eq rfl
         have : (ftype (a \ {x} : Set α)).cardinality = n := by
-          rw[FiniteType.cardinality_insert] at this
+          rw[FiniteType.cardinality_manual_insert] at this
           · exact Nat.succ_inj'.mp this
           · simp only [Set.mem_sdiff_iff, Set.mem_singleton_iff, not_true_eq_false, and_false,
             not_false_eq_true]
         specialize ih _ _ this
-        rw[eq2]
+        rw[eq2, Set.union_comm]
         apply hs _ _ inferInstance (by simp only [Set.mem_sdiff_iff, Set.mem_singleton_iff,
           not_true_eq_false, and_false, not_false_eq_true]) ih
   intro a h
