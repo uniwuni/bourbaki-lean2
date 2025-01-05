@@ -174,4 +174,17 @@ theorem nonempty_iff_neq_empty {x : Set α} : x.Nonempty ↔ x ≠ ∅ := by
 
 @[simp] theorem mem_pair_iff {a b c : α} : c ∈ ({a,b} : Set α) ↔ (c = a ∨ c = b) := Iff.rfl
 
+instance {a : α}: Unique ({a} : Set α) where
+  default := ⟨a,rfl⟩
+  uniq x := Subtype.eq x.property
+
+theorem cases_of_empty {p : Set α → Prop} (h : p ∅) (h' : ∀ a, a.Nonempty → p a) :
+    ∀ a, p a := by
+  intro a
+  by_cases h : a.Nonempty
+  · apply h' _ h
+  · rw[nonempty_iff_neq_empty, Ne, Classical.not_not] at h
+    rw[h]
+    assumption
+
 end Set

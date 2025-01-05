@@ -753,6 +753,57 @@ theorem Cardinal.prod_empty {x : ι → Cardinal.{u}} (h : ι → False) :
     ext x
     exact (h x).elim
 
+theorem Cardinal.sigma_add {a b : Cardinal.{u}} :
+    Cardinal.sigma (Sum.elim (fun _ : PUnit => a) (fun _ : PUnit.{u+1} => b)) = a + b := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  suffices (Sum.elim (fun _ : PUnit ↦ mk a) fun _ : PUnit.{u+1} ↦ mk b) = fun i => mk $ (Sum.elim (fun _ : PUnit ↦ a) fun _ : PUnit.{u+1} ↦ b) i by
+    rw[this]
+    apply Eq.symm
+    simp only [sigma_mk, add_mk, eq_iff]
+    constructor
+    exists (Sum.elim (fun a => ⟨Sum.inl default,a⟩) (fun a => ⟨Sum.inr default,a⟩))
+    constructor
+    · rintro (x|x) (y|y) h
+      · simp only [PUnit.default_eq_unit, Sum.elim_inl] at h
+        injections
+        congr
+      · simp only [PUnit.default_eq_unit, Sum.elim_inl, Sum.elim_inr] at h
+        injections
+      · simp only [PUnit.default_eq_unit, Sum.elim_inr, Sum.elim_inl] at h
+        injections
+      · simp only [PUnit.default_eq_unit, Sum.elim_inr] at h
+        injections
+        congr
+    · rw[Function.surj_iff]
+      rintro ⟨(a|a),h⟩
+      · exists Sum.inl h
+      · exists Sum.inr h
+  ext j
+  rcases j with (j|j) <;> simp
+
+theorem Cardinal.prod_mul {a b : Cardinal.{u}} :
+    Cardinal.prod (Sum.elim (fun _ : PUnit => a) (fun _ : PUnit.{u+1} => b)) = a * b := by
+  obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
+  obtain ⟨b,rfl⟩ := mk_surj.exists_preimage b
+  suffices (Sum.elim (fun _ : PUnit ↦ mk a) fun _ : PUnit.{u+1} ↦ mk b) = fun i => mk $ (Sum.elim (fun _ : PUnit ↦ a) fun _ : PUnit.{u+1} ↦ b) i by
+    rw[this]
+    simp only [mul_mk, prod_mk, eq_iff]
+    constructor
+    exists fun f => ⟨f $ Sum.inl default, f $ Sum.inr default⟩
+    constructor
+    · intro a b h
+      ext i
+      injections h
+      rcases i with (i|i) <;> {rcases i; assumption}
+    · rw[Function.surj_iff]
+      intro ⟨a,b⟩
+      exists fun f => match f with
+        | Sum.inl PUnit.unit => a
+        | Sum.inr PUnit.unit => b
+  ext j
+  rcases j with (j|j) <;> simp
+
 @[simp] theorem Cardinal.mul_zero {a : Cardinal.{u}} : a * 0 = 0 := by
   obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
   change mk a * mk PEmpty = 0

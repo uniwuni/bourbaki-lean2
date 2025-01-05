@@ -441,6 +441,22 @@ noncomputable def of_nat : Nat → FiniteCardinal.{u}
   · ext x; exact of_nat_to_nat
   · ext x; exact to_nat_of_nat
 
+@[simp] theorem of_nat_zero : FiniteCardinal.of_nat 0 = (⟨0, inferInstance⟩ : FiniteCardinal.{u}) := by
+  simp only [FiniteCardinal, of_nat]
+
+@[simp] theorem of_nat_one : FiniteCardinal.of_nat 1 = (⟨1, inferInstance⟩ : FiniteCardinal.{u}) := by
+  simp only [FiniteCardinal, of_nat, Cardinal.zero_add]
+
+@[simp] theorem to_nat_zero : FiniteCardinal.to_nat (⟨0, inferInstance⟩ : FiniteCardinal.{u}) = 0 := by
+  simp only [to_nat, FiniteCardinal, Nat.zero_eq, Nat.succ_eq_add_one, recursion_zero]
+
+@[simp] theorem to_nat_one : FiniteCardinal.to_nat (⟨1, inferInstance⟩ : FiniteCardinal.{u}) = 1 := by
+  suffices FiniteCardinal.to_nat ⟨(⟨0, inferInstance⟩ : FiniteCardinal).val+1, inferInstance⟩ = 1 by
+    simp only [Cardinal.zero_add] at this
+    exact this
+  rw[to_nat,recursion_succ]
+  simp only [FiniteCardinal, Nat.zero_eq, Nat.succ_eq_add_one, recursion_zero, Nat.zero_add]
+
 @[simp] theorem of_nat_add : FiniteCardinal.of_nat (n + m) = (FiniteCardinal.of_nat n : Cardinal.{u}) + FiniteCardinal.of_nat m := by
   induction n with
   | zero => simp only [Nat.zero_add, of_nat, Cardinal.zero_add]

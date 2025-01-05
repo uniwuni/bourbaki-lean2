@@ -4,7 +4,7 @@ import BourbakiLean2.Set.Partitions
 
 variable {α β : Type*} {ι ι' ι'' : Type*} {a : α} {i : ι} {x : ι → Set α} {x' : ι' → Set α} {x'' : ι'' → Set α} {f f' : α → β} {y : ι → Set β}
 namespace Set
-noncomputable def IsCovering.glue_rel (h : IsCovering x)
+noncomputable def IsCovering.glue_rel (_h : IsCovering x)
   (f : (i : ι) → Relation (x i) (x i)) : Relation α α :=
   {pair | ∃ i, ∃ a b : x i, (a,b) ∈ f i ∧ pair.1 = a ∧ pair.2 = b}
 

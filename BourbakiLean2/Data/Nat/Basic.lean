@@ -83,7 +83,7 @@ theorem lt_two_pow : n < 2 ^ n := by
 
 theorem lt_pow_ge_lt (h : 2 ≤ n) : m < n ^ m := lt_of_lt_le lt_two_pow $ Nat.pow_le_pow_left h _
 
-def Nat.ind_start {motive : Nat → Prop} {start} (hstart : motive start) (succ : ∀ n, start ≤ n → motive n → motive (n + 1)) (n) :
+def ind_start {motive : Nat → Prop} {start} (hstart : motive start) (succ : ∀ n, start ≤ n → motive n → motive (n + 1)) (n) :
     start ≤ n → motive n := by
   induction n with
   | zero => intro h; exact Nat.le_zero.mp h ▸ hstart
@@ -92,7 +92,7 @@ def Nat.ind_start {motive : Nat → Prop} {start} (hstart : motive start) (succ 
     · exact hstart
     · exact succ n h (ih h)
 
-def Nat.ind_start_end {motive : Nat → Prop} {start stp} (hstart : motive start) (succ : ∀ n, start ≤ n → n < stp → motive n → motive (n + 1)) (n) :
+def ind_start_end {motive : Nat → Prop} {start stp} (hstart : motive start) (succ : ∀ n, start ≤ n → n < stp → motive n → motive (n + 1)) (n) :
     start ≤ n → n ≤ stp → motive n := by
   induction n with
   | zero => intro h h'; exact Nat.le_zero.mp h ▸ hstart
@@ -102,7 +102,7 @@ def Nat.ind_start_end {motive : Nat → Prop} {start stp} (hstart : motive start
     · intro h'
       apply succ _ h h' $ ih h $ le_trans (le_add_right _ _) h'
 
-def Nat.ind_end_start {motive : Nat → Prop} {start stp} (hstp : motive stp) (succ : ∀ n, start ≤ n → n < stp → motive (n + 1) → motive n) (n)   :
+def ind_end_start {motive : Nat → Prop} {start stp} (hstp : motive stp) (succ : ∀ n, start ≤ n → n < stp → motive (n + 1) → motive n) (n)   :
     start ≤ n → n ≤ stp → motive n := by
   intro h h'
   by_contra neg
@@ -111,5 +111,18 @@ def Nat.ind_end_start {motive : Nat → Prop} {start stp} (hstp : motive stp) (s
   intro m hm1 hm2 hm3 hm4
   apply hm3 $ succ _ (le_trans h hm1) hm2 hm4
 
+theorem lt_iff_exists_eq_add' : n < m ↔ ∃ p, p > 0 ∧ m = n + p := by
+  rw[lt_iff_le_not_eq, le_iff_exists_eq_add']
+  rw[← exists_and_right]
+  apply exists_congr
+  intro p
+  constructor
+  · rintro ⟨rfl,h⟩
+    simp only [gt_iff_lt, and_true]
+    have : 0 ≠ p := by exact ne_of_apply_ne (HAdd.hAdd n) fun a ↦ id (Ne.symm h) (id (Eq.symm a))
+    exact zero_lt_of_ne_zero (Ne.symm this)
+  · rintro ⟨h,rfl⟩
+    simp only [ne_eq, Nat.self_eq_add_right, true_and]
+    exact one_le_iff_ne_zero.mp h
 
 end Nat
