@@ -414,7 +414,18 @@ theorem Cardinal.sigma_reindex (f : Function.Bijection ι' ι) : Cardinal.sigma 
   · apply Equipotent.of_eq
     congr
 
-theorem Cardinal.prod_reindex (f : Function.Bijection ι' ι) : Cardinal.prod (fun i => α (f i)) = Cardinal.prod α := by
+theorem Cardinal.sigma_reindex_univ : Cardinal.sigma (fun (⟨x,_⟩ : Set.univ) => α x) = Cardinal.sigma α := by
+  have val_bij : Function.Bijective (Subtype.val : Set.univ → ι) := by
+    constructor
+    · apply Subtype.val_inj
+    · rw[Function.surj_iff]
+      intro x
+      exists ⟨x, trivial⟩
+  let b : Function.Bijection _ _ := ⟨_,val_bij⟩
+  change Cardinal.sigma (α ∘ b) = Cardinal.sigma α
+  rw[Cardinal.sigma_reindex]
+
+theorem Cardinal.prod_reindex (f : Function.Bijection ι' ι) : Cardinal.prod (α ∘ f) = Cardinal.prod α := by
   simp only [prod, eq_iff]
   apply Equivalence.trans inferInstance
   swap
@@ -423,6 +434,17 @@ theorem Cardinal.prod_reindex (f : Function.Bijection ι' ι) : Cardinal.prod (f
     apply Function.reindex_by_bij f
   · apply Equipotent.of_eq
     congr
+
+theorem Cardinal.prod_reindex_univ : Cardinal.prod (fun (⟨x,_⟩ : Set.univ) => α x) = Cardinal.prod α := by
+  have val_bij : Function.Bijective (Subtype.val : Set.univ → ι) := by
+    constructor
+    · apply Subtype.val_inj
+    · rw[Function.surj_iff]
+      intro x
+      exists ⟨x, trivial⟩
+  let b : Function.Bijection _ _ := ⟨_,val_bij⟩
+  change Cardinal.prod (α ∘ b) = Cardinal.prod α
+  rw[Cardinal.prod_reindex]
 
 theorem Cardinal.prod_assoc {α : ι → Cardinal.{u}} {p : ι' → Set ι}
     (h : Set.IsPartition p) : Cardinal.prod α = Cardinal.prod (fun i' : ι' => Cardinal.prod (fun i : p i' => α i)) := by
@@ -708,6 +730,28 @@ theorem Cardinal.prod_ones {α : ι → Cardinal.{u}} {s : Set ι} (h : ∀ x, x
     exact h ⟨_, f⟩
   · intro f ⟨i,h⟩
     exact f i h
+
+theorem Cardinal.sigma_empty {x : ι → Cardinal.{u}} (h : ι → False) :
+    Cardinal.sigma x = 0 := by
+  simp only [sigma_zero_iff]
+  intro i
+  exact (h i).elim
+
+theorem Cardinal.prod_empty {x : ι → Cardinal.{u}} (h : ι → False) :
+    Cardinal.prod x = 1 := by
+  have ⟨g,eq⟩ := Cardinal.factors_through_mk (f := x)
+  rw[eq]
+  unfold Function.comp
+  simp only [prod_mk, eq_zero_iff]
+  simp only [eq_one_iff]
+  constructor
+  constructor
+  swap
+  · constructor
+    exact fun x => (h x).elim
+  · intro a
+    ext x
+    exact (h x).elim
 
 @[simp] theorem Cardinal.mul_zero {a : Cardinal.{u}} : a * 0 = 0 := by
   obtain ⟨a,rfl⟩ := mk_surj.exists_preimage a
