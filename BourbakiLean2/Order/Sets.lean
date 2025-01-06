@@ -85,7 +85,7 @@ noncomputable instance : HasGreatest (Set α) where
   greatest := Set.univ
   le_greatest _ _ _ := trivial
 
-@[simp] theorem Set.least_eq : ⊥ = (∅ : Set α) := rfl
-@[simp] theorem Set.greatest_eq : ⊤ = (Set.univ : Set α) := rfl
+@[simp] theorem least_eq : ⊥ = (∅ : Set α) := rfl
+@[simp] theorem greatest_eq : ⊤ = (Set.univ : Set α) := rfl
 
 end Set

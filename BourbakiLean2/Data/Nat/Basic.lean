@@ -125,4 +125,5 @@ theorem lt_iff_exists_eq_add' : n < m ↔ ∃ p, p > 0 ∧ m = n + p := by
     simp only [ne_eq, Nat.self_eq_add_right, true_and]
     exact one_le_iff_ne_zero.mp h
 
+@[simp] theorem zero_least : ⊥ = 0 := le_antisymm (least_le _) $ zero_le _
 end Nat

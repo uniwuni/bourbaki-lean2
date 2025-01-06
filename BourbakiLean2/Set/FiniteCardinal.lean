@@ -1,5 +1,5 @@
 import BourbakiLean2.Set.Cardinal
-universe u
+universe u v
 variable {α ι : Type u}
 
 class Cardinal.Finite (a : Cardinal.{u}) where
@@ -30,7 +30,7 @@ instance {a : FiniteCardinal.{u}} : Cardinal.Finite a.val := a.property
 instance {α : Type u} [Finite α] : Cardinal.Finite (Cardinal.mk α) := by
   exact Finite.finite
 
-@[simp] theorem Finite.iff {α : Type u} : Finite α ↔ Cardinal.Finite (Cardinal.mk α) := by
+theorem Finite.iff {α : Type u} : Finite α ↔ Cardinal.Finite (Cardinal.mk α) := by
   constructor
   · intro h
     exact h.finite
@@ -680,3 +680,43 @@ instance {α : Type u} {a b : Set α} [Finite a] [Finite b] : Finite ((a ∪ b) 
 instance {α : Type u} {a : Set α} {b : α} [Finite a] : Finite (insert b a : Set α) := by
   change Finite ({b} ∪ a : Set α)
   infer_instance
+
+theorem FiniteCardinal.equipotent_of_nat_eq {n} : {α : Type u} → {β : Type v} → [Finite α] → [Finite β] →
+    (h1 : Cardinal.mk α = FiniteCardinal.of_nat n) →
+    (h2 : Cardinal.mk β = FiniteCardinal.of_nat n) → Equipotent α β := by
+  induction n with
+  | zero => intro _ _ _ _ h1 h2
+            simp only [FiniteCardinal, of_nat_zero, Subtype.eq_iff, Cardinal.eq_zero_iff] at h1 h2
+            constructor
+            apply Function.bijection_of_funcs (fun f => (h1 f).elim) (fun f => (h2 f).elim) (fun f => (h2 f).elim) (fun f => (h1 f).elim)
+  | succ n ih =>
+    intro _ _ i1 i2 h1 h2
+    simp[Cardinal.one_eq] at h1 h2
+    obtain ⟨a1,eqa⟩ := Cardinal.mk_surj.{u}.exists_preimage (of_nat n).val
+    obtain ⟨b1,eqb⟩ := Cardinal.mk_surj.{v}.exists_preimage (of_nat n).val
+    rw[eqa] at h1
+    rw[eqb] at h2
+    have : Finite a1 := by
+      constructor
+      apply Cardinal.Finite.of_le_finite i1.finite
+      rw[h1]
+      apply Cardinal.le_add_left
+    have : Finite b1 := by
+      constructor
+      apply Cardinal.Finite.of_le_finite i2.finite
+      rw[h2]
+      apply Cardinal.le_add_left
+    specialize @ih _ _ _ _ eqa.symm eqb.symm
+    simp only [Cardinal.add_mk, Cardinal.eq_iff] at h1 h2
+    apply Equipotent.trans h1
+    apply Equipotent.trans ?wah $ h2.symm
+    obtain ⟨f,bj⟩ := ih
+    constructor
+    apply Function.bijection_of_funcs (Sum.map f (fun x => default))
+      (Sum.map bj.inv (fun x => default))
+    · rintro (b|b)
+      · simp only [PUnit.default_eq_unit, Sum.map_inl, Function.Bijective.val_inv_val]
+      · simp only [PUnit.default_eq_unit, Sum.map_inr]
+    · rintro (b|b)
+      · simp only [PUnit.default_eq_unit, Sum.map_inl, Function.Bijective.inv_val_val]
+      · simp only [PUnit.default_eq_unit, Sum.map_inr]

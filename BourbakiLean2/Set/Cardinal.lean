@@ -3,6 +3,19 @@ import BourbakiLean2.Set.Sum
 universe u v
 
 def Equipotent (α : Type u) (β : Type v) := Nonempty (Function.Bijection α β)
+
+theorem Equipotent.symm {α β : Type*} (h : Equipotent α β) : Equipotent β α := by
+  obtain ⟨h⟩ := h
+  constructor
+  exact h.inv
+
+theorem Equipotent.trans {α β γ : Type*} (h : Equipotent α β) (h' : Equipotent β γ) : Equipotent α γ := by
+  obtain ⟨f,h⟩ := h
+  obtain ⟨g,h'⟩ := h'
+  constructor
+  exists g ∘ f
+  apply h'.comp h
+
 theorem Equipotent.of_eq {α β : Type u} (h : α = β) : Equipotent α β := by
   subst h
   constructor

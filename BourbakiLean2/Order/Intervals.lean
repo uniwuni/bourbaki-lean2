@@ -160,6 +160,9 @@ theorem Iio_strictAnti : StrictMonotone (Iio (α := α)) :=
     · exact Or.inl ⟨h, h'⟩
     · exact Or.inr rfl
 
+@[simp] theorem Icc_self : Icc a a = {a} := by
+  ext b
+  simp only [mem_Icc_iff, le_antisymm_iff, mem_singleton_iff, Eq.comm]
 /- and so on and so on i dont need that immediately  -/
 
 end
