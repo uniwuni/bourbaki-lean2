@@ -178,6 +178,11 @@ noncomputable def Nat.finite_prod {ι : Type*} [Finite ι] (x : ι → Nat) :=
     Cardinal.sigma ((Subtype.val ∘ FiniteCardinal.of_nat ∘ x) ∘ f)
   rw[Cardinal.sigma_reindex]
 
+theorem Nat.finite_sum_reindex_univ {ι : Type v} [h : Finite ι]
+    {x : ι → Nat} : Nat.finite_sum x = Nat.finite_sum (fun (i : (Set.univ : Set ι)) => x i) := by
+  change Nat.finite_sum x = Nat.finite_sum (x ∘ Function.bijection_univ : Set.univ → Nat)
+  rw[← finite_sum_reindex]
+
 @[simp] theorem Nat.finite_prod_reindex {ι ι' : Type v} [h : Finite ι] [h' : Finite ι'] (f : Function.Bijection ι' ι)
     {x : ι → Nat} : Nat.finite_prod x = Nat.finite_prod (x ∘ f)
  := by
@@ -187,6 +192,12 @@ noncomputable def Nat.finite_prod {ι : Type*} [Finite ι] (x : ι → Nat) :=
   change (Cardinal.prod (Subtype.val ∘ FiniteCardinal.of_nat ∘ x)) =
     Cardinal.prod ((Subtype.val ∘ FiniteCardinal.of_nat ∘ x) ∘ f)
   rw[Cardinal.prod_reindex]
+
+theorem Nat.finite_prod_reindex_univ {ι : Type v} [h : Finite ι]
+    {x : ι → Nat} : Nat.finite_prod x = Nat.finite_prod (fun (i : (Set.univ : Set ι)) => x i) := by
+  change Nat.finite_prod x = Nat.finite_prod (x ∘ Function.bijection_univ : Set.univ → Nat)
+  rw[← finite_prod_reindex]
+
 
 theorem Nat.finite_sum_assoc {ι ι' : Type v} [h : Finite ι] [h' : Finite ι'] {α : ι → Nat} {p : ι' → Set ι}
     (h'' : Set.IsPartition p) : Nat.finite_sum α = Nat.finite_sum (fun i' : ι' => Nat.finite_sum (fun i : p i' => α i)) := by
@@ -407,3 +418,96 @@ theorem Nat.pow_strict_mono_left {a a' b : Nat} (h : 0 < b) (h' : a < a') : a ^ 
 
 theorem Nat.sub_add_sub {a b a' b' : Nat} (h : a ≤ b) (h' : a' ≤ b') :
     (b - a) + (b' - a') = (b + b') - (a + a') := by omega
+
+theorem Nat.mul_finite_sum : ∀{ι : Type v} [Finite ι] {x : ι → Nat} {n : Nat},
+    finite_sum (fun i => n * x i) = n * finite_sum x := by
+  conv =>
+    intro a b c d
+    rw[finite_sum_reindex_univ]
+    rw[finite_sum_reindex_univ (x := c)]
+  intro α inst x n
+  apply Finite.set_induction (p := fun a =>
+    (finite_sum fun (i : a) => n * x i.val) = n * finite_sum fun (i : a) => x i.val)
+  · simp only [Set.not_mem_empty, Subtype.forall, imp_self, implies_true, finite_sum_empty,
+    Nat.mul_zero]
+  · intro a b fin nmem hyp
+    rw[Nat.finite_sum_remove_one ⟨a,Or.inr rfl⟩]
+    let f : Function.Bijection b { a_1 // a_1 ∈ ({⟨a, Or.inr rfl⟩}ᶜ : Set (b ∪ {a} : Set α))} := by
+      exists fun ⟨x,h⟩ => ⟨⟨x, Or.inl h⟩, by
+        intro h'
+        simp only [Set.mem_singleton_iff, Subtype.eq_iff] at h'
+        rw[h'] at h
+        exact nmem h⟩
+      constructor
+      · intro x y h
+        simp only [Subtype.eq_iff] at h
+        apply Subtype.eq h
+      · rw[Function.surj_iff]
+        rintro ⟨⟨x,(hx1|rfl)⟩,hx2⟩
+        · simp only [Subtype.eq_iff, Subtype.exists, exists_prop, exists_eq_right', hx1]
+        · simp only [Set.mem_compl_iff, Set.mem_singleton_iff, not_true_eq_false] at hx2
+    rw[Nat.finite_sum_remove_one (α := fun i : (b ∪ {a} : Set _) => x i.val) ⟨a,Or.inr rfl⟩]
+    rw[Nat.mul_add]
+    rw[Nat.finite_sum_reindex (f := f)]
+    rw[Nat.finite_sum_reindex (f := f)]
+    conv =>
+      lhs
+      lhs
+      rhs
+      simp
+      change (fun i ↦ n * x i.val)
+    conv =>
+      rhs
+      lhs
+      rhs
+      rhs
+      simp
+      change (fun i ↦ x i.val)
+    rw[hyp]
+
+
+theorem Nat.finite_prod_pow : ∀{ι : Type v} [Finite ι] {x : ι → Nat} {n : Nat},
+    finite_prod (fun i => x i ^ n) = finite_prod x ^ n := by
+  conv =>
+    intro a b c d
+    rw[finite_prod_reindex_univ]
+    rw[finite_prod_reindex_univ (x := c)]
+  intro α inst x n
+  apply Finite.set_induction (p := fun a =>
+    (finite_prod fun (i : a) => x i.val ^ n) = (finite_prod fun (i : a) => x i.val)^n)
+  · simp only [Set.not_mem_empty, Subtype.forall, imp_self, implies_true, finite_prod_empty,
+    Nat.one_pow]
+  · intro a b fin nmem hyp
+    rw[Nat.finite_prod_remove_one ⟨a,Or.inr rfl⟩]
+    let f : Function.Bijection b { a_1 // a_1 ∈ ({⟨a, Or.inr rfl⟩}ᶜ : Set (b ∪ {a} : Set α))} := by
+      exists fun ⟨x,h⟩ => ⟨⟨x, Or.inl h⟩, by
+        intro h'
+        simp only [Set.mem_singleton_iff, Subtype.eq_iff] at h'
+        rw[h'] at h
+        exact nmem h⟩
+      constructor
+      · intro x y h
+        simp only [Subtype.eq_iff] at h
+        apply Subtype.eq h
+      · rw[Function.surj_iff]
+        rintro ⟨⟨x,(hx1|rfl)⟩,hx2⟩
+        · simp only [Subtype.eq_iff, Subtype.exists, exists_prop, exists_eq_right', hx1]
+        · simp only [Set.mem_compl_iff, Set.mem_singleton_iff, not_true_eq_false] at hx2
+    rw[Nat.finite_prod_remove_one (α := fun i : (b ∪ {a} : Set _) => x i.val) ⟨a,Or.inr rfl⟩]
+    rw[Nat.mul_pow]
+    rw[Nat.finite_prod_reindex (f := f)]
+    rw[Nat.finite_prod_reindex (f := f)]
+    conv =>
+      lhs
+      lhs
+      rhs
+      simp
+      change (fun i ↦ x i.val ^ n)
+    conv =>
+      rhs
+      lhs
+      lhs
+      rhs
+      simp
+      change (fun i ↦ x i.val)
+    rw[hyp]

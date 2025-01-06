@@ -3,7 +3,7 @@ import BourbakiLean2.Order.WellOrder
 def Lex (ι : Type*) (α : ι → Type*) := (i : ι) → α i
 
 variable {ι : Type*} {α : ι → Type*}
-instance [Nonempty ι] [TotalOrder ι] [∀ i, PartialOrder (α i)] : PartialOrder (Lex ι α) where
+instance [TotalOrder ι] [∀ i, PartialOrder (α i)] : PartialOrder (Lex ι α) where
   le a b := a = b ∨ ∃ i, (∀ j, j < i → a j = b j) ∧ a i < b i
   le_refl a := Or.inl rfl
   le_trans a b c h1 h2 := by
@@ -59,7 +59,7 @@ instance [Nonempty ι] [TotalOrder ι] [∀ i, PartialOrder (α i)] : PartialOrd
           rw[h1i] at h2
           exact (not_lt_self h2).elim
 
-instance [Nonempty ι] [WellOrder ι] [∀ i, TotalOrder (α i)] : TotalOrder (Lex ι α) where
+instance [WellOrder ι] [∀ i, TotalOrder (α i)] : TotalOrder (Lex ι α) where
   le_total a b := by
     have tri : ∀ i, a i < b i ∨ a i = b i ∨ b i < a i := fun i => lt_trichotomy _ _
     by_cases h : ∀ i, a i = b i
