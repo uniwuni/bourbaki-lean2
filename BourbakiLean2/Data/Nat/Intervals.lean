@@ -249,8 +249,9 @@ theorem Finite.equipotent_Iio {α : Type*} [Finite α] : Equipotent α $ Set.Iio
     simp only [FiniteCardinal.to_nat_of_nat]
     apply Nat.Iio_cardinality
 
-
-theorem TotalOrder.iso_interval {α : Type*} [TotalOrder α] [Finite α] :
+section
+variable {α : Type*} [TotalOrder α] [Finite α]
+theorem TotalOrder.exists_iso_interval :
     ∃ f : α → Set.Iio (Finite.ftype α).cardinality, IsOrderIso f := by
   have := WellOrder.either_embeds α $ Set.Iio (Finite.ftype α).cardinality
   rcases this with (⟨seg,f,iso⟩|⟨seg,f,iso⟩)
@@ -312,3 +313,51 @@ theorem TotalOrder.iso_interval {α : Type*} [TotalOrder α] [Finite α] :
         apply iso.monotone h
       · intro x y h
         apply iso.le_iff.mp h
+
+theorem TotalOrder.ex_unique_iso_interval :
+    ∃! f : α → Set.Iio (Finite.ftype α).cardinality, IsOrderIso f := by
+  obtain ⟨f,h⟩ := TotalOrder.exists_iso_interval (α := α)
+  exists f
+  constructor
+  · assumption
+  · intro g p
+    apply WellOrder.iso_all_eq p h
+
+noncomputable def TotalOrder.enumerate: α → Set.Iio (Finite.ftype α).cardinality :=
+  (TotalOrder.exists_iso_interval).choose
+
+@[simp] theorem TotalOrder.enumerate_isOrderIso : IsOrderIso (TotalOrder.enumerate (α := α)) :=
+  (TotalOrder.exists_iso_interval).choose_spec
+
+noncomputable def TotalOrder.nth : Set.Iio (Finite.ftype α).cardinality → α :=
+  TotalOrder.enumerate_isOrderIso.bij.inv
+
+noncomputable def TotalOrder.nth_isOrderIso : IsOrderIso (TotalOrder.nth (α := α)) :=
+  TotalOrder.enumerate_isOrderIso.inv
+
+@[simp] theorem TotalOrder.enumerate_nth {a : Set.Iio (Finite.ftype α).cardinality} :
+    TotalOrder.enumerate (TotalOrder.nth a) = a := by
+  simp only [nth, Function.Bijective.val_inv_val]
+
+@[simp] theorem TotalOrder.nth_enumerate {a : α} :
+    TotalOrder.nth (TotalOrder.enumerate a) = a := by
+  simp only [nth, Function.Bijective.inv_val_val]
+
+@[simp] theorem TotalOrder.nth_le_iff {x y : Set.Iio (Finite.ftype α).cardinality} : TotalOrder.nth x ≤ TotalOrder.nth y ↔ x ≤ y  := TotalOrder.nth_isOrderIso.le_iff
+@[simp] theorem TotalOrder.nth_lt_iff {x y : Set.Iio (Finite.ftype α).cardinality} : TotalOrder.nth x < TotalOrder.nth y ↔ x < y  := TotalOrder.nth_isOrderIso.lt_iff
+@[simp] theorem TotalOrder.enumerate_le_iff {x y : α} : TotalOrder.enumerate x ≤ TotalOrder.enumerate y ↔ x ≤ y  := TotalOrder.enumerate_isOrderIso.le_iff
+@[simp] theorem TotalOrder.enumerate_lt_iff {x y : α} : TotalOrder.enumerate x < TotalOrder.enumerate y ↔ x < y  := TotalOrder.enumerate_isOrderIso.lt_iff
+@[simp] theorem TotalOrder.nth_zero [Nonempty α] : (TotalOrder.nth ⟨0,lt_of_lt_le Nat.one_pos FiniteType.cardinality_nonempty⟩ : α) = ⊥ := by
+  rw[← le_least_iff]
+  obtain ⟨a,eq⟩ := nth_isOrderIso.bij.surj.exists_preimage (⊥ : α)
+  rw[eq]
+  apply nth_isOrderIso.monotone
+  simp only [Subtype.le_iff_val, Nat.zero_le]
+
+@[simp] theorem TotalOrder.enumerate_least [Nonempty α] : TotalOrder.enumerate (⊥ : α) = ⟨0,lt_of_lt_le Nat.one_pos FiniteType.cardinality_nonempty⟩ := by
+
+  rw[enumerate_isOrderIso.least]
+  obtain ⟨a,eq⟩ := nth_isOrderIso.bij.surj.exists_preimage (⊥ : α)
+  rw[eq]
+  apply nth_isOrderIso.monotone
+  simp only [Subtype.le_iff_val, Nat.zero_le]

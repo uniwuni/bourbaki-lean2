@@ -189,6 +189,12 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
   change (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1
   exact cardinality_manual_insert h'
 
+theorem cardinality_nonempty [Finite α] [h : Nonempty α] : 1 ≤ (Finite.ftype α).cardinality := by
+  obtain ⟨a⟩ := h
+  have := cardinality_set_le (a := {a})
+  rwa[cardinality_singleton] at this
+
+
 end FiniteType
 theorem Finite.set_induction {α : Type*} {p : Set α → Prop}
     (he : p ∅) (hs : ∀ x : α, ∀ a : Set α, Finite a → x ∉ a → p a → p (a ∪ {x}))
