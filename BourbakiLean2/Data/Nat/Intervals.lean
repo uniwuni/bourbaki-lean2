@@ -355,9 +355,9 @@ noncomputable def TotalOrder.nth_isOrderIso : IsOrderIso (TotalOrder.nth (α := 
   simp only [Subtype.le_iff_val, Nat.zero_le]
 
 @[simp] theorem TotalOrder.enumerate_least [Nonempty α] : TotalOrder.enumerate (⊥ : α) = ⟨0,lt_of_lt_le Nat.one_pos FiniteType.cardinality_nonempty⟩ := by
-
+  have : Nonempty $ Set.Iio (Finite.ftype α).cardinality := ⟨0,lt_of_lt_le Nat.one_pos FiniteType.cardinality_nonempty⟩
   rw[enumerate_isOrderIso.least]
-  obtain ⟨a,eq⟩ := nth_isOrderIso.bij.surj.exists_preimage (⊥ : α)
-  rw[eq]
-  apply nth_isOrderIso.monotone
+  symm
+  rw[← le_least_iff]
+  rcases ⊥
   simp only [Subtype.le_iff_val, Nat.zero_le]

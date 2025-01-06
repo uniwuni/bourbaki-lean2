@@ -36,6 +36,10 @@ import BourbakiLean2.Order.Sum
 import BourbakiLean2.Order.WellOrder
 import BourbakiLean2.Order.WellOrderIso
 import BourbakiLean2.Order.Lex
+import BourbakiLean2.Order.Finite
 import BourbakiLean2.Set.Cardinal
 import BourbakiLean2.Set.FiniteCardinal
 import BourbakiLean2.Data.Nat.Basic
+import BourbakiLean2.Data.Nat.IndexedOps
+import BourbakiLean2.Data.Nat.Intervals
+import BourbakiLean2.Data.Finite
