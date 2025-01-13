@@ -1342,4 +1342,33 @@ theorem Cardinal.higher_universe {α : Type u} : ¬ Equipotent α Cardinal.{u} :
   simp only [Subtype.eq_iff] at h
   exact Subtype.eq h
 
+theorem Cardinal.preimage_same_product {α β : Type u} {f : α → β} {c : Cardinal.{u}}
+    (h' : ∀ y : β, Cardinal.mk (f ⁻¹' {y}) = c) : Cardinal.mk α = c * Cardinal.mk β := by
+  obtain ⟨c,rfl⟩ := mk_surj.exists_preimage c
+  symm
+  rw[← sigma_constant]
+  simp only [sigma_mk, eq_iff]
+  simp only [eq_iff] at h'
+  have := Set.singleton_partition.preimage (f := f)
+  constructor
+  have h' y := (Classical.choice (h' y)).inv
+  exists fun ⟨c,b⟩ => (h' b c).val
+  constructor
+  · rintro ⟨x1,y1⟩ ⟨x2,y2⟩ h''
+    simp only at h''
+    have eq1 := ((h' y1).val x1).property
+    have eq2 := ((h' y2).val x2).property
+    rw[h''] at eq1
+    simp only [Set.mem_preimage_iff, Set.mem_singleton_iff] at eq1 eq2
+    rw[eq1] at eq2
+    rw[eq2] at h'' |-
+    congr
+    rw[← Subtype.eq_iff] at h''
+    exact (h' y2).property.inj _ _ h''
+  · rw[Function.surj_iff]
+    intro a
+    simp only
+    exists ⟨(h' (f a)).inv.val ⟨_,Set.mem_preimage_iff.mpr rfl⟩, f a⟩
+    simp only [Function.Bijection.val_inv_val]
+
 end

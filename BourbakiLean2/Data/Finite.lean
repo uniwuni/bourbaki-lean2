@@ -184,6 +184,20 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
     · exists Sum.inr default
     · exists Sum.inl ⟨y,hy⟩
 
+theorem cardinality_preimage_same_product {α β : Type u} [Finite α] [Finite β] {f : α → β} {n : Nat}
+    (h' : ∀ y : β, (Finite.ftype (f ⁻¹' {y})).cardinality = n) :
+      (Finite.ftype α).cardinality = n * (Finite.ftype β).cardinality := by
+  unfold cardinality cardinality' Finite.ftype
+  simp only
+  rw[← FiniteCardinal.to_nat_of_nat (n := n), ← FiniteCardinal.to_nat_mul]
+  congr 2
+  apply Cardinal.preimage_same_product (f := f)
+  intro b
+  specialize h' b
+  rw[← h']
+  simp only [Set.mem_preimage_iff, Set.mem_singleton_iff, cardinality, cardinality', Finite.ftype,
+    FiniteCardinal.of_nat_to_nat]
+
 @[simp] theorem cardinality_insert {a : Set α} [Finite a] {x : α} (h' : x ∉ a):
     (Finite.ftype (insert x a : Set α)).cardinality = (Finite.ftype a).cardinality + 1 := by
   change (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1
