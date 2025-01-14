@@ -1371,4 +1371,16 @@ theorem Cardinal.preimage_same_product {α β : Type u} {f : α → β} {c : Car
     exists ⟨(h' (f a)).inv.val ⟨_,Set.mem_preimage_iff.mpr rfl⟩, f a⟩
     simp only [Function.Bijection.val_inv_val]
 
+theorem Equipotent.subset_subset {α : Type u} {s t : Set α} (h : s ⊆ t) :
+    Equipotent {x : t | x.val ∈ s} s := by
+  constructor
+  exists fun ⟨⟨x,h⟩,h'⟩ => ⟨x,h'⟩
+  constructor
+  · rintro ⟨⟨x,h⟩,h'⟩ ⟨⟨y,hy⟩,hy'⟩ eq
+    simp only [Subtype.eq_iff] at *
+    assumption
+  · rw[Function.surj_iff]
+    intro ⟨b,h'⟩
+    exists ⟨⟨b, h h'⟩, h'⟩
+
 end

@@ -1,27 +1,27 @@
 import BourbakiLean2.Data.Nat.Intervals
 
-noncomputable def Nat.sum_ft (n m : Nat) (x : (i : Nat) → n ≤ i → i < m → Nat) :=
-  Nat.finite_sum (fun i : Set.Ico n m => x i i.2.1 i.2.2)
+noncomputable def Nat.sum_ft (n m : Nat) (x : (i : Nat) → Nat) :=
+  Nat.finite_sum (fun i : Set.Ico n m => x i)
 
-noncomputable def Nat.prod_ft (n m : Nat) (x : (i : Nat) → n ≤ i → i < m → Nat) :=
-  Nat.finite_prod (fun i : Set.Ico n m => x i i.2.1 i.2.2)
+noncomputable def Nat.prod_ft (n m : Nat) (x : (i : Nat) → Nat) :=
+  Nat.finite_prod (fun i : Set.Ico n m => x i)
 
 namespace Nat
 variable {n m n' m' : Nat}
 
-theorem Nat.sum_ft_ge {x : (i : Nat) → n ≤ i → i < m → Nat} (h : m ≤ n) : Nat.sum_ft n m x = 0 := by
+theorem sum_ft_ge {x} (h : m ≤ n) : Nat.sum_ft n m x = 0 := by
   simp only [sum_ft, finite_sum_zero_iff, Subtype.forall, Set.mem_Ico_iff]
   rintro a ⟨b,c⟩
   exact (not_lt_self $ lt_of_le_lt (le_trans h b) c).elim
 
-theorem Nat.prod_ft_ge {x : (i : Nat) → n ≤ i → i < m → Nat} (h : m ≤ n) : Nat.prod_ft n m x = 1 := by
+theorem prod_ft_ge {x} (h : m ≤ n) : Nat.prod_ft n m x = 1 := by
   simp only [prod_ft]
   apply finite_prod_empty
   rintro ⟨a, ⟨b,c⟩⟩
   exact (not_lt_self $ lt_of_le_lt (le_trans h b) c).elim
 
-@[simp] theorem Nat.sum_ft_succ_right (h : n ≤ m) {x : (i : Nat) → n ≤ i → i < m + 1 → Nat} :
-    Nat.sum_ft n (m + 1) x = (Nat.sum_ft n m fun i h1 h2 => x i h1 (lt_succ_of_lt h2)) + x m h (Nat.lt_add_one m) := by
+@[simp] theorem sum_ft_succ_right (h : n ≤ m) {x : Nat → Nat} :
+    Nat.sum_ft n (m + 1) x = (Nat.sum_ft n m x) + x m := by
   simp only [sum_ft]
   rw[Nat.finite_sum_remove_one (i := ⟨m, by simp only [h, Ico_succ, Set.mem_Icc_self_right_iff_le]⟩)]
   simp only [Nat.add_right_cancel_iff]
@@ -41,8 +41,8 @@ theorem Nat.prod_ft_ge {x : (i : Nat) → n ≤ i → i < m → Nat} (h : m ≤ 
   ext ⟨⟨y,h1y,h2y⟩,hy⟩
   simp only [Function.comp_apply]
 
-@[simp] theorem Nat.prod_ft_succ_right (h : n ≤ m) {x : (i : Nat) → n ≤ i → i < m + 1 → Nat} :
-    Nat.prod_ft n (m + 1) x = (Nat.prod_ft n m fun i h1 h2 => x i h1 (lt_succ_of_lt h2)) * x m h (Nat.lt_add_one m) := by
+@[simp] theorem prod_ft_succ_right (h : n ≤ m) {x : (i : Nat) → Nat} :
+    Nat.prod_ft n (m + 1) x = (Nat.prod_ft n m x) * x m := by
   simp only [prod_ft]
   rw[Nat.finite_prod_remove_one (i := ⟨m, by simp only [h, Ico_succ, Set.mem_Icc_self_right_iff_le]⟩)]
   congr 1
@@ -61,7 +61,68 @@ theorem Nat.prod_ft_ge {x : (i : Nat) → n ≤ i → i < m → Nat} (h : m ≤ 
   ext ⟨⟨y,h1y,h2y⟩,hy⟩
   simp only [Function.comp_apply]
 
+theorem sum_ft_split {n m k} (h : n ≤ k) (h' : k ≤ m) {x} : Nat.sum_ft n m x = Nat.sum_ft n k x + Nat.sum_ft k m x := by
+  induction h' with
+  | refl => simp only [sum_ft, Set.mem_Ico_iff, Subtype.forall, imp_false, not_and, Nat.not_lt, imp_self,
+    implies_true, finite_sum_empty, Nat.add_zero]
+  | step h1 ih =>
+    simp only [succ_eq_add_one]; rw[sum_ft_succ_right, sum_ft_succ_right, ih, Nat.add_assoc]
+    · assumption
+    · exact le_trans h h1
+
+theorem sum_ft_le_expand_right {n m k} (h : n ≤ k) (h' : k ≤ m) {x} : Nat.sum_ft n k x ≤ Nat.sum_ft n m x := by
+  rw[sum_ft_split h h']
+  exact le_add_right (n.sum_ft k x) (k.sum_ft m x)
+
+@[simp] theorem sum_ft_le_expand_one {n m} (h : n ≤ m) {x} : Nat.sum_ft n m x ≤ Nat.sum_ft n (m + 1) x :=
+  sum_ft_le_expand_right h $ le_add_right _ _
+
+
+theorem prod_ft_split {n m k} (h : n ≤ k) (h' : k ≤ m) {x} : Nat.prod_ft n m x = Nat.prod_ft n k x * Nat.prod_ft k m x := by
+  induction h' with
+  | refl => simp only [prod_ft, Set.mem_Ico_iff, Subtype.forall, imp_false, not_and, Nat.not_lt,
+    imp_self, implies_true, finite_prod_empty, Nat.mul_one]
+  | step h1 ih =>
+    simp only [succ_eq_add_one]; rw[prod_ft_succ_right, prod_ft_succ_right, ih, Nat.mul_assoc]
+    · assumption
+    · exact le_trans h h1
+
+theorem sum_ft_find_between {n m l} {x} (h : n ≤ m) (h' : l < Nat.sum_ft n m x) : ∃ k, Nat.sum_ft n k x ≤ l ∧ l < Nat.sum_ft n (k+1) x ∧ k < m := by
+  obtain ⟨a,ha,lsta⟩ := WellOrder.existsLeast (s := {k | l < Nat.sum_ft n (k+1) x }) ⟨m, lt_of_lt_le h' $ sum_ft_le_expand_one h⟩
+  exists a
+  constructor
+  swap
+  · constructor
+    · assumption
+    · rw[← not_ge_iff_lt]
+      intro h''
+      have := lsta ⟨m, lt_of_lt_le h' $ sum_ft_le_expand_one h⟩
+      simp only [Subtype.le_iff_val] at this
+      obtain rfl := le_antisymm h'' this
+      cases m with
+      | zero =>
+        rw[sum_ft_ge $ zero_le _] at h'
+        exact not_succ_le_zero l h'
+      | succ m =>
+        specialize lsta ⟨m, h'⟩
+        simp only [Subtype.le_iff_val] at lsta
+        apply not_succ_le_self _ lsta
+  · rw[← not_gt_iff_le]
+    intro h'
+    cases a with
+    | zero =>
+      rw[sum_ft_ge $ zero_le _] at h'
+      exact not_succ_le_zero l h'
+    | succ m =>
+      specialize lsta ⟨m, h'⟩
+      simp only [Subtype.le_iff_val] at lsta
+      apply not_succ_le_self _ lsta
+
+/-theorem sum_ft_le_of_le {n n' m m'} (h : n ≤ n') (h' : m' ≤ m) (h'' : n' ≤ m') {x y}
+    (hxy : ∀ i (hi1 : n' ≤ i) (hi2 : i < m'), x i ≤ y i) :
+    Nat.sum_ft n' m' x ≤ Nat.sum_ft n m y := by-/
 
 
 
-  end Nat
+
+end Nat

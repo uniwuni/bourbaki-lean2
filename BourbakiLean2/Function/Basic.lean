@@ -723,3 +723,29 @@ theorem Eq.rec_of_inj {ι' : Type*} {ι : Type*} {x : ι → Type*}   {i i' : ι
   ext a
   simp only [Set.mem_image_iff, Set.mem_univ, and_true, Subtype.exists, exists_prop,
     exists_eq_right']
+
+theorem Function.Bijective.preimage_eq {s : Set β} {f : α → β} (h : f.Bijective) : f ⁻¹' s = h.inv '' s := by
+    ext a
+    simp only [Set.mem_preimage_iff, Set.mem_image_iff]
+    constructor
+    · intro h''
+      exists f a
+      simp only [Function.Bijective.inv_val_val, h'', and_self]
+    · rintro ⟨b,rfl,h⟩
+      simp only [Function.Bijective.val_inv_val, h]
+
+@[simp] theorem Function.image_univ_restriction {s : Set α} {f : α → β} : (f |_ s) '' Set.univ = f '' s := by
+  ext a
+  simp only [Set.mem_image_iff, restriction, Set.mem_univ, and_comm, true_and, Subtype.exists,
+    exists_prop]
+
+@[simp] def bijection_of_eq {s t : Set α} (h : s = t) : Function.Bijection s t :=
+  ⟨fun ⟨x,hx⟩ => ⟨x, h ▸ hx⟩,(by
+    constructor
+    · intro x y h'
+      simp only [Subtype.eq_iff] at h'
+      apply Subtype.eq h'
+    · rw[Function.surj_iff]
+      intro ⟨x,hx⟩
+      exists ⟨x, h ▸ hx⟩
+  )⟩

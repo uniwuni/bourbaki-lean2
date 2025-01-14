@@ -289,6 +289,10 @@ instance Finite.image {α β : Type u} {s : Set α} [h : Finite s] (f : α → �
   obtain ⟨a,rfl,h'⟩ := c
   exists ⟨a,h'⟩
 
+instance Finite.preimage_bij {α β : Type u} {s : Set β} [h : Finite s] (f : Function.Bijection α β) : Finite (f ⁻¹' s) := by
+  rw[f.2.preimage_eq]
+  infer_instance
+
 theorem Finite.surj_of_inj {α β : Type u} [Finite β] {f : α → β} (hab : Equipotent α β) (h : f.Injective) : f.Surjective := by
   have le : Cardinal.mk α ≤ Cardinal.mk (f '' Set.univ) := by
     simp only [Set.mem_univ, and_true, Cardinal.mk_le_iff]

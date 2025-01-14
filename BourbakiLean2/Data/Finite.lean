@@ -173,6 +173,12 @@ theorem cardinality_image_eq_inj {a : Set α} {f : α → β} [h' : Finite a] (h
     simp only [Subtype.eq_iff]
     exact h'' _ _ h
 
+theorem cardinality_preimage_eq_bij {a : Set β} (f : Function.Bijection α β) [h' : Finite a] :
+    (Finite.ftype $ f ⁻¹' a).cardinality = (Finite.ftype $ a).cardinality := by
+  simp only [f.2.preimage_eq]
+  apply cardinality_image_eq_inj
+  exact f.2.inv_bij.inj
+
 @[simp] theorem cardinality_set_le {a : Set α} [Finite α] :
     (Finite.ftype a).cardinality ≤ (Finite.ftype α).cardinality := by
   simp only [cardinality_le_ftype_iff]

@@ -142,3 +142,19 @@ theorem Combinatorics.Surjective.cardinality_surj_self {α : Type u} [Finite α]
   ext i
   symm
   exact Finite.bij_iff_surj $ Equipotent.of_eq rfl
+
+theorem Combinatorics.Bijective.cardinality_bij {α β : Type u} [Finite α] [Finite β] (h : Equipotent α β):
+    (Finite.ftype (Function.Bijection α β)).cardinality = (Finite.ftype α).cardinality.factorial := by
+  have h' : (Finite.ftype α).cardinality = (Finite.ftype β).cardinality := by
+    simp only [Finite.ftype, FiniteType.cardinality_eq_iff, h]
+  trans (Finite.ftype (Function.Injection α β)).cardinality
+  · simp only [Function.Bijection, Function.Injection,
+    FiniteType.cardinality_eq_iff]
+    apply Equipotent.of_eq
+    congr
+    ext i
+    exact Finite.bij_iff_inj h
+  · rw[Combinatorics.Injective.cardinality_inj_div]
+    · rw[h']
+      simp only [Nat.sub_self, Nat.factorial_zero, Nat.div_one]
+    · apply le_of_eq h'

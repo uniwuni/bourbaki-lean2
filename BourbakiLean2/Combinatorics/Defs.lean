@@ -2,7 +2,7 @@ import BourbakiLean2.Data.Nat.SequenceOps
 import BourbakiLean2.Data.Nat.Intervals
 namespace Nat
 variable {n : Nat}
-noncomputable def factorial (n : Nat) := Nat.prod_ft 0 n (fun i _ _ => i + 1)
+noncomputable def factorial (n : Nat) := Nat.prod_ft 0 n (fun i => i + 1)
 
 @[simp] theorem factorial_zero : factorial 0 = 1 := Nat.prod_ft_ge le_rfl
 

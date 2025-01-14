@@ -41,6 +41,21 @@ theorem IsPartition.preimage (h : IsPartition y) : IsPartition (Set.preimage f �
   · exact h.1.preimage
   · exact h.2.preimage
 
+theorem IsPartition.image_bij (h : IsPartition x) (h' : f.Bijective) : IsPartition (Set.image f ∘ x) := by
+  constructor
+  · simp only [IsCovering, Function.comp_apply]
+    rw[← Set.iUnion_image, h.1, h'.surj]
+  · simp only [Disjoint, ne_eq, Function.comp_apply]
+    intro i i' ne
+    ext a
+    simp
+    rintro a rfl mem b eq mem'
+    have eq' := h.2 i i' ne
+    obtain rfl := h'.inj _ _ eq
+    have : a ∈ x i ∩ x i' := ⟨mem,mem'⟩
+    rwa[eq'] at this
+
+
 theorem IsPartition.inj_of_nonempty (h : IsPartition x) (h' : ∀ i, (x i).Nonempty) : x.Injective :=
   h.2.inj_of_nonempty h'
 
