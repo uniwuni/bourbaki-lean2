@@ -126,4 +126,20 @@ theorem lt_iff_exists_eq_add' : n < m ↔ ∃ p, p > 0 ∧ m = n + p := by
     exact one_le_iff_ne_zero.mp h
 
 @[simp] theorem zero_least : ⊥ = 0 := le_antisymm (least_le _) $ zero_le _
+
+theorem monotone_of_le_succ {α : Type*} [Preorder α]
+    {f : Nat → α} (h : ∀ n, f n ≤ f (n + 1)) : Monotone f := by
+  intro n m le
+  induction le with
+  | refl => rfl
+  | step i ih => exact le_trans ih $ h _
+
+theorem strictMono_of_lt_succ {α : Type*} [PartialOrder α]
+    {f : Nat → α} (h : ∀ n, f n < f (n + 1)) : StrictMonotone f := by
+  intro n m lt
+  induction lt with
+  | refl => exact h _
+  | step i ih => exact lt_of_lt_le ih $ le_of_lt $ h _
+
+
 end Nat

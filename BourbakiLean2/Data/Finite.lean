@@ -47,6 +47,16 @@ noncomputable def cardinality (x : FiniteType.{u}) : Nat := FiniteCardinal.to_na
   constructor
   infer_instance
 
+@[simp high] theorem cardinality_unique [Unique α] : (Finite.ftype α).cardinality = 1 := by
+  simp only [cardinality, cardinality', Finite.ftype]
+  suffices h : Cardinal.mk α = 1 by
+    rw[← FiniteCardinal.to_nat_of_nat (n := 1)]
+    simp only [FiniteCardinal.of_nat, Cardinal.zero_add]
+    congr
+  simp only [Cardinal.eq_one_iff]
+  constructor
+  infer_instance
+
 @[simp high] theorem cardinality_punit : (Finite.ftype.{u} (PUnit.{u + 1} : Type u)).cardinality = 1 := by
   simp only [cardinality, cardinality', Finite.ftype]
   suffices h : Cardinal.mk PUnit = 1 by
@@ -84,6 +94,14 @@ variable {α β : Type u}
     (Finite.ftype α).cardinality ≤ (Finite.ftype β).cardinality ↔ Nonempty (Function.Injection α β) := by
   simp only [Finite.ftype, cardinality_le_iff]
 
+theorem cardinality_univ [Finite α] : (Finite.ftype (Set.univ : Set α)).cardinality = (Finite.ftype α).cardinality := by
+  simp only [cardinality, cardinality', Finite.ftype]
+  congr 2
+  simp only [Set.mem_univ, Cardinal.eq_iff]
+  constructor
+  apply Function.bijection_of_funcs (fun ⟨x,h⟩ => x) (fun x => ⟨x,trivial⟩)
+  · intro b; simp only
+  · intro b; simp only
 
 theorem cardinality_le_of_surj {a b : FiniteType.{u}} (h : Function.Surjection a.val b.val) :
     b.cardinality ≤ a.cardinality := by
@@ -99,7 +117,6 @@ theorem cardinality_le_ftype_of_surj {α β : Type u} [Finite α] [Finite β]
   apply cardinality_le_of_surj h
 
 
-
 @[simp] theorem cardinality_eq_iff {a b : FiniteType.{u}} :
     a.cardinality = b.cardinality ↔ Equipotent a.val b.val := by
   rcases a with ⟨a,ha⟩
@@ -113,6 +130,11 @@ theorem cardinality_le_ftype_of_surj {α β : Type u} [Finite α] [Finite β]
   · intro h
     congr 1
     simp only [FiniteCardinal.eq_1, Subtype.eq_iff, Cardinal.eq_iff, h]
+
+@[simp] theorem cardinality_eq_iff' {α β : Type u} [Finite α] [Finite β]:
+    (Finite.ftype α).cardinality = (Finite.ftype β).cardinality ↔ Equipotent α β := by
+  rw[cardinality_eq_iff]
+  rfl
 
 theorem cardinality_le_of_subset {a b : Set α} (h : a ⊆ b) [h' : Finite a] [h'' : Finite b] :
     (Finite.ftype a).cardinality ≤ (Finite.ftype b).cardinality := by
@@ -134,6 +156,23 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
   obtain ⟨a,rfl,h⟩ := c
   exists ⟨a,h⟩
 
+theorem cardinality_image_eq_inj {a : Set α} {f : α → β} [h' : Finite a] (h'' : f.Injective):
+    (Finite.ftype $ f '' a).cardinality = (Finite.ftype $ a).cardinality := by
+  apply Nat.le_antisymm cardinality_image_le
+  simp only [cardinality_le_ftype_iff]
+  constructor
+  exists (f.restriction a).corestrict ?h
+  · intro x h
+    simp only [Set.mem_image_iff, Function.restriction, Set.mem_univ, and_true, Subtype.exists,
+      exists_prop] at h
+    simp only [Set.mem_image_iff]
+    obtain ⟨x,hx,hx2⟩ := h
+    exists x
+  · intro ⟨x,hx⟩ ⟨y,hy⟩ h
+    simp at h
+    simp only [Subtype.eq_iff]
+    exact h'' _ _ h
+
 @[simp] theorem cardinality_set_le {a : Set α} [Finite α] :
     (Finite.ftype a).cardinality ≤ (Finite.ftype α).cardinality := by
   simp only [cardinality_le_ftype_iff]
@@ -151,6 +190,11 @@ theorem cardinality_image_le {a : Set α} {f : α → β} [h' : Finite a] :
     exact (h ⟨x,h'⟩).elim
   · rintro rfl
     exact ⟨fun ⟨x,h⟩ => h.elim, fun ⟨x,h⟩ => h.elim⟩
+
+theorem of_cardinality_zero [Finite α] (h : (Finite.ftype α).cardinality = 0) (h2 : α) : False := by
+  rw[← cardinality_univ (α := α), cardinality_set_zero_iff] at h
+  have : h2 ∈ Set.univ := trivial
+  rwa[h] at this
 
 @[simp] theorem cardinality_singleton {x : α} : (Finite.ftype ({x} : Set α)).cardinality = 1 := by
   rw[← cardinality_punit, cardinality_eq_iff]
@@ -203,11 +247,54 @@ theorem cardinality_preimage_same_product {α β : Type u} [Finite α] [Finite �
   change (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1
   exact cardinality_manual_insert h'
 
+theorem cardinality_disj_union [Finite α] {a b : Set α} (h : a ∩ b = ∅) : (Finite.ftype (a ∪ b : Set α)).cardinality = (Finite.ftype a).cardinality + (Finite.ftype b).cardinality := by
+  rw[← cardinality_sum, Eq.comm, cardinality_eq_iff]
+  constructor
+  exists Sum.elim (fun ⟨a,h⟩ => ⟨a, Or.inl h⟩) (fun ⟨a,h⟩ => ⟨a, Or.inr h⟩)
+  constructor
+  · rintro (⟨x,hx⟩|⟨x,hx⟩) (⟨y,hy⟩|⟨y,hy⟩) h'
+    · simp only [Sum.elim_inl, Sum.elim_inr] at h'; congr; injection h'
+    · simp only [Sum.elim_inl, Sum.elim_inr] at h'
+      injection h' with h'; rw[h'] at hx
+      have : y ∈ a ∩ b := ⟨hx,hy⟩
+      rw[h] at this
+      exact this.elim
+    · simp only [Sum.elim_inl, Sum.elim_inr] at h'
+      injection h' with h'; rw[h'] at hx
+      have : y ∈ a ∩ b := ⟨hy,hx⟩
+      rw[h] at this
+      exact this.elim
+    · simp only [Sum.elim_inl, Sum.elim_inr] at h'; congr; injection h'
+  · rw[Function.surj_iff]
+    rintro ⟨b,(h'|h')⟩
+    · exists Sum.inl ⟨b,h'⟩
+    · exists Sum.inr ⟨b,h'⟩
+
+@[simp high] theorem cardinality_compl [Finite α] {a : Set α} : (Finite.ftype (a ᶜ)).cardinality = (Finite.ftype α).cardinality - (Finite.ftype a).cardinality := by
+  have : (Finite.ftype α).cardinality = (Finite.ftype a).cardinality + (Finite.ftype (a ᶜ)).cardinality := by
+    rw[← cardinality_univ]
+    have : Set.univ = a ∪ a ᶜ := by
+      simp only [Set.mem_univ, Set.union_with_compl]
+    rw[this]
+    apply cardinality_disj_union
+    simp only [Set.inter_with_compl]
+  rw[this]
+  exact
+    Eq.symm
+      (Nat.add_sub_self_left (Finite.ftype { a_1 // a_1 ∈ a }).cardinality
+        (Finite.ftype { a_1 // a_1 ∈ aᶜ }).cardinality)
+
 theorem cardinality_nonempty [Finite α] [h : Nonempty α] : 1 ≤ (Finite.ftype α).cardinality := by
   obtain ⟨a⟩ := h
   have := cardinality_set_le (a := {a})
   rwa[cardinality_singleton] at this
 
+theorem nonempty_of_cardinality_succ {n} [Finite α] (h : (Finite.ftype α).cardinality = n + 1) : Nonempty α := by
+  have h' : 1 ≤ (Finite.ftype α).cardinality := by rw[h]; simp only [Nat.le_add_left]
+  rw[← cardinality_punit, cardinality_le_iff] at h'
+  obtain ⟨i⟩ := h'
+  constructor
+  exact i PUnit.unit
 
 end FiniteType
 theorem Finite.set_induction {α : Type*} {p : Set α → Prop}

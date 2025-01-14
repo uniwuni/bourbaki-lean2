@@ -607,6 +607,19 @@ instance {α β : Type u} [Finite α] [Finite β] : Finite (α → β) where
     rw[this]
     apply (fun x : FiniteCardinal => x.property)
 
+instance {α β : Type u} [Finite α] [Finite β] : Finite (Function.Injection α β) := by
+  unfold Function.Injection
+  infer_instance
+
+instance {α β : Type u} [Finite α] [Finite β] : Finite (Function.Surjection α β) := by
+  unfold Function.Surjection
+  infer_instance
+
+instance {α β : Type u} [Finite α] [Finite β] : Finite (Function.Bijection α β) := by
+  unfold Function.Bijection
+  infer_instance
+
+
 instance {α : Type u} [Subsingleton α] : Finite α where
   finite := by
     have : Cardinal.mk α ≤ 1 := by
