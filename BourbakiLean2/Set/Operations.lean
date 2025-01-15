@@ -418,6 +418,20 @@ theorem sdiff_mono_right (h : x' ⊆ x'') : x \ x'' ⊆ x \ x' := by
 theorem compl_inj (h : xᶜ = x'ᶜ) : x = x' := by
   rw[← compl_compl (x := x), ← compl_compl (x := x'), h]
 
+theorem eq_compl_of (h : x ∪ x' = Set.univ) (h' : x ∩ x' = ∅) : x' = x ᶜ := by
+  ext a
+  constructor
+  · intro h'' h'''
+    have : a ∈ x ∩ x' := ⟨h''',h''⟩
+    rwa[h'] at this
+  · intro h''
+    by_contra h'''
+    have : a ∈ univ := trivial
+    rw[← h] at this
+    rcases this with (t|t)
+    · exact h'' t
+    · exact h''' t
+
 end Set
 
 section
@@ -694,6 +708,5 @@ theorem iUnion_inter_distrib :
     arg 1
     intro
     rw[← compl_inter]
-
 
 end Set

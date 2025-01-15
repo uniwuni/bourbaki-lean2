@@ -234,6 +234,14 @@ instance Ioc_finite : Finite (Set.Ioc a b) := by
     rw[Ico_cardinality]
     rfl
 
+theorem mem_Iio_2 : a ∈ Set.Iio (2 : Nat) ↔ a = 0 ∨ a = 1 := by
+  cases a with
+  | zero => simp only [Iio_succ, Set.mem_Iic_iff, zero_le, reduceCtorEq, or_false]
+  | succ n => cases n with
+  | zero => simp only [Iio_succ, Nat.zero_add, Set.mem_Iic_self, add_one_ne_zero, or_true]
+  | succ n => simp only [Iio_succ, Set.mem_Iic_iff, reduceLeDiff, add_one_ne_zero,
+    Nat.add_left_eq_self, or_self]
+
 end Nat
 
 theorem Finite.equipotent_Iio {α : Type*} [Finite α] : Equipotent α $ Set.Iio (Finite.ftype α).cardinality := by

@@ -1,7 +1,7 @@
 import BourbakiLean2.Data.Nat.SequenceOps
 import BourbakiLean2.Data.Nat.Intervals
 namespace Nat
-variable {n : Nat}
+variable {n k : Nat}
 noncomputable def factorial (n : Nat) := Nat.prod_ft 0 n (fun i => i + 1)
 
 @[simp] theorem factorial_zero : factorial 0 = 1 := Nat.prod_ft_ge le_rfl
@@ -29,5 +29,19 @@ theorem factorial_lt_succ : factorial (n + 1) < factorial ((n + 1) + 1) := by
 theorem factorial_strictMono : StrictMonotone (fun n => factorial (n + 1)) := by
   apply strictMono_of_lt_succ
   apply factorial_lt_succ
+
+noncomputable def binom (n k : Nat) := if k ≤ n then n.factorial / (k.factorial * (n - k).factorial) else 0
+
+@[simp] theorem binom_zero_of_gt : n < k → binom n k = 0 := by
+  intro h
+  rw[← not_ge_iff_lt] at h
+  simp only [binom, ite_eq_right_iff]
+  intro h'
+  exact (h h').elim
+
+@[simp] theorem binom_of_le : k ≤ n → binom n k = n.factorial / (k.factorial * (n - k).factorial) := by
+  intro h
+  simp only [binom, h, ↓reduceIte]
+
 
 end Nat

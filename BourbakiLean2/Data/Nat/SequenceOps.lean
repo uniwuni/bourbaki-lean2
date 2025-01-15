@@ -122,7 +122,9 @@ theorem sum_ft_find_between {n m l} {x} (h : n ≤ m) (h' : l < Nat.sum_ft n m x
     (hxy : ∀ i (hi1 : n' ≤ i) (hi2 : i < m'), x i ≤ y i) :
     Nat.sum_ft n' m' x ≤ Nat.sum_ft n m y := by-/
 
-
+theorem prod_ft_zero_iff_exists_zero {x : (i : Nat) → Nat} : Nat.prod_ft n m x = 0 ↔ ∃ i, n ≤ i ∧ i < m ∧ x i = 0 := by
+  unfold prod_ft
+  simp only [finite_prod_zero_iff, Subtype.exists, Set.mem_Ico_iff, exists_prop, and_assoc]
 
 
 end Nat

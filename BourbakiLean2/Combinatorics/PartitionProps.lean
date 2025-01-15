@@ -224,3 +224,111 @@ theorem Combinatorics.Partitions.cardinality_partitions' {α : Type} [Finite α]
     rw[← this i]
     unfold Finite.ftype FiniteType.cardinality FiniteType.cardinality'
     simp only [bijection_of_eq.eq_1, Function.comp_apply, FiniteCardinal.of_nat_to_nat, bij]
+
+theorem Combinatorics.Partitions.cardinality_partitions {α : Type} [Finite α] {k} {x : Nat → Nat} (hn : (Finite.ftype α).cardinality = Nat.sum_ft 0 k x) :
+    (Finite.ftype (FittingPartition α k x)).cardinality * Nat.prod_ft 0 k (fun i => (x i).factorial) = (Finite.ftype α).cardinality.factorial := cardinality_partitions' rfl hn.symm
+
+theorem Combinatorics.Partitions.cardinality_partitions_div {α : Type} [Finite α] {k} {x : Nat → Nat} (hn : (Finite.ftype α).cardinality = Nat.sum_ft 0 k x) :
+    (Finite.ftype (FittingPartition α k x)).cardinality = (Finite.ftype α).cardinality.factorial / Nat.prod_ft 0 k (fun i => (x i).factorial) := by
+  rw[Nat.div_eq_of_eq_mul_left]
+  · rw[Nat.pos_iff_ne_zero]
+    intro h
+    rw[Nat.prod_ft_zero_iff_exists_zero] at h
+    obtain ⟨i,_,_,h⟩ := h
+    have := Nat.factorial_pos (n := x i)
+    rw[h] at this
+    apply not_lt_self this
+  · symm
+    apply Combinatorics.Partitions.cardinality_partitions' rfl hn.symm
+
+noncomputable def Combinatorics.Partitions.FittingPartition.val_1_eq_compl_0_of_2 {α : Type} [Finite α] {x : Set.Iio 2 → Set α} (h : Set.IsPartition x) :
+    (x ⟨1, by simp only [Nat.Iio_succ, Set.mem_Iic_self]⟩) =  (x ⟨0, by simp only [Nat.Iio_succ, Set.mem_Iic_iff, Nat.zero_le]⟩) ᶜ := by
+  have un : ⋃ i, x i = x ⟨0, by simp only [Nat.Iio_succ, Set.mem_Iic_iff, Nat.zero_le]⟩ ∪ x ⟨1, by simp only [Nat.Iio_succ, Set.mem_Iic_self]⟩ := by
+    ext a
+    simp only [Set.mem_iUnion_iff, Subtype.exists, Set.mem_union_iff]
+    constructor
+    · rintro ⟨i,lt, h⟩
+      rw[Nat.mem_Iio_2] at lt
+      rcases lt with (rfl|rfl)
+      · left; assumption
+      · right; assumption
+    · rintro (h|h) <;> exact ⟨_,_,h⟩
+  have := h.1
+  rw[Set.IsCovering,un] at this
+  have that := h.2 ⟨0, by simp only [Nat.Iio_succ, Set.mem_Iic_iff, Nat.zero_le]⟩ ⟨1, by simp only [Nat.Iio_succ, Set.mem_Iic_self]⟩ (by
+    intro h
+    simp only [Subtype.eq_iff, reduceCtorEq] at h)
+  apply Set.eq_compl_of this that
+
+
+noncomputable def Combinatorics.Partitions.FittingPartition.subset_as {α : Type} [Finite α] {k} :
+    Function.Bijection (FittingPartition α 2 (fun i => if i = 0 then k else (Finite.ftype α).cardinality - k)) {a : Set α | (Finite.ftype a).cardinality = k} := by
+  exists fun y => ⟨y.1 ⟨0, Nat.zero_lt_succ _⟩, y.2.2 _ _⟩
+  constructor
+  · intro x y h
+    ext ⟨i,iprp⟩ : 2
+    simp only [Subtype.eq_iff] at h
+    rcases Nat.mem_Iio_2.mp iprp with (rfl|rfl)
+    · rw[h]
+    · have eq1 : x.val ⟨1, iprp⟩ = (x.val ⟨0,by simp only [Nat.Iio_succ, Set.mem_Iic_iff,
+        Nat.zero_le]⟩).compl := val_1_eq_compl_0_of_2 x.2.1
+      have eq2 : y.val ⟨1, iprp⟩ = (y.val ⟨0,by simp only [Nat.Iio_succ, Set.mem_Iic_iff,
+        Nat.zero_le]⟩).compl := val_1_eq_compl_0_of_2 y.2.1
+      rw[h] at eq1
+      rw[eq1,eq2]
+  · rw[Function.surj_iff]
+    intro ⟨s, cards⟩
+    let y : Set.Iio 2 → Set α := fun i => if i.val = 0 then s else sᶜ
+    have : y ∈ FittingPartition α 2 (fun i => if i = 0 then k else (Finite.ftype α).cardinality - k) := by
+      constructor
+      · constructor
+        · ext a
+          simp only [Set.mem_iUnion_iff, Subtype.exists, Nat.Iio_succ, Set.mem_Iic_iff,
+            Set.mem_univ, iff_true]
+          by_cases h : a ∈ s
+          · exists 0
+            exists (Nat.zero_le 1)
+          · exists 1
+            exists (Nat.le_of_ble_eq_true rfl)
+        · intro ⟨i,hi⟩ ⟨j,hj⟩ ne
+          rcases Nat.mem_Iio_2.mp hi with (rfl|rfl) <;> rcases Nat.mem_Iio_2.mp hj with (rfl|rfl)
+          · simp only [ne_eq, not_true_eq_false] at ne
+          · simp only [↓reduceIte, Nat.add_one_ne_zero, Set.inter_with_compl, y]
+          · simp only [Nat.add_one_ne_zero, ↓reduceIte, Set.inter_comm, Set.inter_with_compl, y]
+          · simp only [ne_eq, not_true_eq_false] at ne
+      · intro i h
+        by_cases h' : i = 0
+        · simp only [h', ↓reduceIte, y]
+          exact cards
+        · simp only [h', ↓reduceIte, y]
+          rw[FiniteType.cardinality_compl, cards]
+    exists ⟨_,this⟩
+
+theorem Combinatorics.subset_of_size {α : Type} [Finite α] {k : Nat} : (Finite.ftype {s : Set α | (Finite.ftype s).cardinality = k}).cardinality = Nat.binom (Finite.ftype α).cardinality k := by
+  have : (Finite.ftype {s : Set α | (Finite.ftype s).cardinality = k}).cardinality = (Finite.ftype (Partitions.FittingPartition α 2 (fun i => if i = 0 then k else (Finite.ftype α).cardinality - k))).cardinality := by
+    symm
+    simp only [Set.mem_setOf_iff, FiniteType.cardinality_eq_iff]
+    constructor
+    exact Partitions.FittingPartition.subset_as
+  rw[this]
+  by_cases h : k ≤ (Finite.ftype α).cardinality
+  · rw[Partitions.cardinality_partitions_div]
+    · rw[Nat.binom_of_le h]
+      simp only [Nat.zero_le, Nat.prod_ft_succ_right, le_rfl, Nat.prod_ft_ge, ↓reduceIte, Nat.one_mul,
+        Nat.add_one_ne_zero]
+    · simp only [Nat.zero_le, Nat.sum_ft_succ_right, le_rfl, Nat.sum_ft_ge, ↓reduceIte,
+        Nat.zero_add, Nat.add_one_ne_zero]
+      exact Eq.symm (Nat.add_sub_of_le h)
+  · trans 0
+    · simp only [FiniteType.cardinality_set_zero_iff]
+      ext a
+      simp only [Set.not_mem_empty, iff_false]
+      intro h'
+      replace h' := h'.2 0 (by simp only [Nat.Iio_succ, Set.mem_Iic_iff, Nat.zero_le])
+      simp only [↓reduceIte] at h'
+      have : (Finite.ftype { a_1 // a_1 ∈ a ⟨0, by simp only [Nat.Iio_succ, Set.mem_Iic_iff,
+        Nat.zero_le]⟩ }).cardinality ≤ (Finite.ftype α).cardinality := by simp only [FiniteType.cardinality_set_le]
+      rw[h'] at this
+      exact h this
+    · rw[Nat.binom_zero_of_gt]
+      rwa[not_ge_iff_lt] at h
