@@ -17,7 +17,7 @@ import BourbakiLean2.Function.Basic
 import BourbakiLean2.Function.Prod
 import BourbakiLean2.Function.Rel
 import BourbakiLean2.Function.CharacteristicFunction
-import BourbakiLean2.Order.Basic
+import BourbakiLean2.Order.Basicx^
 import BourbakiLean2.Order.Synonyms
 import BourbakiLean2.Order.Monotone
 import BourbakiLean2.Order.Intervals
@@ -42,7 +42,7 @@ import BourbakiLean2.Order.Lex
 import BourbakiLean2.Order.Finite
 import BourbakiLean2.Set.Cardinal
 import BourbakiLean2.Set.FiniteCardinal
-import BourbakiLean2.Set.Character
+import BourbakiLean2.Set.FiniteCharacter
 import BourbakiLean2.Data.Nat.Basic
 import BourbakiLean2.Data.Nat.IndexedOps
 import BourbakiLean2.Data.Nat.Intervals
