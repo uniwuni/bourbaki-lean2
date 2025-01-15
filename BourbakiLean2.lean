@@ -1,6 +1,8 @@
 -- This module serves as the root of the `BourbakiLean2` library.
 -- Import modules here that should be built as part of the library.
 import BourbakiLean2.Basic
+import BourbakiLean2.Logic
+import BourbakiLean2.Equivalence
 import BourbakiLean2.Set.Basic
 import BourbakiLean2.Set.Defs
 import BourbakiLean2.Set.Rel
@@ -14,6 +16,7 @@ import BourbakiLean2.Equivalence
 import BourbakiLean2.Function.Basic
 import BourbakiLean2.Function.Prod
 import BourbakiLean2.Function.Rel
+import BourbakiLean2.Function.CharacteristicFunction
 import BourbakiLean2.Order.Basic
 import BourbakiLean2.Order.Synonyms
 import BourbakiLean2.Order.Monotone
@@ -39,7 +42,13 @@ import BourbakiLean2.Order.Lex
 import BourbakiLean2.Order.Finite
 import BourbakiLean2.Set.Cardinal
 import BourbakiLean2.Set.FiniteCardinal
+import BourbakiLean2.Set.Character
 import BourbakiLean2.Data.Nat.Basic
 import BourbakiLean2.Data.Nat.IndexedOps
 import BourbakiLean2.Data.Nat.Intervals
+import BourbakiLean2.Data.Nat.SequenceOps
 import BourbakiLean2.Data.Finite
+import BourbakiLean2.Combinatorics.Binom
+import BourbakiLean2.Combinatorics.Defs
+import BourbakiLean2.Combinatorics.FunctionProps
+import BourbakiLean2.Combinatorics.PartitionProps
