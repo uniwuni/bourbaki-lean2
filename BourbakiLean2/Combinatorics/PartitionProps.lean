@@ -304,7 +304,7 @@ noncomputable def Combinatorics.Partitions.FittingPartition.subset_as {α : Type
           rw[FiniteType.cardinality_compl, cards]
     exists ⟨_,this⟩
 
-theorem Combinatorics.subset_of_size {α : Type} [Finite α] {k : Nat} : (Finite.ftype {s : Set α | (Finite.ftype s).cardinality = k}).cardinality = Nat.binom (Finite.ftype α).cardinality k := by
+theorem Combinatorics.cardinality_subset_of_size {α : Type} [Finite α] {k : Nat} : (Finite.ftype {s : Set α | (Finite.ftype s).cardinality = k}).cardinality = Nat.binom (Finite.ftype α).cardinality k := by
   have : (Finite.ftype {s : Set α | (Finite.ftype s).cardinality = k}).cardinality = (Finite.ftype (Partitions.FittingPartition α 2 (fun i => if i = 0 then k else (Finite.ftype α).cardinality - k))).cardinality := by
     symm
     simp only [Set.mem_setOf_iff, FiniteType.cardinality_eq_iff]
@@ -332,3 +332,87 @@ theorem Combinatorics.subset_of_size {α : Type} [Finite α] {k : Nat} : (Finite
       exact h this
     · rw[Nat.binom_zero_of_gt]
       rwa[not_ge_iff_lt] at h
+
+theorem Combinatorics.cardinality_strict_mono_of_size {α β : Type} [Finite α] [Finite β] [TotalOrder α] [TotalOrder β]:
+    (Finite.ftype {f : α → β | StrictMonotone f}).cardinality = Nat.binom (Finite.ftype β).cardinality (Finite.ftype α).cardinality := by
+  by_cases le : (Finite.ftype α).cardinality ≤ (Finite.ftype β).cardinality
+  · rw[← Combinatorics.cardinality_subset_of_size]
+    simp only [Set.mem_setOf_iff]
+    apply FiniteType.cardinality_eq_iff.mpr
+    constructor
+    exists fun f => ⟨f.1 '' Set.univ, by rw[FiniteType.cardinality_image_eq_inj, FiniteType.cardinality_univ]; apply TotalOrder.inj_of_strictMono f.2⟩
+    constructor
+    · intro ⟨f,hf⟩ ⟨g,hg⟩ eq
+      rw[Subtype.eq_iff] at eq
+      simp only [StrictMonotone.eq_1] at eq
+      have f1 := TotalOrder.corestrict_strictMono_iso' hf eq
+      have g1 := TotalOrder.corestrict_strictMono_iso hg
+      have := WellOrder.iso_all_eq f1 g1
+      rw[Function.corestrict_eq_iff] at this
+      apply Subtype.eq this
+    · rw[Function.surj_iff]
+      intro ⟨a,ha⟩
+      let x' := Subtype.val ∘ TotalOrder.enumerate (α := α)
+      have hx' a : x' a ∈ Set.Iio _ := Subtype.property $ TotalOrder.enumerate (α := α) a
+      rw[← ha] at hx'
+      let x := Subtype.val ∘ TotalOrder.nth (α := a) ∘ fun i => ⟨x' i, hx' i⟩
+      have : StrictMonotone x := by
+        intro a b h
+        simp only [Function.comp_assoc, Function.comp_apply, x, x']
+        rw[← Subtype.lt_iff_val]
+        apply TotalOrder.nth_isOrderIso.strictMonotone
+        simp only [Subtype.lt_iff_val]
+        rw[← Subtype.lt_iff_val]
+        apply TotalOrder.enumerate_isOrderIso.strictMonotone h
+      exists ⟨x,this⟩
+      simp only
+      congr
+      ext i
+      unfold x x'
+      constructor
+      · intro hi
+        simp only [Function.comp_apply, Function.comp_assoc, Function.image_comp, Set.mem_image_iff,
+          Subtype.eq_iff, Set.mem_univ, and_true, Subtype.exists, Set.mem_Iio_iff, exists_and_right,
+          exists_and_left, exists_prop, exists_eq_left']
+        exists i
+        constructor
+        · exact ⟨hi,rfl⟩
+        · exists (TotalOrder.enumerate (α := a) ⟨i,hi⟩)
+          constructor
+          · exists (TotalOrder.enumerate (α := a) ⟨i,hi⟩).property
+            change (⟨i,hi⟩ : a).val  = _
+            apply Subtype.eq_iff.mp
+            change _ = TotalOrder.nth (TotalOrder.enumerate ⟨i, hi⟩)
+            simp only [TotalOrder.nth_enumerate]
+          · obtain ⟨a',h1',h2'⟩ : ∃ a' : α, ∃ h : (TotalOrder.enumerate a').val ∈ (Set.Iio (Finite.ftype { a_3 // a_3 ∈ a }).cardinality),
+                (TotalOrder.enumerate ⟨i,hi⟩) = (⟨(TotalOrder.enumerate a').val,h⟩ : Set.Iio _) := by
+              let x := TotalOrder.enumerate (⟨i, hi⟩ : a)
+              let x' : Set.Iio (Finite.ftype α).cardinality := ⟨x.val, by rw[← ha]; exact x.property⟩
+              obtain ⟨b,eq⟩ := TotalOrder.enumerate_isOrderIso.bij.surj.exists_preimage x'
+              exists b
+              have : (TotalOrder.enumerate b).val ∈ Set.Iio (Finite.ftype { a_3 // a_3 ∈ a }).cardinality := by
+                rw[← eq, ha]
+                exact x'.property
+              exists this
+              apply Subtype.eq
+              simp only
+              rw[← eq]
+            exists a'
+            apply Subtype.eq_iff.mp h2'
+      · intro hi
+        simp only [Function.comp_apply, Function.comp_assoc, Function.image_comp, Set.mem_image_iff,
+          Subtype.eq_iff, Set.mem_univ, and_true, Subtype.exists, Set.mem_Iio_iff, exists_and_right,
+          exists_and_left, exists_prop, exists_eq_left'] at hi
+        obtain ⟨a,⟨mem,eq⟩,_⟩ := hi
+        rwa[eq]
+  · trans 0
+    · have : {a : α → β| StrictMonotone a} = ∅ := by
+        simp only [FiniteType.cardinality_le_ftype_iff] at le
+        ext f
+        simp only [Set.mem_setOf_iff, Set.not_mem_empty, iff_false,
+          Classical.not_forall, not_imp]
+        intro hf
+        exact le ⟨_,TotalOrder.inj_of_strictMono hf⟩
+      rw[this, FiniteType.cardinality_empty_set]
+    · rw[not_ge_iff_lt] at le
+      simp only [le, Nat.binom_zero_of_gt]

@@ -22,6 +22,10 @@ theorem subset_rfl : x ⊆ x := subset_refl x
 theorem subset_trans (h : x ⊆ y) (h' : y ⊆ z) : x ⊆ z :=
   fun _ h'' => h' (h h'')
 
+theorem subset_of_eq (h : x = y): x ⊆ y := match h with
+  | rfl => subset_rfl
+
+
 instance: Trans (fun (x y : Set α) => x ⊆ y) (fun x y => x ⊆ y) (fun x y => x ⊆ y) where
   trans := subset_trans
 

@@ -1,5 +1,6 @@
 import BourbakiLean2.Order.Basic
 import BourbakiLean2.Order.Synonyms
+universe u
 variable {α β : Type*}
 section Defs
 variable (f : α → β)

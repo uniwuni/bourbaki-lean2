@@ -230,6 +230,26 @@ theorem TotalOrder.strictMono_iso_image [TotalOrder α] [PartialOrder β] {f : �
       replace h''' := h h'''
       exact not_lt_self $ lt_of_le_lt h'' h'''
 
+theorem TotalOrder.corestrict_strictMono_iso [TotalOrder α] [PartialOrder β] {f : α → β} (h : StrictMonotone f) :
+    IsOrderIso (f.corestrict Set.subset_rfl) := by
+  apply TotalOrder.strictMono_iso_image
+  · intro x y h'
+    simp only [Subtype.lt_iff_val, Function.coe_corestrict]
+    apply h h'
+  · simp only [Function.surj_iff, Subtype.eq_iff, Function.coe_corestrict, Subtype.forall,
+    Set.mem_image_iff, Set.mem_univ, and_true, imp_self, implies_true]
+
+theorem TotalOrder.corestrict_strictMono_iso' [TotalOrder α] [PartialOrder β] {f : α → β} {s : Set β} (h : StrictMonotone f) (h' : f '' Set.univ = s)  :
+    IsOrderIso (f.corestrict $ Set.subset_of_eq h') := by
+  apply TotalOrder.strictMono_iso_image
+  · intro x y h'
+    simp only [Subtype.lt_iff_val, Function.coe_corestrict]
+    apply h h'
+  · simp only [Function.surj_iff, Subtype.eq_iff, Function.coe_corestrict, Subtype.forall]
+    rw[← h']
+    simp only [Set.mem_image_iff, Set.mem_univ, and_true, imp_self, implies_true]
+
+
 theorem isLUB_iff_ub_exists_lt [TotalOrder α] {s : Set α} : IsLUB s x ↔ (UpperBound s x ∧ ∀ y, y < x → ∃ z ∈ s, y < z) := by
   have {y : α} : (∃ z, z ∈ s ∧ y < z) ↔ ¬ UpperBound s y := by
     simp[UpperBound]

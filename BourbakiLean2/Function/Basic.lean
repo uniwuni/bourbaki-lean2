@@ -281,8 +281,17 @@ theorem corestrict_surjective : Surjective (corestrict f (Set.subset_refl _)) :=
   rintro x a rfl
   exists a
 
+
+
 @[simp] theorem coe_corestrict {y : Set β} {h : f '' Set.univ ⊆ y} {a : α} :
     ↑ (corestrict f h a) = f a := rfl
+
+@[simp] theorem corestrict_eq_iff {f g : α → β} {y : Set β} {h : f '' Set.univ ⊆ y} {h' : g '' Set.univ ⊆ y} :
+    f.corestrict h = g.corestrict h' ↔ f = g := by
+  rw[funext_iff, funext_iff]
+  apply forall_congr'
+  intro a
+  simp only [Subtype.eq_iff, coe_corestrict]
 
 /- bijectivity -/
 
