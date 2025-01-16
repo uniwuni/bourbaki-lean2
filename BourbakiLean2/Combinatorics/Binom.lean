@@ -7,6 +7,9 @@ theorem Nat.binom_symmetric {n k} (h : k ≤ n): binom n k = binom n (n - k) := 
   congr
   exact Eq.symm (Nat.sub_sub_self h)
 
+@[simp] theorem Nat.binom_self (n) : binom n n = 1 := by
+  simp only [binom, le_rfl, ↓reduceIte, Nat.sub_self, factorial_zero, Nat.mul_one]
+  apply Nat.div_self factorial_pos
 
 theorem Nat.sum_binom {n} : Nat.sum_ft 0 (n+1) (binom n) = 2^n := by
   rw[← Iio_cardinality (a := n)]
@@ -26,7 +29,7 @@ theorem Nat.sum_binom {n} : Nat.sum_ft 0 (n+1) (binom n) = 2^n := by
     rw[h1] at h2
     apply ne $ Subtype.eq h2
 
-@[simp] theorem Nat.binom_succ_succ_of_le {n k} (h : k + 1 ≤ n):
+theorem Nat.binom_succ_succ_of_le {n k} (h : k + 1 ≤ n):
     binom (n + 1) (k + 1) = binom n (k+1) + binom n k := by
   conv => rhs; rw[← Nat.Iio_cardinality (a := n)]
   rw[← Nat.Iio_cardinality (a := n + 1), ← Combinatorics.cardinality_subset_of_size, ← Combinatorics.cardinality_subset_of_size, ← Combinatorics.cardinality_subset_of_size]
@@ -206,7 +209,13 @@ theorem Nat.sum_binom {n} : Nat.sum_ft 0 (n+1) (binom n) = 2^n := by
     rw[h] at h'
     simp only [Nat.add_right_eq_self, add_one_ne_zero] at h'
 
-
+theorem Nat.binom_succ_succ {n k} :
+    binom (n + 1) (k + 1) = binom n (k+1) + binom n k := by
+  rcases lt_trichotomy k n with (h|rfl|h)
+  · exact binom_succ_succ_of_le h
+  · simp only [binom_self, Nat.lt_add_one, binom_zero_of_gt, Nat.zero_add]
+  · have : n < k + 1 := lt_succ_of_lt h
+    simp only [Nat.add_lt_add_iff_right, h, binom_zero_of_gt, this, Nat.add_zero]
 
 /-
 theorem Nat.factorial_prod_dvd {n k : Nat} (h : k ≤ n) :  k.factorial * (n - k).factorial ∣ n.factorial := by

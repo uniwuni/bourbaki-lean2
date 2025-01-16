@@ -39,7 +39,7 @@ noncomputable def binom (n k : Nat) := if k ≤ n then n.factorial / (k.factoria
   intro h'
   exact (h h').elim
 
-@[simp] theorem binom_of_le : k ≤ n → binom n k = n.factorial / (k.factorial * (n - k).factorial) := by
+@[simp low] theorem binom_of_le : k ≤ n → binom n k = n.factorial / (k.factorial * (n - k).factorial) := by
   intro h
   simp only [binom, h, ↓reduceIte]
 
