@@ -217,18 +217,44 @@ theorem Nat.binom_succ_succ_of_le {n k} (h : k + 1 ≤ n):
   · have : n < k + 1 := lt_succ_of_lt h
     simp only [Nat.add_lt_add_iff_right, h, binom_zero_of_gt, this, Nat.add_zero]
 
-/-
-theorem Nat.factorial_prod_dvd {n k : Nat} (h : k ≤ n) :  k.factorial * (n - k).factorial ∣ n.factorial := by
-  induction h with
-  | refl => simp only [Nat.sub_self, factorial_zero, Nat.mul_one]; exact Nat.dvd_refl _
-  | step le ih =>
-    unfold Dvd.dvd instDvd at *
-    dsimp only at *
-    obtain ⟨c,eq⟩ := ih
+@[simp] theorem Nat.binom_zero_succ {k} : binom 0 (k + 1) = 0 := by
+  simp only [zero_lt_succ, binom_zero_of_gt]
 
+@[simp high] theorem Nat.binom_zero {n} : binom n 0 = 1 := by
+  simp only [zero_le, binom_of_le, factorial_zero, Nat.sub_zero, Nat.one_mul, factorial_pos,
+    Nat.div_self]
 
-theorem Nat.factorial_eq_binom_mul {n k} (h : k ≤ n) : binom n k * k.factorial * (n-k).factorial = n.factorial := by
-  simp only [binom_of_le h]
-  rw[Nat.mul_assoc]
-  rw[Nat.div_mul_cancel]
--/
+theorem Nat.factorial_eq_binom_mul {n} : ∀ k, (h : k ≤ n) → binom n k * k.factorial * (n-k).factorial = n.factorial := by
+  induction n with
+  | zero => intro k h; rw[le_zero] at h; rw[h]; simp only [binom_self, factorial_zero, Nat.mul_one,
+    Nat.sub_self]
+  | succ n ih =>
+    intro k h'
+    rcases le_iff_lt_or_eq.mp h' with (h|rfl)
+    · rw[lt_succ] at h
+      rw[Nat.sub_add_comm h]
+      rw[factorial_succ (n := n)]
+      rw[← ih k h]
+      cases k with
+      | zero =>
+        simp only [le_add_left,factorial_succ, factorial_zero, Nat.sub_zero,
+          Nat.one_mul, Nat.mul_one, zero_le, binom_zero]
+      | succ k =>
+        simp only [binom_succ_succ]
+        rw[Nat.add_mul, Nat.add_mul]
+        conv => lhs; lhs; rhs; rw[factorial_succ]
+        conv => lhs; rw[← Nat.mul_assoc]
+        rw[ih _ h]
+        conv => lhs; rhs; rhs; rw[sub_add_eq]
+        conv => lhs; rhs; lhs; rw[factorial_succ]
+        rw[Nat.sub_add_cancel
+          (by rw[Nat.le_sub_iff_add_le']; assumption; exact le_of_succ_le h)]
+        conv =>
+          lhs; rhs; rw[Nat.mul_right_comm, ← Nat.mul_assoc];
+          lhs; rw[Nat.mul_right_comm]
+          rw[ih _ (le_of_succ_le h)]
+        rw[← Nat.mul_add]
+        congr 1
+        omega
+    · simp only [binom_self, factorial_succ, Nat.one_mul, Nat.sub_self, factorial_zero,
+      Nat.mul_one]

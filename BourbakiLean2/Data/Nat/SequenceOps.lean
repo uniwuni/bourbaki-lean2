@@ -126,7 +126,34 @@ theorem prod_ft_zero_iff_exists_zero {x : (i : Nat) → Nat} : Nat.prod_ft n m x
   unfold prod_ft
   simp only [finite_prod_zero_iff, Subtype.exists, Set.mem_Ico_iff, exists_prop, and_assoc]
 
+theorem prod_minus_one_even {n} : 2 ∣ n * (n - 1) := by
+  induction n with
+  | zero => simp only [Nat.zero_sub, Nat.mul_zero, Nat.dvd_zero]
+  | succ n ih =>
+    cases n with
+    | zero => simp only [Nat.zero_add, Nat.sub_self, Nat.mul_zero, Nat.dvd_zero]
+    | succ n =>
+      simp only [Nat.add_one_sub_one] at ih
+      simp only [Nat.add_one_sub_one]
+      rw[Nat.mul_comm, Nat.mul_add_one, Nat.mul_add_one, Nat.add_assoc, ← Nat.two_mul]
+      apply Nat.dvd_add ih $ Nat.dvd_mul_right _ _
 
+theorem sum_ft_id : Nat.sum_ft 0 n id = n * (n - 1) / 2 := by
+  induction n with
+  | zero => simp only [le_rfl, sum_ft_ge, Nat.zero_sub, Nat.mul_zero, Nat.zero_div]
+  | succ n ih =>
+    simp only [zero_le, sum_ft_succ_right, ih, id_eq, Nat.add_one_sub_one]
+    conv => lhs; rhs; rw[← Nat.mul_div_cancel (n := 2) (m := n) (by simp only [zero_lt_succ])]
+    symm
+    rw[Nat.div_eq_of_eq_mul_left (n := 2) (by simp only [zero_lt_succ])]
+    rw[Nat.add_mul (k := 2)]
+    simp only [zero_lt_succ, mul_div_left]
+    rw[Nat.div_mul_cancel prod_minus_one_even]
+    cases n with
+    | zero => simp only [Nat.zero_add, Nat.mul_zero, Nat.zero_sub, Nat.zero_mul, Nat.add_zero]
+    | succ n =>
+      simp only [Nat.add_one_sub_one]
+      rw[← Nat.mul_add, Nat.mul_comm]
 end Nat
 
 theorem FiniteType.cardinality_disj_iUnion_ft {n m} {α : Type} [Finite α] {a : Nat → Set α} (h : Set.Disjoint (fun x : Set.Ico n m => a x.val)) :
