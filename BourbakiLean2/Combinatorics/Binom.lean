@@ -209,7 +209,7 @@ theorem Nat.binom_succ_succ_of_le {n k} (h : k + 1 ≤ n):
     rw[h] at h'
     simp only [Nat.add_right_eq_self, add_one_ne_zero] at h'
 
-theorem Nat.binom_succ_succ {n k} :
+@[simp low+1] theorem Nat.binom_succ_succ {n k} :
     binom (n + 1) (k + 1) = binom n (k+1) + binom n k := by
   rcases lt_trichotomy k n with (h|rfl|h)
   · exact binom_succ_succ_of_le h
