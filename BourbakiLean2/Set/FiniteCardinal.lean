@@ -737,3 +737,8 @@ theorem FiniteCardinal.equipotent_of_nat_eq {n} : {α : Type u} → {β : Type v
     · rintro (b|b)
       · simp only [PUnit.default_eq_unit, Sum.map_inl, Function.Bijective.inv_val_val]
       · simp only [PUnit.default_eq_unit, Sum.map_inr]
+
+instance Finite.sets {α : Type u} [h : Finite α] : Finite (Set α) := by
+  constructor
+  rw[Cardinal.set_eq_two_pow]
+  infer_instance

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Leonardo de Moura
 -/
 import Lean.Elab.Term
+import Lean.PrettyPrinter.Delaborator
 import Batteries.Util.ExtendedBinder
 
 /-!
@@ -46,14 +47,13 @@ def Set (α : Type u) := α → Prop
 def setOf {α : Type u} (p : α → Prop) : Set α :=
   p
 
-namespace Set
-
 /-- Membership in a set -/
-protected def Mem (s : Set α) (a : α) : Prop :=
+protected def Set.Mem (s : Set α) (a : α) : Prop :=
   s a
 
-instance : Membership α (Set α) :=
+instance instMembership : Membership α (Set α) :=
   ⟨Set.Mem⟩
+namespace Set
 
 @[ext] theorem ext {a b : Set α} (h : ∀ (x : α), x ∈ a ↔ x ∈ b) : a = b :=
   funext (fun x ↦ propext (h x))
@@ -273,3 +273,28 @@ elab "Type*" : term => do
 /-- The coercion of sets to types via their elements -/
 instance {α : Type u} : CoeSort (Set α) (Type u) where
   coe x := Subtype (fun a => a ∈ x)
+
+namespace Lean.Expr
+
+/-- If `e` is a coercion of a set to a type, return the set.
+Succeeds either for `Set.Elem s` terms or `{x // x ∈ s}` subtype terms. -/
+def coeTypeSet? (e : Expr) : Option Expr := do
+if e.isAppOfArity ``Subtype 2 then
+    let .lam _ _ body _ := e.appArg! | failure
+    guard <| body.isAppOfArity ``Membership.mem 5
+    let #[_, _, inst, .bvar 0, s] := body.getAppArgs | failure
+    guard <| inst.isAppOfArity ``instMembership 1
+    return s
+  else
+    failure
+open Lean.PrettyPrinter.Delaborator Lean.SubExpr SubExpr
+
+@[app_delab Subtype]
+def delabSubtypeSetLike : Delab := whenPPOption getPPNotation do
+  let #[_, Lean.Expr.lam n _ body _] := (← getExpr).getAppArgs | failure
+  guard <| body.isAppOf ``Membership.mem
+  let #[_, _, inst, _, .bvar 0] := body.getAppArgs | failure
+  --guard <| inst.isAppOfArity ``instMembership 3
+  let S ← withAppArg <| withBindingBody n <| withNaryArg 3 delab
+  `(↥$S)
+end Lean.Expr

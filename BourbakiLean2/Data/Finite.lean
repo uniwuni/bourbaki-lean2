@@ -116,7 +116,6 @@ theorem cardinality_le_ftype_of_surj {α β : Type u} [Finite α] [Finite β]
     (Finite.ftype α).cardinality ≤ (Finite.ftype β).cardinality := by
   apply cardinality_le_of_surj h
 
-
 @[simp] theorem cardinality_eq_iff {a b : FiniteType.{u}} :
     a.cardinality = b.cardinality ↔ Equipotent a.val b.val := by
   rcases a with ⟨a,ha⟩
@@ -253,6 +252,17 @@ theorem cardinality_preimage_same_product {α β : Type u} [Finite α] [Finite �
   change (Finite.ftype ({x} ∪ a : Set α)).cardinality = (Finite.ftype a).cardinality + 1
   exact cardinality_manual_insert h'
 
+theorem eq_of_cardinality_eq_subset {a b : Set α} [Finite a] [Finite b] (h : a ⊆ b) (h' : (Finite.ftype a).cardinality = (Finite.ftype b).cardinality) :
+    a = b := by
+  simp only [cardinality_eq_iff, Finite.ftype] at h'
+  let f : Function.Injection a b := ⟨fun ⟨x,hx⟩ => ⟨x, h hx⟩, fun x y h => by simp only [Subtype.eq_iff] at h; exact Subtype.eq h⟩
+  have : Function.Bijective f := (Finite.bij_iff_inj h').mpr f.property
+  apply Set.eq_iff_subset_subset.mpr ⟨h,?wh⟩
+  intro x hx
+  obtain ⟨⟨a,ha⟩,eq⟩ := this.surj.exists_preimage ⟨x,hx⟩
+  simp only [Subtype.eq_iff] at eq
+  rwa[eq]
+
 theorem cardinality_disj_union [Finite α] {a b : Set α} (h : a ∩ b = ∅) : (Finite.ftype (a ∪ b : Set α)).cardinality = (Finite.ftype a).cardinality + (Finite.ftype b).cardinality := by
   rw[← cardinality_sum, Eq.comm, cardinality_eq_iff]
   constructor
@@ -301,6 +311,15 @@ theorem nonempty_of_cardinality_succ {n} [Finite α] (h : (Finite.ftype α).card
   obtain ⟨i⟩ := h'
   constructor
   exact i PUnit.unit
+
+theorem cardinality_sets [Finite α] : (Finite.ftype (Set α)).cardinality = 2^(Finite.ftype α).cardinality := by
+  trans (Finite.ftype (α → PUnit ⊕ PUnit)).cardinality
+  · rw[cardinality_eq_iff, ← Cardinal.eq_iff]
+    simp only [Finite.ftype]
+    rw[Cardinal.set_eq_two_pow]
+    rw[Cardinal.one_eq]
+    simp only [Cardinal.add_mk, Cardinal.pow_mk]
+  · simp only [cardinality_pow, cardinality_sum, cardinality_unique, Nat.reduceAdd]
 
 end FiniteType
 theorem Finite.set_induction {α : Type*} {p : Set α → Prop}

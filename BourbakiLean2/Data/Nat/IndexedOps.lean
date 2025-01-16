@@ -511,3 +511,10 @@ theorem Nat.finite_prod_pow : ∀{ι : Type v} [Finite ι] {x : ι → Nat} {n :
       simp
       change (fun i ↦ x i.val)
     rw[hyp]
+
+theorem FiniteType.cardinality_disj_iUnion {α ι : Type u} [Finite α] [Finite ι] {a : ι → Set α} (h : Set.Disjoint a) :
+    (Finite.ftype (⋃ i, a i)).cardinality = Nat.finite_sum (fun i => (Finite.ftype $ a i).cardinality) := by
+  simp only [cardinality, cardinality', Finite.ftype, Nat.finite_sum]
+  congr 2
+  conv => rhs; rhs; intro i; rw[FiniteCardinal.of_nat_to_nat]
+  exact Cardinal.disj_iUnion h

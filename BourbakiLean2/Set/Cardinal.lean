@@ -1383,4 +1383,32 @@ theorem Equipotent.subset_subset {α : Type u} {s t : Set α} (h : s ⊆ t) :
     intro ⟨b,h'⟩
     exists ⟨⟨b, h h'⟩, h'⟩
 
+theorem Cardinal.disj_iUnion {α ι : Type u} {a : ι → Set α} (h : Set.Disjoint a) :
+    Cardinal.mk (⋃ i, a i) = Cardinal.sigma fun i => Cardinal.mk (a i) := by
+  symm
+  simp only [Set.mem_iUnion_iff, sigma_mk, eq_iff]
+  constructor
+  exists fun ⟨i, x⟩ => ⟨x, ⟨i, x.2⟩⟩
+  constructor
+  · intro ⟨i,⟨x,hx⟩⟩ ⟨j,⟨y,hy⟩⟩ eq
+    simp only[Subtype.eq_iff] at eq
+    have eq2 : i = j := by
+      have : _ ∈ a i ∩ a j := ⟨hx, eq ▸ hy⟩
+      by_contra h'
+      specialize h i j h'
+      rwa[h] at this
+    congr
+    · rw[eq2]
+    · apply heq_of_eqRec_eq
+      · rfl
+      · rw[eq,eq2]
+  · rw[Function.surj_iff]
+    intro ⟨x,i,hx⟩
+    exists ⟨i,x,hx⟩
+
+
+
+
+
+
 end

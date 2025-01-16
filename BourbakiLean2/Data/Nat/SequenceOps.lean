@@ -1,5 +1,5 @@
 import BourbakiLean2.Data.Nat.Intervals
-
+universe u
 noncomputable def Nat.sum_ft (n m : Nat) (x : (i : Nat) → Nat) :=
   Nat.finite_sum (fun i : Set.Ico n m => x i)
 
@@ -128,3 +128,9 @@ theorem prod_ft_zero_iff_exists_zero {x : (i : Nat) → Nat} : Nat.prod_ft n m x
 
 
 end Nat
+
+theorem FiniteType.cardinality_disj_iUnion_ft {n m} {α : Type} [Finite α] {a : Nat → Set α} (h : Set.Disjoint (fun x : Set.Ico n m => a x.val)) :
+    (Finite.ftype (⋃ i : Set.Ico n m, a i)).cardinality = Nat.sum_ft n m (fun i => (Finite.ftype (a i)).cardinality) := by
+  rw[Nat.sum_ft]
+  rw[← FiniteType.cardinality_disj_iUnion (a := fun i : Set.Ico n m => a i.val)]
+  exact h
